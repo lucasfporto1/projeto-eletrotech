@@ -3,7 +3,18 @@ require_once '../../lib-php/libUtils.php';
 checkSession('loginView.php');
 
 $db = ConexaoBanco::connect();
-$query = "SELECT * FROM tabela_eletricistas ORDER BY id DESC";
+
+$mesAtual = date('Y-m');
+
+$query = "SELECT e.*, 
+       (SELECT COUNT(*) FROM tabela_ordens_servico WHERE eletricista_os = e.id) as total_os,
+       (SELECT vlr_meta FROM tabela_metas 
+        WHERE eletricista_meta = e.id 
+        AND mes_meta = DATE_FORMAT(NOW(), '%Y-%m') 
+        LIMIT 1) as meta_atual
+       FROM tabela_eletricistas e
+       ORDER BY e.id DESC";
+
 $resultado = $db->query($query);
 ?>
 <!DOCTYPE html>
@@ -284,8 +295,8 @@ $resultado = $db->query($query);
                             <td><?= $dataContratacao ?></td>
                             <td><?= $dataDemissao ?></td>
                             <td><span class="badge <?= $badgeClass ?>"><?= $statusText ?></span></td>
-                            <td>0</td>
-                            <td>-</td>
+                            <td><?= $eletricista['total_os'] ?></td>
+                            <td><?= ($eletricista['meta_atual'] > 0) ? 'R$ ' . number_format($eletricista['meta_atual'], 2, ',', '.') : 'R$ 0,00' ?></td>
                             <td>
                                 <button type="button" class="btn btn-sm btn-outline-warning"
                                     data-bs-toggle="modal"
