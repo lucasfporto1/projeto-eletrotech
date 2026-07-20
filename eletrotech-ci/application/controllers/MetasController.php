@@ -27,7 +27,7 @@ class MetasController extends Auth_Controller
     {
         $this->form_validation->set_rules('eletricista_meta', 'Eletricista', 'required|numeric');
         $this->form_validation->set_rules('mes_meta', 'Mês de Referência', 'required');
-        $this->form_validation->set_rules('vlr_meta', 'Valor da Meta', 'required|decimal');
+        $this->form_validation->set_rules('vlr_meta', 'Valor da Meta', 'required');
 
         if ($this->form_validation->run() === FALSE) {
             $this->session->set_flashdata('erro', validation_errors());

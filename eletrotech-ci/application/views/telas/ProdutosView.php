@@ -216,7 +216,7 @@
     </div>
 
     <div id="acoes_id">
-        <button data-bs-toggle="modal" data-bs-target="#modalNovoProduto">
+        <button type="button" data-bs-toggle="modal" data-bs-target="#modalNovoProduto">
             <i class="fa-solid fa-plus"></i> Novo Produto
         </button>
     </div>
@@ -255,6 +255,16 @@
                                     class="btn btn-sm btn-outline-danger" onclick="return confirm('Zerar estoque?');">
                                     <i class="fa-solid fa-trash"></i>
                                 </a>
+
+                                <button type="button" class="btn btn-sm btn-outline-success"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#modalAumentarEstoque"
+                                    data-id="<?= $produto['id'] ?>"
+                                    data-nome="<?= htmlspecialchars($produto['nome_produto']) ?>"
+                                    onclick="preencherModalAumentarEstoque(this)">
+                                    <i class="fa-solid fa-plus"></i>
+                                </button>
+
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -315,9 +325,32 @@
                 </div>
             </div>
         </div>
-
     </div>
 
+    <div class="modal fade" id="modalAumentarEstoque" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content eletrotech-modal">
+                <div class="modal-header">
+                    <h5 class="modal-title">Aumentar Estoque</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <?= form_open('produtos/aumentarQtdEstoque/', ['class' => 'eletrotech-form', 'id' => 'formAumentarEstoque']) ?>
+
+                    <input type="hidden" name="id" id="aumentar_estoque_produto_id">
+
+                    <label>Produto</label>
+                    <p id="aumentar_estoque_produto_nome" style="margin-bottom: 20px; font-weight: 700;"></p>
+
+                    <label for="qtd_estoque">Quantidade a adicionar</label>
+                    <input type="number" name="qtd_estoque" id="qtd_estoque" min="1" placeholder="Ex: 10" required>
+
+                    <button type="submit" class="btn-submit mt-3">Atualizar Estoque</button>
+                    <?= form_close() ?>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -331,6 +364,15 @@
             document.getElementById('edit_nome_produto').value = nome;
             document.getElementById('edit_vlr_unitario').value = valor;
         };
+
+        const preencherModalAumentarEstoque = (botao) => {
+            const id = botao.getAttribute('data-id');
+            const nome = botao.getAttribute('data-nome');
+
+            document.getElementById('aumentar_estoque_produto_id').value = id;
+            document.getElementById('aumentar_estoque_produto_nome').textContent = nome;
+        };
+
     </script>
     <?php $this->load->view('components/Chatbot'); ?>
 

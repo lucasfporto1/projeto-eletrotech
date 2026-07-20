@@ -41,4 +41,11 @@ class ProdutosModel extends CI_Model
     {
         return $this->db->update($this->table, ['qtd_estoque' => 0], ['id' => $id]);
     }
+
+    public function aumentarQtdEstoque($id, $quantidade)
+    {
+        $this->db->set('qtd_estoque', 'qtd_estoque + ' . (int)$quantidade, FALSE);
+        $this->db->where('id', $id);
+        return $this->db->update($this->table);
+    }
 }

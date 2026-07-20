@@ -242,7 +242,7 @@
                         $ativo = is_null($eletricista['data_demissao']);
                         $statusText = $ativo ? 'Ativo' : 'Demitido';
                         $badgeClass = $ativo ? 'bg-success' : 'bg-secondary';
-
+                        
                         $dataContratacao = date('d/m/Y', strtotime($eletricista['data_contratacao']));
                         $dataDemissao = !$ativo ? date('d/m/Y', strtotime($eletricista['data_demissao'])) : '-';
                     ?>

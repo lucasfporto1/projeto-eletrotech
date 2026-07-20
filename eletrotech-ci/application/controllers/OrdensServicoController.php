@@ -32,10 +32,13 @@ class OrdensServicoController extends Auth_Controller
             return;
         }
 
+        
+
         $eletricistaId = $this->input->post('eletricista_os', TRUE);
         $dataOs        = $this->input->post('data_os', TRUE);
         $idsProdutos   = $this->input->post('id_produto', TRUE) ?? [];
         $quantidades   = $this->input->post('qtd_utilizada', TRUE) ?? [];
+
 
         $produtos = [];
         foreach ($idsProdutos as $i => $idProduto) {
@@ -44,6 +47,7 @@ class OrdensServicoController extends Auth_Controller
                 'qtd' => $quantidades[$i] ?? 0,
             ];
         }
+
 
         $idOs = $this->OrdemservicoModel->registrar_os($eletricistaId, $dataOs, $produtos);
 

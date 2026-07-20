@@ -20,7 +20,7 @@ class ProdutosController extends Auth_Controller
     public function cadastrar()
     {
         $this->form_validation->set_rules('nome_produto', 'Nome do Produto', 'required|min_length[3]');
-        $this->form_validation->set_rules('vlr_unitario', 'Preço Unitário', 'required|decimal');
+        $this->form_validation->set_rules('vlr_unitario', 'Preço Unitário', 'required');
         $this->form_validation->set_rules('qtd_estoque', 'Quantidade em Estoque', 'required|integer|greater_than_equal_to[0]');
 
         if ($this->form_validation->run() === FALSE) {
@@ -83,6 +83,41 @@ class ProdutosController extends Auth_Controller
             $this->session->set_flashdata('sucesso', 'Estoque do produto zerado com sucesso.');
         } else {
             $this->session->set_flashdata('erro', 'Erro ao zerar estoque do produto.');
+        }
+
+        redirect('produtos');
+    }
+
+    public function aumentarQtdEstoque($id = null)
+    {
+        if (empty($id) || !is_numeric($id)) {
+            $id = $this->input->post('id', TRUE);
+        }
+
+        if (empty($id) || !is_numeric($id)) {
+            show_404();
+            return;
+        }
+
+        $this->form_validation->set_rules('qtd_estoque', 'Quantidade em Estoque', 'required|integer|greater_than[0]');
+
+        if ($this->form_validation->run() === FALSE) {
+            $this->session->set_flashdata('erro', validation_errors());
+            redirect('produtos');
+            return;
+        }
+
+        $produto = $this->ProdutosModel->get_by_id($id);
+        if (!$produto) {
+            show_404();
+            return;
+        }
+
+        $quantidade = $this->input->post('qtd_estoque', TRUE);
+        if ($this->ProdutosModel->aumentarQtdEstoque($id, $quantidade)) {
+            $this->session->set_flashdata('sucesso', 'Quantidade em estoque atualizada com sucesso!');
+        } else {
+            $this->session->set_flashdata('erro', 'Erro ao atualizar quantidade em estoque.');
         }
 
         redirect('produtos');

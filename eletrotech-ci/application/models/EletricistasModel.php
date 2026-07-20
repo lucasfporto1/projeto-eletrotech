@@ -17,7 +17,7 @@ class EletricistasModel extends CI_Model
                     (SELECT COUNT(*) FROM tabela_ordens_servico WHERE eletricista_os = e.id) as total_os,
                     (SELECT vlr_meta FROM tabela_metas
                         WHERE eletricista_meta = e.id
-                        AND DATE_FORMAT(mes_meta, '%Y-%m') = ?
+                        AND mes_meta = ?
                         LIMIT 1) as meta_atual
                 FROM tabela_eletricistas e
                 ORDER BY e.id DESC";
