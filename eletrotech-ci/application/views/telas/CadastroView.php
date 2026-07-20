@@ -74,13 +74,13 @@
 
       <label for="cadastro-senha">Senha</label>
       <div class="ml-input-wrapper">
-        <input type="password" id="cadastro-senha" name="senha" class="ml-input-field" placeholder="Sua senha" required />
+        <input type="password" id="cadastro-senha" name="senha" class="ml-input-field" placeholder="Sua senha" minlength="8" required />
         <i class="fa-regular fa-eye ml-input-icon"></i>
       </div>
 
       <label for="cadastro-confirmar-senha" style="margin-top: 10px;">Confirmar Senha</label>
       <div class="ml-input-wrapper">
-        <input type="password" id="cadastro-confirmar-senha" name="confirmar_senha" class="ml-input-field" placeholder="Repita sua senha" required />
+        <input type="password" id="cadastro-confirmar-senha" name="confirmar_senha" class="ml-input-field" placeholder="Repita sua senha" minlength="8" required />
         <i class="fa-regular fa-eye ml-input-icon"></i>
       </div>
 
@@ -114,8 +114,22 @@
       const mensagemErro = document.getElementById('erro-senha');
 
       form.addEventListener('submit', function(event) {
-        if (senha.value !== confirmarSenha.value) {
+        const valor = senha.value;
+        let mensagem = '';
+
+        if (valor.length < 8) {
+          mensagem = 'A senha deve ter no mínimo 8 caracteres.';
+        } else if (!/[A-Z]/.test(valor)) {
+          mensagem = 'A senha deve conter ao menos uma letra maiúscula.';
+        } else if (!/[^a-zA-Z0-9]/.test(valor)) {
+          mensagem = 'A senha deve conter ao menos um caractere especial.';
+        } else if (valor !== confirmarSenha.value) {
+          mensagem = 'As senhas não coincidem.';
+        }
+
+        if (mensagem) {
           event.preventDefault();
+          mensagemErro.textContent = mensagem;
           mensagemErro.style.display = 'block';
           confirmarSenha.focus();
         } else {

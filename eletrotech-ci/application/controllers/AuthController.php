@@ -67,10 +67,13 @@ class AuthController extends MY_Controller
         }
 
         $this->form_validation->set_rules('nome', 'Nome de Usuário', 'trim|required');
-        $this->form_validation->set_rules('senha', 'Senha', 'required');
+        $this->form_validation->set_rules('senha', 'Senha', 'required|min_length[8]|callback_senha_forte');
+
+        $this->form_validation->set_message('required', 'Por favor, preencha todos os campos.');
+        $this->form_validation->set_message('min_length', 'A senha deve ter no mínimo {param} caracteres.');
 
         if ($this->form_validation->run() === false) {
-            $this->session->set_flashdata('erro', 'Por favor, preencha todos os campos.');
+            $this->session->set_flashdata('erro', validation_errors());
             redirect('auth/cadastro');
         }
 
@@ -96,10 +99,22 @@ class AuthController extends MY_Controller
         redirect('auth');
     }
 
-    /**
-     * Impede abusos de requisições limitando tentativas por tempo.
-     * Retorna TRUE se o usuário estiver bloqueado, FALSE se estiver liberado.
-     */
+
+    public function senha_forte($senha)
+    {
+        if (!preg_match('/[A-Z]/', $senha)) {
+            $this->form_validation->set_message('senha_forte', 'A senha deve conter ao menos uma letra maiúscula.');
+            return false;
+        }
+
+        if (!preg_match('/[^a-zA-Z0-9]/', $senha)) {
+            $this->form_validation->set_message('senha_forte', 'A senha deve conter ao menos um caractere especial.');
+            return false;
+        }
+
+        return true;
+    }
+
     private function estaBloqueado($acao, $limiteTentativas = 5, $bloqueioSegundos = 60)
     {
         $chaveTentativas = "rl_{$acao}_tentativas";
