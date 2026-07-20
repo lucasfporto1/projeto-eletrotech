@@ -56,6 +56,7 @@ $route['translate_uri_dashes'] = FALSE;
 // Mapeia as URLs curtas para os controllers
 $route['auth'] = 'AuthController';
 $route['auth/(.+)'] = 'AuthController/$1';
+$route['home'] = 'HomeController';
 $route['menu'] = 'MenuController';
 $route['usuarios'] = 'UsuariosController';
 $route['usuarios/(.+)'] = 'UsuariosController/$1';

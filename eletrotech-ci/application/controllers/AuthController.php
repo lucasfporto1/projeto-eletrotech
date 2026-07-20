@@ -13,7 +13,7 @@ class AuthController extends MY_Controller
     public function index()
     {
         if ($this->session->userdata('user_id')) {
-            redirect('menu');
+            redirect('home');
         }
 
         $this->load->view('telas/LoginView');
@@ -48,7 +48,7 @@ class AuthController extends MY_Controller
                 'user_id' => $usuario->id,
                 'usuario' => $nomeUsuario,
             ));
-            redirect('menu');
+            redirect('home');
         }
 
         $this->session->set_flashdata('erro', 'Credenciais inválidas.');

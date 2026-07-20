@@ -242,28 +242,8 @@
 </head>
 
 <body>
-    <nav class="navbar navbar-expand-lg navbar-custom">
-        <div class="container-fluid px-4">
-            <a class="navbar-brand d-flex align-items-center" href="<?= site_url('menu') ?>">
-                <img src="<?= base_url('assets/logo-eletrotech.png') ?>" alt="Logo Eletrotech">
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+    <?php $this->load->view('components/Navbar', array('ativo' => 'metas')); ?>
 
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
-                    <li class="nav-item"><a class="nav-link" href="<?= site_url('menu') ?>">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="<?= site_url('usuarios') ?>">Usuários</a></li>
-                    <li class="nav-item"><a class="nav-link" href="<?= site_url('eletricistas') ?>">Eletricistas</a></li>
-                    <li class="nav-item"><a class="nav-link" href="<?= site_url('produtos') ?>">Produtos</a></li>
-                    <li class="nav-item"><a class="nav-link active" aria-current="page" href="<?= site_url('metas') ?>">Metas</a></li>
-                    <li class="nav-item"><a class="nav-link" href="<?= site_url('ordemServico') ?>">Ordens de Serviço</a></li>
-                    <li class="nav-item ms-3"><a class="nav-link text-danger fw-bold" style="background-color: transparent;" href="<?= site_url('auth/sair') ?>">Sair</a></li>
-                </ul>
-            </div>
-        </div>
-    </nav>
 
     <div class="container mt-3">
         <?php if ($this->session->flashdata('erro')): ?>
