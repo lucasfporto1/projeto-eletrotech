@@ -225,21 +225,17 @@
         <table class="table table-dark table-hover table-bordered custom-table text-center">
             <thead>
                 <tr>
-                    <th scope="col" style="width: 10%;">ID</th>
+                    <th scope="col" style="width: 15%;">Ações</th>
                     <th scope="col" style="width: 45%;">Nome do Produto</th>
                     <th scope="col" style="width: 20%;">Valor Unitário</th>
                     <th scope="col" style="width: 10%;">Qtd. Estoque</th>
-                    <th scope="col" style="width: 15%;">Ações</th>
+                    <th scope="col" style="width: 10%;">ID</th>
                 </tr>
             </thead>
             <tbody>
                 <?php if (!empty($produtos)): ?>
                     <?php foreach ($produtos as $produto): ?>
                         <tr>
-                            <td><?= $produto['id'] ?></td>
-                            <td><?= htmlspecialchars($produto['nome_produto']) ?></td>
-                            <td>R$ <?= number_format($produto['vlr_unitario'], 2, ',', '.') ?></td>
-                            <td><?= $produto['qtd_estoque'] ?></td>
                             <td>
                                 <button type="button" class="btn btn-sm btn-outline-warning"
                                     data-bs-toggle="modal"
@@ -266,6 +262,10 @@
                                 </button>
 
                             </td>
+                            <td><?= htmlspecialchars($produto['nome_produto']) ?></td>
+                            <td>R$ <?= number_format($produto['vlr_unitario'], 2, ',', '.') ?></td>
+                            <td><?= $produto['qtd_estoque'] ?></td>
+                            <td><?= $produto['id'] ?></td>
                         </tr>
                     <?php endforeach; ?>
                 <?php else: ?>

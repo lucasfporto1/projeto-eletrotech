@@ -286,21 +286,17 @@
         <table class="table table-dark table-hover table-bordered custom-table text-center">
             <thead>
                 <tr>
-                    <th scope="col" style="width: 10%;">ID</th>
+                    <th scope="col" style="width: 15%;">Ações</th>
                     <th scope="col" style="width: 40%;">Eletricista</th>
                     <th scope="col" style="width: 20%;">Mês de Referência</th>
                     <th scope="col" style="width: 15%;">Valor da Meta</th>
-                    <th scope="col" style="width: 15%;">Ações</th>
+                    <th scope="col" style="width: 10%;">ID</th>
                 </tr>
             </thead>
             <tbody>
                 <?php if (!empty($metas)): ?>
                     <?php foreach ($metas as $meta): ?>
                         <tr>
-                            <td><?= $meta['id'] ?></td>
-                            <td><?= htmlspecialchars($meta['nome_eletricista']) ?></td>
-                            <td><?= htmlspecialchars($meta['mes_meta'] ?? '-') ?></td>
-                            <td>R$ <?= number_format($meta['vlr_meta'], 2, ',', '.') ?></td>
                             <td>
                                 <button type="button" class="btn btn-sm btn-outline-warning"
                                     data-bs-toggle="modal"
@@ -318,6 +314,11 @@
                                     <i class="fa-solid fa-trash"></i>
                                 </a>
                             </td>
+                            <td><?= htmlspecialchars($meta['nome_eletricista']) ?></td>
+                            <td><?= htmlspecialchars($meta['mes_meta'] ?? '-') ?></td>
+                            <td>R$ <?= number_format($meta['vlr_meta'], 2, ',', '.') ?></td>
+                            
+                            <td><?= $meta['id'] ?></td>
                         </tr>
                     <?php endforeach; ?>
                 <?php else: ?>

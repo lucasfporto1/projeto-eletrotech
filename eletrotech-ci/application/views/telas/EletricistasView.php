@@ -226,6 +226,7 @@
         <table class="table table-dark table-hover table-bordered custom-table text-center">
             <thead>
                 <tr>
+                    <th scope="col">Ações</th>
                     <th scope="col">CPF</th>
                     <th scope="col">Nome</th>
                     <th scope="col">Contratação</th>
@@ -233,7 +234,7 @@
                     <th scope="col">Status</th>
                     <th scope="col">OS Realizadas</th>
                     <th scope="col">Meta Atual</th>
-                    <th scope="col">Ações</th>
+                    
                 </tr>
             </thead>
             <tbody>
@@ -247,13 +248,6 @@
                         $dataDemissao = !$ativo ? date('d/m/Y', strtotime($eletricista['data_demissao'])) : '-';
                     ?>
                         <tr>
-                            <td><?= htmlspecialchars($eletricista['cpf']) ?></td>
-                            <td><?= htmlspecialchars($eletricista['nome']) ?></td>
-                            <td><?= $dataContratacao ?></td>
-                            <td><?= $dataDemissao ?></td>
-                            <td><span class="badge <?= $badgeClass ?>"><?= $statusText ?></span></td>
-                            <td><?= $eletricista['total_os'] ?></td>
-                            <td><?= ($eletricista['meta_atual'] > 0) ? 'R$ ' . number_format($eletricista['meta_atual'], 2, ',', '.') : 'R$ 0,00' ?></td>
                             <td>
                                 <button type="button" class="btn btn-sm btn-outline-warning"
                                     data-bs-toggle="modal"
@@ -276,6 +270,14 @@
                                     </a>
                                 <?php endif; ?>
                             </td>
+                            <td><?= htmlspecialchars($eletricista['cpf']) ?></td>
+                            <td><?= htmlspecialchars($eletricista['nome']) ?></td>
+                            <td><?= $dataContratacao ?></td>
+                            <td><?= $dataDemissao ?></td>
+                            <td><span class="badge <?= $badgeClass ?>"><?= $statusText ?></span></td>
+                            <td><?= $eletricista['total_os'] ?></td>
+                            <td><?= ($eletricista['meta_atual'] > 0) ? 'R$ ' . number_format($eletricista['meta_atual'], 2, ',', '.') : 'R$ 0,00' ?></td>
+                            
                         </tr>
                     <?php endforeach; ?>
                 <?php else: ?>

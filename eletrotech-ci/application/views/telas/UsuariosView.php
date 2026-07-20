@@ -225,17 +225,15 @@
         <table class="table table-dark table-hover table-bordered custom-table text-center">
             <thead>
                 <tr>
-                    <th scope="col" style="width: 10%;">ID</th>
-                    <th scope="col" style="width: 60%;">Nome de Usuário</th>
                     <th scope="col" style="width: 30%;">Ações</th>
+                    <th scope="col" style="width: 60%;">Nome de Usuário</th>
+                    <th scope="col" style="width: 10%;">ID</th>
                 </tr>
             </thead>
             <tbody>
                 <?php if (!empty($usuarios)): ?>
                     <?php foreach ($usuarios as $usuario): ?>
                         <tr>
-                            <td><?= htmlspecialchars($usuario->id) ?></td>
-                            <td><?= htmlspecialchars($usuario->usuario) ?></td>
                             <td>
                                 <button type="button"
                                     class="btn btn-sm btn-outline-warning"
@@ -252,6 +250,9 @@
                                     <i class="fa-solid fa-trash"></i>
                                 </a>
                             </td>
+                            <td><?= htmlspecialchars($usuario->usuario) ?></td>
+                            <td><?= htmlspecialchars($usuario->id) ?></td>
+                            
                         </tr>
                     <?php endforeach; ?>
                 <?php else: ?>

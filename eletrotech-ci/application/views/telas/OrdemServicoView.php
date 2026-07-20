@@ -263,19 +263,16 @@
         <table class="table table-dark table-hover table-bordered custom-table text-center">
             <thead>
                 <tr>
-                    <th scope="col" style="width: 15%;">ID OS</th>
-                    <th scope="col" style="width: 20%;">Data da Operação</th>
-                    <th scope="col" style="width: 45%;">Eletricista Responsável</th>
                     <th scope="col" style="width: 20%;">Ações</th>
+                    <th scope="col" style="width: 45%;">Eletricista Responsável</th>
+                    <th scope="col" style="width: 20%;">Data da Operação</th>
+                    <th scope="col" style="width: 15%;">ID OS</th>
                 </tr>
             </thead>
             <tbody>
                 <?php if (!empty($ordensServico)): ?>
                     <?php foreach ($ordensServico as $os): ?>
                         <tr>
-                            <td>#<?= str_pad($os['id'], 5, "0", STR_PAD_LEFT) ?></td>
-                            <td><?= date('d/m/Y', strtotime($os['data_os'])) ?></td>
-                            <td><?= htmlspecialchars($os['nome_eletricista']) ?></td>
                             <td>
                                 <button class="btn btn-sm btn-outline-info" title="Ver Detalhes"
                                     data-bs-toggle="modal"
@@ -284,6 +281,9 @@
                                     <i class="fa-solid fa-eye"></i> Histórico
                                 </button>
                             </td>
+                            <td><?= htmlspecialchars($os['nome_eletricista']) ?></td>
+                            <td><?= date('d/m/Y', strtotime($os['data_os'])) ?></td>
+                            <td>#<?= str_pad($os['id'], 5, "0", STR_PAD_LEFT) ?></td>
                         </tr>
                     <?php endforeach; ?>
                 <?php else: ?>
@@ -449,6 +449,31 @@
             return !(select.value && valor > estoque);
         }
 
+        function validarDuplicatas() {
+            const selects = document.querySelectorAll('select[name="id_produto[]"]');
+            const valores = {};
+            let valido = true;
+
+            selects.forEach(function (select) {
+                const valor = select.value;
+                if (!valor) {
+                    select.setCustomValidity('');
+                    return;
+                }
+
+                if (valores[valor]) {
+                    select.setCustomValidity('Este produto já foi adicionado. Escolha outro item.');
+                    valido = false;
+                } else {
+                    select.setCustomValidity('');
+                    valores[valor] = true;
+                }
+                select.reportValidity();
+            });
+
+            return valido;
+        }
+
         // Delegação de eventos, pois as linhas são criadas dinamicamente
         document.getElementById('lista-materiais').addEventListener('input', function (e) {
             if (e.target.matches('input[name="qtd_utilizada[]"]')) {
@@ -459,12 +484,13 @@
         document.getElementById('lista-materiais').addEventListener('change', function (e) {
             if (e.target.matches('select[name="id_produto[]"]')) {
                 validarLinha(e.target.closest('.linha-produto'));
+                validarDuplicatas();
             }
         });
 
         document.getElementById('formOS').addEventListener('submit', function (e) {
             const linhas = document.querySelectorAll('#lista-materiais .linha-produto');
-            let valido = true;
+            let valido = validarDuplicatas();
             linhas.forEach(function (linha) {
                 if (!validarLinha(linha)) valido = false;
             });

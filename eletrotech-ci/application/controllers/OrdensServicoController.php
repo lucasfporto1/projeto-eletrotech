@@ -39,6 +39,12 @@ class OrdensServicoController extends Auth_Controller
         $idsProdutos   = $this->input->post('id_produto', TRUE) ?? [];
         $quantidades   = $this->input->post('qtd_utilizada', TRUE) ?? [];
 
+        $produtoIds = array_map('intval', $idsProdutos);
+        if (count($produtoIds) !== count(array_unique($produtoIds))) {
+            $this->session->set_flashdata('erro', 'Não é permitido adicionar o mesmo produto mais de uma vez na mesma OS.');
+            redirect('ordemServico');
+            return;
+        }
 
         $produtos = [];
         foreach ($idsProdutos as $i => $idProduto) {
