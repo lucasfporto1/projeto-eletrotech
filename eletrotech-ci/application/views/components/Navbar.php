@@ -18,6 +18,18 @@
                 <li class="nav-item">
                     <a class="nav-link <?= $ativo === 'usuarios' ? 'active' : '' ?>" href="<?= site_url('usuarios') ?>">Usuários</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= $ativo === 'eletricistas' ? 'active' : '' ?>" href="<?= site_url('eletricistas') ?>">Eletricistas</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= $ativo === 'produtos' ? 'active' : '' ?>" href="<?= site_url('produtos') ?>">Produtos</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= $ativo === 'metas' ? 'active' : '' ?>" href="<?= site_url('metas') ?>">Metas</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= $ativo === 'ordemServico' ? 'active' : '' ?>" href="<?= site_url('ordemServico') ?>">Ordens de Serviço</a>
+                </li>
                 <li class="nav-item ms-3">
                     <a class="nav-link text-danger fw-bold" style="background-color: transparent;" href="<?= site_url('auth/sair') ?>">Sair</a>
                 </li>
