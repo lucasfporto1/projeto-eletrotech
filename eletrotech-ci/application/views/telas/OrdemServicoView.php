@@ -263,10 +263,12 @@
         <table class="table table-dark table-hover table-bordered custom-table text-center">
             <thead>
                 <tr>
-                    <th scope="col" style="width: 20%;">Ações</th>
-                    <th scope="col" style="width: 45%;">Eletricista Responsável</th>
-                    <th scope="col" style="width: 20%;">Data da Operação</th>
-                    <th scope="col" style="width: 15%;">ID OS</th>
+                    <th scope="col" style="width: 16%;">Ações</th>
+                    <th scope="col" style="width: 28%;">Eletricista Responsável</th>
+                    <th scope="col" style="width: 15%;">Data da Operação</th>
+                    <th scope="col" style="width: 15%;">Data de Fechamento</th>
+                    <th scope="col" style="width: 12%;">Status</th>
+                    <th scope="col" style="width: 14%;">ID OS</th>
                 </tr>
             </thead>
             <tbody>
@@ -274,21 +276,38 @@
                     <?php foreach ($ordensServico as $os): ?>
                         <tr>
                             <td>
-                                <button class="btn btn-sm btn-outline-info" title="Ver Detalhes"
+                                <button class="btn btn-sm btn-outline-info mb-1" title="Ver Detalhes"
                                     data-bs-toggle="modal"
                                     data-bs-target="#modalDetalhesOS"
                                     onclick="carregarDetalhesOS(<?= $os['id'] ?>)">
-                                    <i class="fa-solid fa-eye"></i> Histórico
+                                    <i class="fa-solid fa-eye"></i>
                                 </button>
+                                <?php if ($os['status'] === 'aberta'): ?>
+                                    <button class="btn btn-sm btn-outline-success" type="button" onclick="abrirModalFechamento(<?= $os['id'] ?>)">
+                                        <i class="fa-solid fa-check"></i> Fechar OS
+                                    </button>
+                                <?php else: ?>
+                                    <button class="btn btn-sm btn-outline-secondary" type="button" disabled>
+                                        <i class="fa-solid fa-lock"></i> Fechada
+                                    </button>
+                                <?php endif; ?>
                             </td>
                             <td><?= htmlspecialchars($os['nome_eletricista']) ?></td>
-                            <td><?= date('d/m/Y', strtotime($os['data_os'])) ?></td>
+                            <td><?= !empty($os['data_os']) ? date('d/m/Y', strtotime($os['data_os'])) : '-' ?></td>
+                            <td><?= !empty($os['data_fechamento']) ? date('d/m/Y', strtotime($os['data_fechamento'])) : '-' ?></td>
+                            <td>
+                                <?php if ($os['status'] === 'aberta'): ?>
+                                    <span class="badge bg-success">Aberta</span>
+                                <?php else: ?>
+                                    <span class="badge bg-secondary">Fechada</span>
+                                <?php endif; ?>
+                            </td>
                             <td>#<?= str_pad($os['id'], 5, "0", STR_PAD_LEFT) ?></td>
                         </tr>
                     <?php endforeach; ?>
                 <?php else: ?>
                     <tr>
-                        <td colspan="4" class="empty-state">Nenhuma Ordem de Serviço registrada no momento.</td>
+                        <td colspan="5" class="empty-state">Nenhuma Ordem de Serviço registrada no momento.</td>
                     </tr>
                 <?php endif; ?>
             </tbody>
@@ -317,7 +336,8 @@
                         </div>
                         <div class="col-md-6">
                             <label for="data_os">Data da Operação</label>
-                            <input type="date" name="data_os" id="data_os" required max="<?= date('Y-m-d') ?>">
+                            <input type="date" name="data_os" id="data_os" max="<?= date('Y-m-d') ?>" required>
+                            <small class="form-text text-muted">Opcional: deixe em branco se a OS ainda não tiver data de início.</small>
                         </div>
                     </div>
 
@@ -350,7 +370,24 @@
                         <i class="fa-solid fa-plus"></i> Adicionar Mais um Produto
                     </button>
 
-                    <button type="submit" class="btn-submit">Registrar OS e Baixar Estoque</button>
+                    <?php if (!empty($checklistInicio['perguntas'])): ?>
+                        <div class="mt-4">
+                            <h6 style="color: #FBD814; text-transform: uppercase; font-size: 14px; font-weight: bold; margin-bottom: 12px;">Checklist de Início</h6>
+                            <?php foreach ($checklistInicio['perguntas'] as $pergunta): ?>
+                                <label><?= htmlspecialchars($pergunta['texto_pergunta']) ?></label>
+                                <select name="checklist_resposta[<?= $pergunta['id'] ?>]" required>
+                                    <option value="" disabled selected hidden>Selecione sim ou não</option>
+                                    <option value="sim">Sim</option>
+                                    <option value="nao">Não</option>
+                                </select>
+                            <?php endforeach; ?>
+                            <input type="hidden" name="checklist_inicio_id" value="<?= $checklistInicio['id'] ?>">
+                        </div>
+                    <?php else: ?>
+                        <div class="alert alert-warning text-center">Nenhum checklist de início selecionado. Acesse Checklist e escolha um checklist de início padrão para abrir uma OS.</div>
+                    <?php endif; ?>
+
+                    <button type="submit" class="btn-submit" <?= empty($checklistInicio['perguntas']) ? 'disabled' : '' ?>>Registrar OS e Baixar Estoque</button>
 
                     <?= form_close() ?>
                 </div>
@@ -369,6 +406,40 @@
                     <div id="conteudo-detalhes">
                         <p class="text-center">Carregando...</p>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalFecharOS" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content eletrotech-modal">
+                <div class="modal-header">
+                    <h5 class="modal-title">Checklist de Fechamento</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <?= form_open('ordemServico/fechar', ['class' => 'eletrotech-form', 'id' => 'formFecharOS']) ?>
+                    <input type="hidden" name="id_os" id="id_os_fechamento" value="">
+
+                    <?php if (!empty($checklistFim['perguntas'])): ?>
+                        <p class="mb-3">Responda o checklist de fim para encerrar a OS.</p>
+                        <?php foreach ($checklistFim['perguntas'] as $pergunta): ?>
+                            <label><?= htmlspecialchars($pergunta['texto_pergunta']) ?></label>
+                            <select name="checklist_resposta[<?= $pergunta['id'] ?>]" required class="select-checklist-fim" data-pergunta="<?= $pergunta['id'] ?>">
+                                <option value="" disabled selected hidden>Selecione sim ou não</option>
+                                <option value="sim">Sim</option>
+                                <option value="nao">Não</option>
+                            </select>
+                            <textarea name="motivo_nao[<?= $pergunta['id'] ?>]" class="motivo-nao form-control" placeholder="Explique o motivo do não" style="display:none; margin-top:10px;"></textarea>
+                        <?php endforeach; ?>
+                        <button type="submit" class="btn-submit">Fechar OS</button>
+                    <?php else: ?>
+                        <div class="alert alert-warning text-center">Nenhum checklist de fim selecionado. Defina um checklist de fim na tela de Checklist antes de fechar ordens.</div>
+                        <button type="button" class="btn-submit" disabled>Fechar OS</button>
+                    <?php endif; ?>
+
+                    <?= form_close() ?>
                 </div>
             </div>
         </div>
@@ -499,7 +570,33 @@
             }
         });
 
+        function abrirModalFechamento(idOs) {
+            const inputId = document.getElementById('id_os_fechamento');
+            inputId.value = idOs;
+            const modalElement = document.getElementById('modalFecharOS');
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        }
 
+        document.addEventListener('change', function (event) {
+            if (!event.target.matches('.select-checklist-fim')) {
+                return;
+            }
+            const select = event.target;
+            const perguntaId = select.dataset.pergunta;
+            const textarea = document.querySelector('textarea[name="motivo_nao[' + perguntaId + ']"]');
+            if (!textarea) {
+                return;
+            }
+            if (select.value === 'nao') {
+                textarea.style.display = 'block';
+                textarea.required = true;
+            } else {
+                textarea.style.display = 'none';
+                textarea.required = false;
+                textarea.value = '';
+            }
+        });
     </script>
     <?php $this->load->view('components/Chatbot'); ?>
 

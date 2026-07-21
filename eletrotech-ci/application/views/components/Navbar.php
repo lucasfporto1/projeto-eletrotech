@@ -32,6 +32,9 @@
                 <li class="nav-item">
                     <a class="nav-link <?= $ativo === 'ordemServico' ? 'active' : '' ?>" href="<?= site_url('ordemServico') ?>">Ordens de Serviço</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= $ativo === 'checklist' ? 'active' : '' ?>" href="<?= site_url('checklist') ?>">Checklist</a>
+                </li>
                 <li class="nav-item ms-3">
                     <a class="nav-link text-danger fw-bold" style="background-color: transparent;" href="<?= site_url('auth/sair') ?>">Sair</a>
                 </li>

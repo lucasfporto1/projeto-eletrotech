@@ -81,7 +81,9 @@ DROP TABLE IF EXISTS `tabela_ordens_servico`;
 CREATE TABLE `tabela_ordens_servico` (
   `id` int NOT NULL AUTO_INCREMENT,
   `eletricista_os` int NOT NULL,
-  `data_os` date NOT NULL,
+  `data_os` date DEFAULT NULL,
+  `status` enum('aberta','fechada') NOT NULL DEFAULT 'aberta',
+  `data_fechamento` date DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `eletricista_os` (`eletricista_os`),
   CONSTRAINT `tabela_ordens_servico_ibfk_1` FOREIGN KEY (`eletricista_os`) REFERENCES `tabela_eletricistas` (`id`) ON DELETE RESTRICT
@@ -94,7 +96,7 @@ CREATE TABLE `tabela_ordens_servico` (
 
 LOCK TABLES `tabela_ordens_servico` WRITE;
 /*!40000 ALTER TABLE `tabela_ordens_servico` DISABLE KEYS */;
-INSERT INTO `tabela_ordens_servico` VALUES (8,1,'2005-03-15'),(9,3,'2010-03-15'),(10,1,'2025-04-15');
+INSERT INTO `tabela_ordens_servico` VALUES (8,1,'2005-03-15','aberta',NULL),(9,3,'2010-03-15','aberta',NULL),(10,1,'2025-04-15','aberta',NULL);
 /*!40000 ALTER TABLE `tabela_ordens_servico` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -127,6 +129,52 @@ LOCK TABLES `tabela_os_materiais` WRITE;
 INSERT INTO `tabela_os_materiais` VALUES (1,8,3,2),(2,9,4,10),(3,10,8,5);
 /*!40000 ALTER TABLE `tabela_os_materiais` ENABLE KEYS */;
 UNLOCK TABLES;
+
+--
+-- Table structure for table `tabela_checklist`
+--
+
+DROP TABLE IF EXISTS `tabela_checklist`;
+CREATE TABLE `tabela_checklist` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `titulo` varchar(255) NOT NULL,
+  `tipo` enum('inicio','fim') NOT NULL,
+  `selecionado` tinyint(1) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Table structure for table `tabela_checklist_perguntas`
+--
+
+DROP TABLE IF EXISTS `tabela_checklist_perguntas`;
+CREATE TABLE `tabela_checklist_perguntas` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `id_checklist` int NOT NULL,
+  `texto_pergunta` varchar(255) NOT NULL,
+  `ordem` int NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`),
+  KEY `id_checklist` (`id_checklist`),
+  CONSTRAINT `tabela_checklist_perguntas_ibfk_1` FOREIGN KEY (`id_checklist`) REFERENCES `tabela_checklist` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Table structure for table `tabela_os_checklist_respostas`
+--
+
+DROP TABLE IF EXISTS `tabela_os_checklist_respostas`;
+CREATE TABLE `tabela_os_checklist_respostas` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `id_os` int NOT NULL,
+  `id_pergunta` int NOT NULL,
+  `resposta` text NOT NULL,
+  `motivo_nao` text DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `id_os` (`id_os`),
+  KEY `id_pergunta` (`id_pergunta`),
+  CONSTRAINT `tabela_os_checklist_respostas_ibfk_1` FOREIGN KEY (`id_os`) REFERENCES `tabela_ordens_servico` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `tabela_os_checklist_respostas_ibfk_2` FOREIGN KEY (`id_pergunta`) REFERENCES `tabela_checklist_perguntas` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Table structure for table `tabela_produtos`
