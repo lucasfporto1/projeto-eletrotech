@@ -5,6 +5,7 @@ class OrdemServicoModel extends CI_Model
 {
     protected $table = 'tabela_ordens_servico';
     protected $tabelaPivot = 'tabela_os_materiais';
+    protected $tableRespostas = 'tabela_os_checklist_respostas';
 
     public function __construct()
     {
@@ -13,7 +14,7 @@ class OrdemServicoModel extends CI_Model
 
     public function get_all()
     {
-        $query = $this->db->select('os.id, os.data_os, e.nome as nome_eletricista')
+        $query = $this->db->select('os.id, os.data_os, os.data_fechamento, os.status, e.nome as nome_eletricista')
             ->from('tabela_ordens_servico os')
             ->join('tabela_eletricistas e', 'os.eletricista_os = e.id', 'inner')
             ->order_by('os.id', 'DESC')
@@ -69,27 +70,37 @@ class OrdemServicoModel extends CI_Model
         return $query->result_array();
     }
 
-    /**
-     * Registra a OS, os materiais utilizados e dá baixa no estoque,
-     *
-     * @param int    $eletricistaId
-     * @param string $dataOs
-     * @param array  $produtos  ex: [['id' => 3, 'qtd' => 5], ['id' => 7, 'qtd' => 2]]
-     * @return int|false  ID da nova OS, ou false em caso de falha/estoque insuficiente
-     */
-    public function registrar_os($eletricistaId, $dataOs, array $produtos)
+    public function get_checklist_respostas_by_os($idOs)
+    {
+        $query = $this->db->select('r.id_pergunta, p.texto_pergunta, r.resposta, r.motivo_nao')
+            ->from($this->tableRespostas . ' r')
+            ->join('tabela_checklist_perguntas p', 'r.id_pergunta = p.id', 'inner')
+            ->where('r.id_os', $idOs)
+            ->order_by('p.ordem', 'ASC')
+            ->get();
+
+        if ($query === false) {
+            return [];
+        }
+
+        return $query->result_array();
+    }
+
+    public function registrar_os($eletricistaId, $dataOs, array $produtos, array $respostas = [])
     {
         $this->db->trans_start();
 
         $this->db->insert($this->table, [
             'eletricista_os' => $eletricistaId,
             'data_os' => $dataOs,
+            'status' => 'aberta',
         ]);
         $idOs = $this->db->insert_id();
 
+        $insufficientStock = false;
         foreach ($produtos as $item) {
             $produtoId = (int) $item['id'];
-            $qtd       = (int) $item['qtd'];
+            $qtd = (int) $item['qtd'];
 
             $produto = $this->db->select('qtd_estoque, vlr_unitario')
                 ->where('id', $produtoId)
@@ -97,13 +108,13 @@ class OrdemServicoModel extends CI_Model
                 ->row_array();
 
             if (!$produto || $produto['qtd_estoque'] < $qtd) {
-                $this->db->trans_status(FALSE);
+                $insufficientStock = true;
                 break;
             }
 
             $this->db->insert($this->tabelaPivot, [
-                'id_os'         => $idOs,
-                'id_produto'    => $produtoId,
+                'id_os' => $idOs,
+                'id_produto' => $produtoId,
                 'qtd_utilizada' => $qtd,
             ]);
 
@@ -111,16 +122,31 @@ class OrdemServicoModel extends CI_Model
                 ->where('id', $produtoId)
                 ->update('tabela_produtos');
 
-
             $this->db->insert('tabela_movimentacoes', [
-                'id_produto'     => $produtoId,
-                'tipo'           => 'saida',
-                'quantidade'     => $qtd,
+                'id_produto' => $produtoId,
+                'tipo' => 'saida',
+                'quantidade' => $qtd,
                 'valor_unitario' => $produto['vlr_unitario'],
-                'data_mov'       => $dataOs,
-                'origem'         => 'OS #' . str_pad($idOs, 5, '0', STR_PAD_LEFT),
-                'id_os'          => $idOs,
+                'data_mov' => $dataOs,
+                'origem' => 'OS #' . str_pad($idOs, 5, '0', STR_PAD_LEFT),
+                'id_os' => $idOs,
             ]);
+        }
+
+        if ($insufficientStock) {
+            $this->db->trans_rollback();
+            $this->db->trans_complete();
+            return false;
+        }
+
+        if ($this->db->trans_status() !== FALSE && !empty($respostas)) {
+            foreach ($respostas as $perguntaId => $resposta) {
+                $this->db->insert($this->tableRespostas, [
+                    'id_os' => $idOs,
+                    'id_pergunta' => (int) $perguntaId,
+                    'resposta' => $resposta,
+                ]);
+            }
         }
 
         $this->db->trans_complete();
@@ -130,5 +156,34 @@ class OrdemServicoModel extends CI_Model
         }
 
         return $idOs;
+    }
+
+    public function fechar_os($idOs, array $respostas)
+    {
+        $ordem = $this->db->where('id', $idOs)->where('status', 'aberta')->get($this->table)->row_array();
+
+        if (empty($ordem)) {
+            return false;
+        }
+
+        $this->db->trans_start();
+
+        $this->db->where('id', $idOs)->update($this->table, [
+            'status' => 'fechada',
+            'data_fechamento' => date('Y-m-d'),
+        ]);
+
+        foreach ($respostas as $perguntaId => $respostaData) {
+            $this->db->insert($this->tableRespostas, [
+                'id_os' => $idOs,
+                'id_pergunta' => (int) $perguntaId,
+                'resposta' => $respostaData['resposta'],
+                'motivo_nao' => isset($respostaData['motivo_nao']) ? $respostaData['motivo_nao'] : null,
+            ]);
+        }
+
+        $this->db->trans_complete();
+
+        return $this->db->trans_status() !== FALSE;
     }
 }

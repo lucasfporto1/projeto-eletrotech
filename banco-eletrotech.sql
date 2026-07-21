@@ -16,6 +16,58 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
+-- Table structure for table `tabela_checklist`
+--
+
+DROP TABLE IF EXISTS `tabela_checklist`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tabela_checklist` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `titulo` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `tipo` enum('inicio','fim') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `selecionado` tinyint(1) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tabela_checklist`
+--
+
+LOCK TABLES `tabela_checklist` WRITE;
+/*!40000 ALTER TABLE `tabela_checklist` DISABLE KEYS */;
+/*!40000 ALTER TABLE `tabela_checklist` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tabela_checklist_perguntas`
+--
+
+DROP TABLE IF EXISTS `tabela_checklist_perguntas`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tabela_checklist_perguntas` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `id_checklist` int NOT NULL,
+  `texto_pergunta` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `ordem` int NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`),
+  KEY `id_checklist` (`id_checklist`),
+  CONSTRAINT `tabela_checklist_perguntas_ibfk_1` FOREIGN KEY (`id_checklist`) REFERENCES `tabela_checklist` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tabela_checklist_perguntas`
+--
+
+LOCK TABLES `tabela_checklist_perguntas` WRITE;
+/*!40000 ALTER TABLE `tabela_checklist_perguntas` DISABLE KEYS */;
+/*!40000 ALTER TABLE `tabela_checklist_perguntas` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `tabela_eletricistas`
 --
 
@@ -92,7 +144,7 @@ CREATE TABLE `tabela_movimentacoes` (
   KEY `fk_mov_os` (`id_os`),
   CONSTRAINT `fk_mov_os` FOREIGN KEY (`id_os`) REFERENCES `tabela_ordens_servico` (`id`),
   CONSTRAINT `fk_mov_produto` FOREIGN KEY (`id_produto`) REFERENCES `tabela_produtos` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -101,7 +153,7 @@ CREATE TABLE `tabela_movimentacoes` (
 
 LOCK TABLES `tabela_movimentacoes` WRITE;
 /*!40000 ALTER TABLE `tabela_movimentacoes` DISABLE KEYS */;
-INSERT INTO `tabela_movimentacoes` VALUES (1,3,'saida',30,6.50,'2026-05-25','OS #00001',1),(2,1,'saida',50,120.50,'0026-05-10','OS #00002',2),(3,1,'saida',1,120.50,'0026-05-10','OS #00002',2),(4,5,'saida',1,10.00,'2026-07-06','OS #00003',3),(5,5,'saida',1,10.00,'2026-07-06','OS #00003',3),(6,2,'saida',20,18.90,'2026-03-20','OS #00006',6),(8,1,'entrada',51,120.50,'0026-05-10','Estoque inicial',NULL),(9,2,'entrada',20,18.90,'0026-05-10','Estoque inicial',NULL),(10,3,'entrada',100,6.50,'0026-05-10','Estoque inicial',NULL),(11,4,'entrada',50,10.90,'0026-05-10','Estoque inicial',NULL),(12,5,'entrada',2,10.00,'0026-05-10','Estoque inicial',NULL),(13,6,'entrada',3,9.90,'0026-05-10','Estoque inicial',NULL);
+INSERT INTO `tabela_movimentacoes` VALUES (1,3,'saida',30,6.50,'2026-05-25','OS #00001',1),(2,1,'saida',50,120.50,'0026-05-10','OS #00002',2),(3,1,'saida',1,120.50,'0026-05-10','OS #00002',2),(4,5,'saida',1,10.00,'2026-07-06','OS #00003',3),(5,5,'saida',1,10.00,'2026-07-06','OS #00003',3),(6,2,'saida',20,18.90,'2026-03-20','OS #00006',6),(8,1,'entrada',51,120.50,'0026-05-10','Estoque inicial',NULL),(9,2,'entrada',20,18.90,'0026-05-10','Estoque inicial',NULL),(10,3,'entrada',100,6.50,'0026-05-10','Estoque inicial',NULL),(11,4,'entrada',50,10.90,'0026-05-10','Estoque inicial',NULL),(12,5,'entrada',2,10.00,'0026-05-10','Estoque inicial',NULL),(13,6,'entrada',3,9.90,'0026-05-10','Estoque inicial',NULL),(18,6,'entrada',5,9.90,'2026-07-20','Reposição de estoque',NULL),(19,7,'entrada',10000,100.00,'2026-07-20','Reposição de estoque',NULL),(20,7,'saida',20,100.00,'2026-07-20','OS #00008',8),(22,7,'entrada',20,100.00,'2026-07-21','Reposição de estoque',NULL),(24,6,'saida',1,9.90,'0025-03-15','OS #00010',10),(25,4,'entrada',40,10.90,'2026-07-21','Reposição de estoque',NULL),(26,4,'saida',40,10.90,'2026-07-21','Baixa manual de estoque',NULL),(27,4,'entrada',50,10.90,'2026-07-21','Reposição de estoque',NULL),(28,4,'saida',50,10.90,'2026-07-21','Baixa manual de estoque',NULL);
 /*!40000 ALTER TABLE `tabela_movimentacoes` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -116,10 +168,12 @@ CREATE TABLE `tabela_ordens_servico` (
   `id` int NOT NULL AUTO_INCREMENT,
   `eletricista_os` int NOT NULL,
   `data_os` date NOT NULL,
+  `status` enum('aberta','fechada') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'aberta',
+  `data_fechamento` date DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `eletricista_os` (`eletricista_os`),
   CONSTRAINT `tabela_ordens_servico_ibfk_1` FOREIGN KEY (`eletricista_os`) REFERENCES `tabela_eletricistas` (`id`) ON DELETE RESTRICT
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -128,8 +182,38 @@ CREATE TABLE `tabela_ordens_servico` (
 
 LOCK TABLES `tabela_ordens_servico` WRITE;
 /*!40000 ALTER TABLE `tabela_ordens_servico` DISABLE KEYS */;
-INSERT INTO `tabela_ordens_servico` VALUES (1,1,'2026-05-25'),(2,1,'0026-05-10'),(3,1,'2026-07-06'),(4,2,'2026-03-13'),(5,2,'2006-03-15'),(6,2,'2026-03-20');
+INSERT INTO `tabela_ordens_servico` VALUES (1,1,'2026-05-25','aberta',NULL),(2,1,'0026-05-10','aberta',NULL),(3,1,'2026-07-06','aberta',NULL),(4,2,'2026-03-13','aberta',NULL),(5,2,'2006-03-15','aberta',NULL),(6,2,'2026-03-20','aberta',NULL),(8,2,'2026-07-20','aberta',NULL),(10,2,'0025-03-15','aberta',NULL);
 /*!40000 ALTER TABLE `tabela_ordens_servico` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tabela_os_checklist_respostas`
+--
+
+DROP TABLE IF EXISTS `tabela_os_checklist_respostas`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tabela_os_checklist_respostas` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `id_os` int NOT NULL,
+  `id_pergunta` int NOT NULL,
+  `resposta` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `motivo_nao` text COLLATE utf8mb4_unicode_ci,
+  PRIMARY KEY (`id`),
+  KEY `id_os` (`id_os`),
+  KEY `id_pergunta` (`id_pergunta`),
+  CONSTRAINT `tabela_os_checklist_respostas_ibfk_1` FOREIGN KEY (`id_os`) REFERENCES `tabela_ordens_servico` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `tabela_os_checklist_respostas_ibfk_2` FOREIGN KEY (`id_pergunta`) REFERENCES `tabela_checklist_perguntas` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tabela_os_checklist_respostas`
+--
+
+LOCK TABLES `tabela_os_checklist_respostas` WRITE;
+/*!40000 ALTER TABLE `tabela_os_checklist_respostas` DISABLE KEYS */;
+/*!40000 ALTER TABLE `tabela_os_checklist_respostas` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -149,7 +233,7 @@ CREATE TABLE `tabela_os_materiais` (
   KEY `id_produto` (`id_produto`),
   CONSTRAINT `tabela_os_materiais_ibfk_1` FOREIGN KEY (`id_os`) REFERENCES `tabela_ordens_servico` (`id`) ON DELETE CASCADE,
   CONSTRAINT `tabela_os_materiais_ibfk_2` FOREIGN KEY (`id_produto`) REFERENCES `tabela_produtos` (`id`) ON DELETE RESTRICT
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -158,7 +242,7 @@ CREATE TABLE `tabela_os_materiais` (
 
 LOCK TABLES `tabela_os_materiais` WRITE;
 /*!40000 ALTER TABLE `tabela_os_materiais` DISABLE KEYS */;
-INSERT INTO `tabela_os_materiais` VALUES (1,1,3,30),(2,2,1,50),(3,2,1,1),(4,3,5,1),(5,3,5,1),(6,6,2,20);
+INSERT INTO `tabela_os_materiais` VALUES (1,1,3,30),(2,2,1,50),(3,2,1,1),(4,3,5,1),(5,3,5,1),(6,6,2,20),(8,8,7,20),(10,10,6,1);
 /*!40000 ALTER TABLE `tabela_os_materiais` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -184,7 +268,7 @@ CREATE TABLE `tabela_produtos` (
 
 LOCK TABLES `tabela_produtos` WRITE;
 /*!40000 ALTER TABLE `tabela_produtos` DISABLE KEYS */;
-INSERT INTO `tabela_produtos` VALUES (1,'Cabo Flexível 2.5mm Preto',120.50,0),(2,'Disjuntor DIN 16A',18.90,0),(3,'Fita Isolante 3M',6.50,70),(4,'Fita',10.90,50),(5,'cabo',10.00,0),(6,'Cabo',9.90,3),(7,'Cabo de energia',100.00,0);
+INSERT INTO `tabela_produtos` VALUES (1,'Cabo Flexível 2.5mm Preto',120.50,0),(2,'Disjuntor DIN 16A',18.90,0),(3,'Fita Isolante 3M',6.50,70),(4,'Fita',10.90,0),(5,'cabo',10.00,0),(6,'Cabo',9.90,7),(7,'Cabo de energia',100.00,10000);
 /*!40000 ALTER TABLE `tabela_produtos` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -201,7 +285,7 @@ CREATE TABLE `tabela_usuarios` (
   `senha` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `usuario` (`usuario`)
-) ENGINE=InnoDB AUTO_INCREMENT=31 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=33 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
