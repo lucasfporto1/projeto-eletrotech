@@ -1,13 +1,13 @@
--- MySQL dump 10.13  Distrib 8.0.45, for macos15 (arm64)
+-- MySQL dump 10.13  Distrib 8.0.44, for macos12.7 (arm64)
 --
--- Host: localhost    Database: eletrotech
+-- Host: 127.0.0.1    Database: eletrotech
 -- ------------------------------------------------------
 -- Server version	8.0.44
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!50503 SET NAMES utf8 */;
+/*!50503 SET NAMES utf8mb4 */;
 /*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
 /*!40103 SET TIME_ZONE='+00:00' */;
 /*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
@@ -30,7 +30,7 @@ CREATE TABLE `tabela_eletricistas` (
   `data_demissao` date DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `cpf` (`cpf`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -39,7 +39,7 @@ CREATE TABLE `tabela_eletricistas` (
 
 LOCK TABLES `tabela_eletricistas` WRITE;
 /*!40000 ALTER TABLE `tabela_eletricistas` DISABLE KEYS */;
-INSERT INTO `tabela_eletricistas` VALUES (1,'12345678910','Lucas','2010-03-12',NULL),(2,'07574900345','Lucas','2005-05-12',NULL),(3,'32132112321','Lucas Porto','2026-03-15',NULL);
+INSERT INTO `tabela_eletricistas` VALUES (1,'67125897037','Carlos Alberto','2026-05-28',NULL),(2,'07574900345','Lucas','2025-03-15',NULL);
 /*!40000 ALTER TABLE `tabela_eletricistas` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -58,7 +58,7 @@ CREATE TABLE `tabela_metas` (
   PRIMARY KEY (`id`),
   KEY `eletricista_meta` (`eletricista_meta`),
   CONSTRAINT `tabela_metas_ibfk_1` FOREIGN KEY (`eletricista_meta`) REFERENCES `tabela_eletricistas` (`id`) ON DELETE RESTRICT
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -67,8 +67,42 @@ CREATE TABLE `tabela_metas` (
 
 LOCK TABLES `tabela_metas` WRITE;
 /*!40000 ALTER TABLE `tabela_metas` DISABLE KEYS */;
-INSERT INTO `tabela_metas` VALUES (7,3,'2024-01',2000.00),(8,3,'2026-05',2000.00);
+INSERT INTO `tabela_metas` VALUES (1,1,'2026-06',2000.00),(2,2,'2026-04',5000.00),(3,2,'2026-08',3000.00);
 /*!40000 ALTER TABLE `tabela_metas` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tabela_movimentacoes`
+--
+
+DROP TABLE IF EXISTS `tabela_movimentacoes`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tabela_movimentacoes` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `id_produto` int NOT NULL,
+  `tipo` enum('entrada','saida') NOT NULL,
+  `quantidade` int NOT NULL,
+  `valor_unitario` decimal(10,2) NOT NULL DEFAULT '0.00',
+  `data_mov` date NOT NULL,
+  `origem` varchar(100) NOT NULL DEFAULT '',
+  `id_os` int DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_mov_produto` (`id_produto`),
+  KEY `fk_mov_os` (`id_os`),
+  CONSTRAINT `fk_mov_os` FOREIGN KEY (`id_os`) REFERENCES `tabela_ordens_servico` (`id`),
+  CONSTRAINT `fk_mov_produto` FOREIGN KEY (`id_produto`) REFERENCES `tabela_produtos` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tabela_movimentacoes`
+--
+
+LOCK TABLES `tabela_movimentacoes` WRITE;
+/*!40000 ALTER TABLE `tabela_movimentacoes` DISABLE KEYS */;
+INSERT INTO `tabela_movimentacoes` VALUES (1,3,'saida',30,6.50,'2026-05-25','OS #00001',1),(2,1,'saida',50,120.50,'0026-05-10','OS #00002',2),(3,1,'saida',1,120.50,'0026-05-10','OS #00002',2),(4,5,'saida',1,10.00,'2026-07-06','OS #00003',3),(5,5,'saida',1,10.00,'2026-07-06','OS #00003',3),(6,2,'saida',20,18.90,'2026-03-20','OS #00006',6),(8,1,'entrada',51,120.50,'0026-05-10','Estoque inicial',NULL),(9,2,'entrada',20,18.90,'0026-05-10','Estoque inicial',NULL),(10,3,'entrada',100,6.50,'0026-05-10','Estoque inicial',NULL),(11,4,'entrada',50,10.90,'0026-05-10','Estoque inicial',NULL),(12,5,'entrada',2,10.00,'0026-05-10','Estoque inicial',NULL),(13,6,'entrada',3,9.90,'0026-05-10','Estoque inicial',NULL);
+/*!40000 ALTER TABLE `tabela_movimentacoes` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -85,7 +119,7 @@ CREATE TABLE `tabela_ordens_servico` (
   PRIMARY KEY (`id`),
   KEY `eletricista_os` (`eletricista_os`),
   CONSTRAINT `tabela_ordens_servico_ibfk_1` FOREIGN KEY (`eletricista_os`) REFERENCES `tabela_eletricistas` (`id`) ON DELETE RESTRICT
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -94,7 +128,7 @@ CREATE TABLE `tabela_ordens_servico` (
 
 LOCK TABLES `tabela_ordens_servico` WRITE;
 /*!40000 ALTER TABLE `tabela_ordens_servico` DISABLE KEYS */;
-INSERT INTO `tabela_ordens_servico` VALUES (8,1,'2005-03-15'),(9,3,'2010-03-15'),(10,1,'2025-04-15');
+INSERT INTO `tabela_ordens_servico` VALUES (1,1,'2026-05-25'),(2,1,'0026-05-10'),(3,1,'2026-07-06'),(4,2,'2026-03-13'),(5,2,'2006-03-15'),(6,2,'2026-03-20');
 /*!40000 ALTER TABLE `tabela_ordens_servico` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -115,7 +149,7 @@ CREATE TABLE `tabela_os_materiais` (
   KEY `id_produto` (`id_produto`),
   CONSTRAINT `tabela_os_materiais_ibfk_1` FOREIGN KEY (`id_os`) REFERENCES `tabela_ordens_servico` (`id`) ON DELETE CASCADE,
   CONSTRAINT `tabela_os_materiais_ibfk_2` FOREIGN KEY (`id_produto`) REFERENCES `tabela_produtos` (`id`) ON DELETE RESTRICT
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -124,7 +158,7 @@ CREATE TABLE `tabela_os_materiais` (
 
 LOCK TABLES `tabela_os_materiais` WRITE;
 /*!40000 ALTER TABLE `tabela_os_materiais` DISABLE KEYS */;
-INSERT INTO `tabela_os_materiais` VALUES (1,8,3,2),(2,9,4,10),(3,10,8,5);
+INSERT INTO `tabela_os_materiais` VALUES (1,1,3,30),(2,2,1,50),(3,2,1,1),(4,3,5,1),(5,3,5,1),(6,6,2,20);
 /*!40000 ALTER TABLE `tabela_os_materiais` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -150,7 +184,7 @@ CREATE TABLE `tabela_produtos` (
 
 LOCK TABLES `tabela_produtos` WRITE;
 /*!40000 ALTER TABLE `tabela_produtos` DISABLE KEYS */;
-INSERT INTO `tabela_produtos` VALUES (3,'Cabo',9.00,0),(4,'Cabo de energia',12.00,0),(8,'Cabo PP 2,5mm2',8.99,95);
+INSERT INTO `tabela_produtos` VALUES (1,'Cabo Flexível 2.5mm Preto',120.50,0),(2,'Disjuntor DIN 16A',18.90,0),(3,'Fita Isolante 3M',6.50,70),(4,'Fita',10.90,50),(5,'cabo',10.00,0),(6,'Cabo',9.90,3),(7,'Cabo de energia',100.00,0);
 /*!40000 ALTER TABLE `tabela_produtos` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -167,7 +201,7 @@ CREATE TABLE `tabela_usuarios` (
   `senha` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `usuario` (`usuario`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=31 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -176,7 +210,7 @@ CREATE TABLE `tabela_usuarios` (
 
 LOCK TABLES `tabela_usuarios` WRITE;
 /*!40000 ALTER TABLE `tabela_usuarios` DISABLE KEYS */;
-INSERT INTO `tabela_usuarios` VALUES (5,'Lucas Farias','$2y$10$BG1gVttLEP9M97b5YBMuCeMQhjPvWj7an1PoJRN9ZaSQ5F/lcuwFG');
+INSERT INTO `tabela_usuarios` VALUES (26,'Lucas','$2y$10$1DnK3WE2RZ9gLKOP6HGF1uHR.A8jSc2FYFZ9ysUL95W/f5WlxfMvq');
 /*!40000 ALTER TABLE `tabela_usuarios` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -189,4 +223,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-05-22 16:42:43
+-- Dump completed

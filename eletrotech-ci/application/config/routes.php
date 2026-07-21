@@ -68,4 +68,5 @@ $route['metas'] = 'MetasController';
 $route['metas/(.+)'] = 'MetasController/$1';
 $route['ordemServico'] = 'OrdensServicoController';
 $route['ordemServico/(.+)'] = 'OrdensServicoController/$1';
+$route['baixas'] = 'BaixasController';
 $route['chat/(.+)'] = 'ChatController/$1';

@@ -1,5 +1,5 @@
 <?php
-defined('BASEPATH') OR exit('No direct script access allowed');
+defined('BASEPATH') or exit('No direct script access allowed');
 
 class OrdemServicoModel extends CI_Model
 {
@@ -14,10 +14,10 @@ class OrdemServicoModel extends CI_Model
     public function get_all()
     {
         $query = $this->db->select('os.id, os.data_os, e.nome as nome_eletricista')
-                            ->from('tabela_ordens_servico os')
-                            ->join('tabela_eletricistas e', 'os.eletricista_os = e.id', 'inner')
-                            ->order_by('os.id', 'DESC')
-                            ->get();
+            ->from('tabela_ordens_servico os')
+            ->join('tabela_eletricistas e', 'os.eletricista_os = e.id', 'inner')
+            ->order_by('os.id', 'DESC')
+            ->get();
 
         if ($query === false) {
             return [];
@@ -29,9 +29,9 @@ class OrdemServicoModel extends CI_Model
     public function get_eletricistas_ativos()
     {
         $query = $this->db->select('id, nome')
-                            ->where('data_demissao', null)
-                            ->order_by('nome', 'ASC')
-                            ->get('tabela_eletricistas');
+            ->where('data_demissao', null)
+            ->order_by('nome', 'ASC')
+            ->get('tabela_eletricistas');
 
         if ($query === false) {
             return [];
@@ -43,9 +43,9 @@ class OrdemServicoModel extends CI_Model
     public function get_produtos_disponiveis()
     {
         $query = $this->db->select('id, nome_produto, qtd_estoque')
-                            ->where('qtd_estoque >', 0)
-                            ->order_by('nome_produto', 'ASC')
-                            ->get('tabela_produtos');
+            ->where('qtd_estoque >', 0)
+            ->order_by('nome_produto', 'ASC')
+            ->get('tabela_produtos');
 
         if ($query === false) {
             return [];
@@ -57,10 +57,10 @@ class OrdemServicoModel extends CI_Model
     public function get_materiais_by_os($idOs)
     {
         $query = $this->db->select('p.nome_produto, mp.qtd_utilizada')
-                            ->from($this->tabelaPivot . ' mp')
-                            ->join('tabela_produtos p', 'mp.id_produto = p.id', 'inner')
-                            ->where('mp.id_os', $idOs)
-                            ->get();
+            ->from($this->tabelaPivot . ' mp')
+            ->join('tabela_produtos p', 'mp.id_produto = p.id', 'inner')
+            ->where('mp.id_os', $idOs)
+            ->get();
 
         if ($query === false) {
             return [];
@@ -91,10 +91,10 @@ class OrdemServicoModel extends CI_Model
             $produtoId = (int) $item['id'];
             $qtd       = (int) $item['qtd'];
 
-            $produto = $this->db->select('qtd_estoque')
-                                  ->where('id', $produtoId)
-                                  ->get('tabela_produtos')
-                                  ->row_array();
+            $produto = $this->db->select('qtd_estoque, vlr_unitario')
+                ->where('id', $produtoId)
+                ->get('tabela_produtos')
+                ->row_array();
 
             if (!$produto || $produto['qtd_estoque'] < $qtd) {
                 $this->db->trans_status(FALSE);
@@ -108,8 +108,19 @@ class OrdemServicoModel extends CI_Model
             ]);
 
             $this->db->set('qtd_estoque', 'qtd_estoque - ' . $qtd, FALSE)
-                      ->where('id', $produtoId)
-                      ->update('tabela_produtos');
+                ->where('id', $produtoId)
+                ->update('tabela_produtos');
+
+
+            $this->db->insert('tabela_movimentacoes', [
+                'id_produto'     => $produtoId,
+                'tipo'           => 'saida',
+                'quantidade'     => $qtd,
+                'valor_unitario' => $produto['vlr_unitario'],
+                'data_mov'       => $dataOs,
+                'origem'         => 'OS #' . str_pad($idOs, 5, '0', STR_PAD_LEFT),
+                'id_os'          => $idOs,
+            ]);
         }
 
         $this->db->trans_complete();
