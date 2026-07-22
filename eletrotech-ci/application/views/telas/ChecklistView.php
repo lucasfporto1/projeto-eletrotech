@@ -204,6 +204,11 @@
             letter-spacing: 0.5px;
         }
 
+        .eletrotech-form label.required::after {
+            content: ' *';
+            color: #FBD814;
+        }
+
         .eletrotech-form input,
         .eletrotech-form select,
         .eletrotech-form textarea {
@@ -402,10 +407,10 @@
                 <div class="modal-body p-4">
                     <?= form_open('checklist/cadastrar', ['class' => 'eletrotech-form']) ?>
 
-                    <label for="titulo_checklist">Título do checklist</label>
+                    <label for="titulo_checklist" class="required">Título do checklist</label>
                     <input type="text" name="titulo" id="titulo_checklist" placeholder="Ex: Checklist de abertura de OS" required>
 
-                    <label for="tipo_checklist">Tipo do Checklist</label>
+                    <label for="tipo_checklist" class="required">Tipo do Checklist</label>
                     <select name="tipo" id="tipo_checklist" required>
                         <option value="" disabled selected hidden>Selecione o tipo</option>
                         <option value="inicio">Início</option>

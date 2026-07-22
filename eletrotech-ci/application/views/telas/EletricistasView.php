@@ -134,6 +134,12 @@
             margin-bottom: 5px;
         }
 
+        form.eletrotech-form label.required::after {
+            content: ' *';
+            color: #FBD814;
+        }
+        
+
         form.eletrotech-form input {
             border: none;
             border-bottom: 1px solid #777;
@@ -299,14 +305,14 @@
                 <div class="modal-body p-4">
                     <?= form_open('eletricistas/cadastrar', ['class' => 'eletrotech-form']) ?>
 
-                    <label>CPF</label>
+                    <label class="required">CPF</label>
                     <input type="text" id="cpf" name="cpf" placeholder="Apenas números" minlength="11" maxlength="11" required>
                     <small id="cpf-feedback" style="font-weight: bold; margin-top: 5px; display: block;"></small>
 
-                    <label for="nome_eletricista">Nome Completo</label>
+                    <label for="nome_eletricista" class="required">Nome Completo</label>
                     <input type="text" name="nome" id="nome_eletricista" placeholder="Ex: João Silva" required />
 
-                    <label for="data_contratacao">Data de Contratação</label>
+                    <label for="data_contratacao" class="required">Data de Contratação</label>
                     <input type="date" name="data_contratacao" id="data_contratacao" required />
 
                     <button type="submit" class="btn-submit mt-3">Salvar Eletricista</button>

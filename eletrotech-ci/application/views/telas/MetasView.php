@@ -159,6 +159,11 @@
             margin-bottom: 5px;
         }
 
+        form.eletrotech-form label.required::after {
+            content: ' *';
+            color: #FBD814;
+        }
+
         form.eletrotech-form input,
         form.eletrotech-form select {
             border: none;
@@ -340,7 +345,7 @@
                 <div class="modal-body p-4">
                     <?= form_open('metas/cadastrar', ['class' => 'eletrotech-form']) ?>
 
-                    <label for="eletricista">Eletricista Responsável</label>
+                    <label for="eletricista" class="required">Eletricista Responsável</label>
                     <select name="eletricista_meta" id="eletricista" required>
                         <option value="" disabled selected hidden>Selecione um eletricista ativo...</option>
                         <?php foreach ($eletricistasAtivos as $ativo): ?>
@@ -348,10 +353,10 @@
                         <?php endforeach; ?>
                     </select>
 
-                    <label for="mes_meta">Mês de Referência</label>
+                    <label for="mes_meta" class="required">Mês de Referência</label>
                     <input type="month" name="mes_meta" id="mes_meta" required />
 
-                    <label for="vlr_meta">Valor da Meta (R$)</label>
+                    <label for="vlr_meta" class="required">Valor da Meta (R$)</label>
                     <input type="number" step="0.01" name="vlr_meta" id="vlr_meta" placeholder="Ex: 5000.00" required />
 
                     <button type="submit" class="btn-submit mt-3">Salvar Meta</button>

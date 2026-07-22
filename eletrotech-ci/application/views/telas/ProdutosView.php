@@ -133,6 +133,11 @@
             margin-bottom: 5px;
         }
 
+        form.eletrotech-form label.required::after {
+            content: ' *';
+            color: #FBD814;
+        }
+
         form.eletrotech-form input {
             border: none;
             border-bottom: 1px solid #777;
@@ -286,13 +291,13 @@
                 </div>
                 <div class="modal-body p-4">
                     <?= form_open('produtos/cadastrar', ['class' => 'eletrotech-form']) ?>
-                    <label for="nome_material">Nome / Descrição do Material</label>
+                    <label for="nome_material" class="required">Nome / Descrição do Material</label>
                     <input type="text" name="nome_produto" id="nome_material" placeholder="Ex: Cabo PP 2,5mm²" required />
 
-                    <label for="preco_unitario">Preço Unitário (R$)</label>
+                    <label for="preco_unitario" class="required">Preço Unitário (R$)</label>
                     <input type="text" name="vlr_unitario" id="preco_unitario" placeholder="Ex: 8.90" required />
 
-                    <label for="quantidade_inicial">Quantidade em Estoque</label>
+                    <label for="quantidade_inicial" class="required">Quantidade em Estoque</label>
                     <input type="number" name="qtd_estoque" id="quantidade_inicial" min="0" placeholder="Ex: 100" required />
 
                     <button type="submit" class="btn-submit mt-3">Salvar Produto</button>
