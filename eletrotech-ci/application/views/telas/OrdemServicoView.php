@@ -450,12 +450,12 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         const opcoesHtml = <?= json_encode(
-                        !empty($produtosDisponiveis)
-                            ? implode('', array_map(function ($prod) {
-                                return '<option value="' . $prod['id'] . '" data-estoque="' . $prod['qtd_estoque'] . '">' . htmlspecialchars($prod['nome_produto'], ENT_QUOTES, 'UTF-8') . ' (Estoque: ' . $prod['qtd_estoque'] . ')</option>';
-                            }, $produtosDisponiveis))
-                            : '<option value="" disabled>Nenhum material com estoque disponível</option>'
-                    ) ?>;
+                                !empty($produtosDisponiveis)
+                                    ? implode('', array_map(function ($prod) {
+                                        return '<option value="' . $prod['id'] . '" data-estoque="' . $prod['qtd_estoque'] . '">' . htmlspecialchars($prod['nome_produto'], ENT_QUOTES, 'UTF-8') . ' (Estoque: ' . $prod['qtd_estoque'] . ')</option>';
+                                    }, $produtosDisponiveis))
+                                    : '<option value="" disabled>Nenhum material com estoque disponível</option>'
+                            ) ?>;
 
         function adicionarMaterial() {
             const container = document.getElementById('lista-materiais');
@@ -494,7 +494,7 @@
                     container.innerHTML = html;
                 });
         }
-        
+
         function getEstoqueDisponivel(selectEl) {
             const opt = selectEl.options[selectEl.selectedIndex];
             return opt ? parseInt(opt.getAttribute('data-estoque') || '0', 10) : 0;
@@ -525,7 +525,7 @@
             const valores = {};
             let valido = true;
 
-            selects.forEach(function (select) {
+            selects.forEach(function(select) {
                 const valor = select.value;
                 if (!valor) {
                     select.setCustomValidity('');
@@ -545,24 +545,23 @@
             return valido;
         }
 
-        // Delegação de eventos, pois as linhas são criadas dinamicamente
-        document.getElementById('lista-materiais').addEventListener('input', function (e) {
+        document.getElementById('lista-materiais').addEventListener('input', function(e) {
             if (e.target.matches('input[name="qtd_utilizada[]"]')) {
                 validarLinha(e.target.closest('.linha-produto'));
             }
         });
 
-        document.getElementById('lista-materiais').addEventListener('change', function (e) {
+        document.getElementById('lista-materiais').addEventListener('change', function(e) {
             if (e.target.matches('select[name="id_produto[]"]')) {
                 validarLinha(e.target.closest('.linha-produto'));
                 validarDuplicatas();
             }
         });
 
-        document.getElementById('formOS').addEventListener('submit', function (e) {
+        document.getElementById('formOS').addEventListener('submit', function(e) {
             const linhas = document.querySelectorAll('#lista-materiais .linha-produto');
             let valido = validarDuplicatas();
-            linhas.forEach(function (linha) {
+            linhas.forEach(function(linha) {
                 if (!validarLinha(linha)) valido = false;
             });
             if (!valido) {
@@ -578,7 +577,7 @@
             modal.show();
         }
 
-        document.addEventListener('change', function (event) {
+        document.addEventListener('change', function(event) {
             if (!event.target.matches('.select-checklist-fim')) {
                 return;
             }
