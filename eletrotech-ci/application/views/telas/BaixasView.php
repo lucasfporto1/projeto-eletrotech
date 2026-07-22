@@ -1,19 +1,18 @@
 <?php
 
-/** @var array $produtos */
-/** @var array $filtros */
-/** @var bool  $consultou */
-/** @var array $movimentacoes */
+/** @var array  $produtos */
+/** @var array  $filtros */
+/** @var bool   $consultou */
+/** @var array  $movimentacoes */
+/** @var array  $totais */
+/** @var int    $total_rows */
+/** @var int    $offset */
+/** @var int    $por_pagina */
+/** @var string $paginacao */
 
-$totalEntrada = 0;
-$totalSaida   = 0;
-foreach ($movimentacoes as $m) {
-    if ($m['tipo'] === 'entrada') {
-        $totalEntrada += $m['valor_total'];
-    } else {
-        $totalSaida += $m['valor_total'];
-    }
-}
+// Os totais vêm do model somando o filtro inteiro, não só a página exibida
+$totalEntrada = $totais['total_entrada'];
+$totalSaida   = $totais['total_saida'];
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -28,6 +27,7 @@ foreach ($movimentacoes as $m) {
         body {
             background-color: #3c3b3b;
             color: white;
+            padding-bottom: 60px;
         }
 
         nav.navbar.navbar-custom {
@@ -205,6 +205,50 @@ foreach ($movimentacoes as $m) {
             font-style: italic;
             padding: 3rem 1rem;
         }
+
+        .btn-detalhes {
+            color: #FBD814;
+            font-size: 18px;
+            text-decoration: none;
+            transition: 0.2s;
+        }
+
+        .btn-detalhes:hover {
+            color: #ffffff;
+        }
+
+        .rodape-paginacao {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 20px 0 40px 0;
+        }
+
+        .rodape-paginacao .contagem {
+            color: #a0a0a0;
+            font-size: 14px;
+        }
+
+        .rodape-paginacao .page-link {
+            background-color: #282828;
+            border-color: #555;
+            color: #ffffff;
+        }
+
+        .rodape-paginacao .page-link:hover {
+            background-color: #FBD814;
+            border-color: #FBD814;
+            color: #282828;
+        }
+
+        .rodape-paginacao .page-item.active .page-link {
+            background-color: #FBD814;
+            border-color: #FBD814;
+            color: #282828;
+            font-weight: bold;
+        }
     </style>
 </head>
 
@@ -265,13 +309,14 @@ foreach ($movimentacoes as $m) {
                 </div>
                 <div class="box">
                     <div class="rotulo">Registros</div>
-                    <div class="valor"><?= count($movimentacoes) ?></div>
+                    <div class="valor"><?= $total_rows ?></div>
                 </div>
             </div>
 
             <table class="table table-dark table-hover table-bordered custom-table text-center">
                 <thead>
                     <tr>
+                        <th>Ações</th>
                         <th>Data</th>
                         <th>Produto</th>
                         <th>Tipo</th>
@@ -285,6 +330,11 @@ foreach ($movimentacoes as $m) {
                     <?php if (!empty($movimentacoes)): ?>
                         <?php foreach ($movimentacoes as $m): ?>
                             <tr>
+                                <td>
+                                    <a href="<?= site_url('baixas/detalhes/' . $m['id']) ?>" class="btn-detalhes" title="Ver relatório detalhado">
+                                        <i class="fa-solid fa-file-lines"></i>
+                                    </a>
+                                </td>
                                 <td><?= date('d/m/Y', strtotime($m['data_mov'])) ?></td>
                                 <td><?= htmlspecialchars($m['nome_produto']) ?></td>
                                 <td>
@@ -298,15 +348,25 @@ foreach ($movimentacoes as $m) {
                                 <td>R$ <?= number_format($m['valor_unitario'], 2, ',', '.') ?></td>
                                 <td>R$ <?= number_format($m['valor_total'], 2, ',', '.') ?></td>
                                 <td><?= htmlspecialchars($m['origem']) ?></td>
+
                             </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="7" class="empty-state">Nenhuma movimentação encontrada para os filtros selecionados.</td>
+                            <td colspan="8" class="empty-state">Nenhuma movimentação encontrada para os filtros selecionados.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>
             </table>
+
+            <?php if ($total_rows > $por_pagina): ?>
+                <div class="rodape-paginacao">
+                    <nav><?= $paginacao ?></nav>
+                    <span class="contagem">
+                        Mostrando <?= $offset + 1 ?>–<?= min($offset + $por_pagina, $total_rows) ?> de <?= $total_rows ?> registros
+                    </span>
+                </div>
+            <?php endif; ?>
         <?php else: ?>
             <div class="hint">
                 <i class="fa-solid fa-filter fa-2x" style="color:#FBD814; margin-bottom:15px;"></i>
