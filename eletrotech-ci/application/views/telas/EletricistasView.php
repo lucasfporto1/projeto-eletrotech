@@ -264,6 +264,12 @@
                                     <i class="fa-solid fa-pen"></i>
                                 </button>
 
+                                <button type="button" class="btn btn-sm btn-outline-info"
+                                    title="Ver histórico de OS"
+                                    onclick="abrirHistoricoOs(<?= $eletricista['id'] ?>)">
+                                    <i class="fa-solid fa-clock-rotate-left"></i>
+                                </button>
+
                                 <?php if ($ativo): ?>
                                     <a href="<?= site_url('eletricistas/demitir/' . $eletricista['id']) ?>"
                                         class="btn btn-sm btn-outline-danger" onclick="return confirm('Demitir este funcionário?');" title="Demitir">
@@ -303,6 +309,7 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
+                    <p class="mb-3" style="color:#FBD814; font-size:12px; font-weight:bold;">* campos obrigatórios</p>
                     <?= form_open('eletricistas/cadastrar', ['class' => 'eletrotech-form']) ?>
 
                     <label class="required">CPF</label>
@@ -331,6 +338,7 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
+                    <p class="mb-3" style="color:#FBD814; font-size:12px; font-weight:bold;">* campos obrigatórios</p>
                     <?= form_open('eletricistas/editar', ['class' => 'eletrotech-form']) ?>
 
                     <input type="hidden" name="id" id="edit_id">
@@ -346,6 +354,20 @@
         </div>
     </div>
 
+    <div class="modal fade" id="modalHistoricoOs" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content eletrotech-modal">
+                <div class="modal-header">
+                    <h5 class="modal-title">Histórico de OS do Eletricista</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4" id="modalHistoricoOsBody">
+                    <p class="text-center">Carregando...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
@@ -355,6 +377,23 @@
 
             document.getElementById('edit_id').value = id;
             document.getElementById('edit_nome').value = nome;
+        };
+
+        const abrirHistoricoOs = (idEletricista) => {
+            const body = document.getElementById('modalHistoricoOsBody');
+            body.innerHTML = '<p class="text-center">Carregando...</p>';
+
+            fetch(`<?= site_url('eletricistas/historico_os') ?>/${idEletricista}`)
+                .then(response => response.text())
+                .then(html => {
+                    body.innerHTML = html;
+                    const modalEl = document.getElementById('modalHistoricoOs');
+                    const modal = new bootstrap.Modal(modalEl);
+                    modal.show();
+                })
+                .catch(() => {
+                    body.innerHTML = '<p class="text-center text-danger">Erro ao carregar o histórico.</p>';
+                });
         };
     </script>
     <script src="<?= base_url('assets/js/myLibrary.js') ?>"></script>

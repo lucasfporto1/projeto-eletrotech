@@ -327,6 +327,7 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
+                    <p class="mb-3" style="color:#FBD814; font-size:12px; font-weight:bold;">* campos obrigatórios</p>
                     <?= form_open('ordemServico/cadastrar', ['class' => 'eletrotech-form', 'id' => 'formOS']) ?>
 
                     <div class="row">
@@ -424,6 +425,7 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
+                    <p class="mb-3" style="color:#FBD814; font-size:12px; font-weight:bold;">* campos obrigatórios</p>
                     <?= form_open('ordemServico/fechar', ['class' => 'eletrotech-form', 'id' => 'formFecharOS']) ?>
                     <input type="hidden" name="id_os" id="id_os_fechamento" value="">
 

@@ -107,4 +107,39 @@ class EletricistasController extends Auth_Controller
 
         redirect('eletricistas');
     }
+
+    public function historico_os($id = null)
+    {
+        if (empty($id) || !is_numeric($id)) {
+            echo '<p class="text-center text-danger">Eletricista inválido.</p>';
+            return;
+        }
+
+        $historico = $this->EletricistasModel->get_os_by_eletricista((int) $id);
+
+        if (empty($historico)) {
+            echo '<p class="text-center">Nenhuma OS registrada para este eletricista.</p>';
+            return;
+        }
+
+        echo '<div class="table-responsive">';
+        echo '<table class="table table-dark table-bordered custom-table text-center">';
+        echo '<thead><tr><th>ID</th><th>Data da OS</th><th>Status</th><th>Data de Fechamento</th></tr></thead>';
+        echo '<tbody>';
+
+        foreach ($historico as $os) {
+            $dataOs = !empty($os['data_os']) ? date('d/m/Y', strtotime($os['data_os'])) : '-';
+            $dataFechamento = !empty($os['data_fechamento']) ? date('d/m/Y', strtotime($os['data_fechamento'])) : '-';
+            $status = ucfirst($os['status'] ?? '');
+
+            echo '<tr>';
+            echo '<td>#' . str_pad((int) $os['id'], 5, '0', STR_PAD_LEFT) . '</td>';
+            echo '<td>' . htmlspecialchars($dataOs) . '</td>';
+            echo '<td>' . htmlspecialchars($status) . '</td>';
+            echo '<td>' . htmlspecialchars($dataFechamento) . '</td>';
+            echo '</tr>';
+        }
+
+        echo '</tbody></table></div>';
+    }
 }

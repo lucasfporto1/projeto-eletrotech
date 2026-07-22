@@ -343,6 +343,7 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
+                    <p class="mb-3" style="color:#FBD814; font-size:12px; font-weight:bold;">* campos obrigatórios</p>
                     <?= form_open('metas/cadastrar', ['class' => 'eletrotech-form']) ?>
 
                     <label for="eletricista" class="required">Eletricista Responsável</label>
@@ -375,6 +376,7 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
+                    <p class="mb-3" style="color:#FBD814; font-size:12px; font-weight:bold;">* campos obrigatórios</p>
                     <?= form_open('metas/editar', ['class' => 'eletrotech-form']) ?>
 
                     <input type="hidden" name="id" id="edit_meta_id">

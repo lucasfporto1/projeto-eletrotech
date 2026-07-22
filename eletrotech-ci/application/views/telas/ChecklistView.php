@@ -405,6 +405,7 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
+                    <p class="mb-3" style="color:#FBD814; font-size:12px; font-weight:bold;">* campos obrigatórios</p>
                     <?= form_open('checklist/cadastrar', ['class' => 'eletrotech-form']) ?>
 
                     <label for="titulo_checklist" class="required">Título do checklist</label>

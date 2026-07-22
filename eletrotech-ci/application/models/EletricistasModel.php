@@ -41,6 +41,22 @@ class EletricistasModel extends CI_Model
         return $this->db->get_where($this->table, ['cpf' => $cpf])->row_array();
     }
 
+    public function get_os_by_eletricista($idEletricista)
+    {
+        $query = $this->db
+            ->select('os.id, os.data_os, os.data_fechamento, os.status')
+            ->from('tabela_ordens_servico os')
+            ->where('os.eletricista_os', (int) $idEletricista)
+            ->order_by('os.id', 'DESC')
+            ->get();
+
+        if ($query === false) {
+            return [];
+        }
+
+        return $query->result_array();
+    }
+
     public function insert($data)
     {
         return $this->db->insert($this->table, $data);

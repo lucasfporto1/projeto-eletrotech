@@ -290,6 +290,7 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
+                    <p class="mb-3" style="color:#FBD814; font-size:12px; font-weight:bold;">* campos obrigatórios</p>
                     <?= form_open('produtos/cadastrar', ['class' => 'eletrotech-form']) ?>
                     <label for="nome_material" class="required">Nome / Descrição do Material</label>
                     <input type="text" name="nome_produto" id="nome_material" placeholder="Ex: Cabo PP 2,5mm²" required />
@@ -315,6 +316,7 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
+                    <p class="mb-3" style="color:#FBD814; font-size:12px; font-weight:bold;">* campos obrigatórios</p>
                     <?= form_open('produtos/editar', ['class' => 'eletrotech-form']) ?>
 
                     <input type="hidden" name="id" id="edit_produto_id">
