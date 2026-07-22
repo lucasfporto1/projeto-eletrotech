@@ -28,4 +28,42 @@ class DashboardModel extends CI_Model
 
         return $totais;
     }
+
+    public function getOsPorEletricista()
+    {
+        $query = $this->db
+            ->select('e.nome AS eletricista, COUNT(os.id) AS total')
+            ->from('tabela_ordens_servico os')
+            ->join('tabela_eletricistas e', 'e.id = os.eletricista_os', 'left')
+            ->group_by('e.id, e.nome')
+            ->order_by('total', 'DESC')
+            ->get();
+
+        if ($query === false || $query->num_rows() === 0) {
+            return [];
+        }
+
+        return $query->result_array();
+    }
+
+    public function getOsPorMes($mes = null)
+    {
+        $this->db
+            ->select("DATE_FORMAT(data_os, '%Y-%m') AS mes, COUNT(id) AS total", false)
+            ->from('tabela_ordens_servico')
+            ->group_by("DATE_FORMAT(data_os, '%Y-%m')")
+            ->order_by('mes', 'ASC');
+
+        if (!empty($mes)) {
+            $this->db->where("DATE_FORMAT(data_os, '%Y-%m') =", $mes);
+        }
+
+        $query = $this->db->get();
+
+        if ($query === false || $query->num_rows() === 0) {
+            return [];
+        }
+
+        return $query->result_array();
+    }
 }

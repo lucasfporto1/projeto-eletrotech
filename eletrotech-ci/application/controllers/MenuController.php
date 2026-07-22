@@ -7,9 +7,14 @@ class MenuController extends Auth_Controller
     {
         $this->load->model('DashboardModel', 'dashboard');
 
+        $mesFiltro = $this->input->get('mes', TRUE);
+
         $dados = array(
-            'totais'  => $this->dashboard->contarTotais(),
-            'usuario' => $this->session->userdata('usuario'),
+            'totais'             => $this->dashboard->contarTotais(),
+            'usuario'            => $this->session->userdata('usuario'),
+            'mesFiltro'          => $mesFiltro ?? '',
+            'graficoEletricista' => $this->dashboard->getOsPorEletricista(),
+            'graficoMes'         => $this->dashboard->getOsPorMes($mesFiltro),
         );
 
         $this->load->view('telas/MenuView', $dados);

@@ -1,6 +1,9 @@
 <?php
 /** @var array $totais */
 /** @var string $usuario */
+/** @var string $mesFiltro */
+/** @var array $graficoEletricista */
+/** @var array $graficoMes */
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -111,6 +114,45 @@
             color: #ccc;
             font-weight: 600;
         }
+
+        .chart-panel {
+            background-color: #1f1f1f;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #FBD814;
+            margin-top: 2rem;
+            height: 100%;
+        }
+
+        .chart-panel h3 {
+            color: #FBD814;
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .filtro-mes {
+            background-color: #282828;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #FBD814;
+            margin: 1rem 0 0.5rem 0;
+            display: flex;
+            align-items: end;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .filtro-mes label {
+            color: #FBD814;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .filtro-mes input,
+        .filtro-mes button {
+            height: 40px;
+        }
     </style>
 </head>
 
@@ -156,6 +198,32 @@
                 </div>
             </div>
         </div>
+
+        <div class="row g-4 mt-1">
+            <div class="col-lg-6">
+                <div class="chart-panel">
+                    <h3>OS por eletricista</h3>
+                    <canvas id="graficoOsEletricista"></canvas>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="chart-panel">
+                    <h3>Quantidade de OS por mês</h3>
+                    <form method="GET" action="<?= site_url('menu') ?>" class="filtro-mes">
+                        <div style="flex-grow:1; min-width:220px;">
+                            <label for="mes">Filtrar mês:</label>
+                            <input type="month" name="mes" id="mes" class="form-control" value="<?= htmlspecialchars($mesFiltro) ?>">
+                        </div>
+                        <div>
+                            <button type="submit" class="btn btn-outline-warning">Buscar</button>
+                            <a href="<?= site_url('menu') ?>" class="btn btn-outline-secondary">Limpar</a>
+                        </div>
+                    </form>
+                    <canvas id="graficoOsMes" class="mt-3"></canvas>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="toast-container position-fixed bottom-0 end-0 p-3">
@@ -168,7 +236,76 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
     <script>
+        const osEletricista = <?= json_encode($graficoEletricista) ?>;
+        const osMes = <?= json_encode($graficoMes) ?>;
+
+        const labelsEletricista = osEletricista.map(item => item.eletricista || 'Sem nome');
+        const valoresEletricista = osEletricista.map(item => Number(item.total || 0));
+
+        const labelsMes = osMes.map(item => {
+            const [ano, mes] = String(item.mes || '').split('-');
+            if (!ano || !mes) return item.mes || 'Sem mês';
+            return new Date(Number(ano), Number(mes) - 1, 1).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
+        });
+        const valoresMes = osMes.map(item => Number(item.total || 0));
+
+        new Chart(document.getElementById('graficoOsEletricista'), {
+            type: 'bar',
+            data: {
+                labels: labelsEletricista,
+                datasets: [{
+                    label: 'Quantidade de OS',
+                    data: valoresEletricista,
+                    backgroundColor: ['#FBD814', '#ffcc00', '#f9d65e', '#f6d24b', '#f8a81e', '#e4b101'],
+                    borderColor: '#ffffff',
+                    borderWidth: 1,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { labels: { color: '#ffffff' } }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: '#ffffff' },
+                        grid: { color: 'rgba(255,255,255,0.08)' }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: { color: '#ffffff' },
+                        grid: { color: 'rgba(255,255,255,0.08)' }
+                    }
+                }
+            }
+        });
+
+        new Chart(document.getElementById('graficoOsMes'), {
+            type: 'pie',
+            data: {
+                labels: labelsMes,
+                datasets: [{
+                    label: 'OS por mês',
+                    data: valoresMes,
+                    backgroundColor: ['#FBD814', '#ffcc00', '#f9d65e', '#f6d24b', '#f8a81e', '#e4b101'],
+                    borderColor: '#ffffff',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        labels: { color: '#ffffff' },
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
         function showToast(mensagem, tipo) {
             const toastElement = document.getElementById('liveToast');
             const toastBody = document.getElementById('toast-message');
