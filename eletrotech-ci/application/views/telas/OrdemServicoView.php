@@ -157,6 +157,11 @@
             color: white;
         }
 
+        form.eletrotech-form label.required::after {
+            content: ' *';
+            color: #FBD814;
+        }
+
         form.eletrotech-form .btn-submit {
             background-color: #ebca1e;
             color: #282828;
@@ -326,7 +331,7 @@
 
                     <div class="row">
                         <div class="col-md-6">
-                            <label for="eletricista_os">Eletricista Responsável</label>
+                            <label for="eletricista_os" class="required">Eletricista Responsável</label>
                             <select name="eletricista_os" id="eletricista_os" required>
                                 <option value="" disabled selected hidden>Selecione (Apenas Ativos)</option>
                                 <?php foreach ($eletricistasAtivos as $eletricista): ?>
@@ -335,7 +340,7 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label for="data_os">Data da Operação</label>
+                            <label for="data_os" class="required">Data da Operação</label>
                             <input type="date" name="data_os" id="data_os" max="<?= date('Y-m-d') ?>" required>
                             <small class="form-text text-muted">Opcional: deixe em branco se a OS ainda não tiver data de início.</small>
                         </div>
@@ -347,7 +352,7 @@
                     <div id="lista-materiais">
                         <div class="linha-produto">
                             <div>
-                                <label>Produto</label>
+                                <label class="required">Produto</label>
                                 <select name="id_produto[]" required>
                                     <option value="" disabled selected hidden>Selecione o material...</option>
                                     <?php if (!empty($produtosDisponiveis)): ?>
@@ -360,7 +365,7 @@
                                 </select>
                             </div>
                             <div>
-                                <label>Quantidade</label>
+                                <label class="required">Quantidade</label>
                                 <input type="number" name="qtd_utilizada[]" min="1" placeholder="Ex: 5" required>
                             </div>
                         </div>
