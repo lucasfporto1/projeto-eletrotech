@@ -12,7 +12,27 @@ class ChecklistController extends Auth_Controller
     public function index()
     {
         $data['titulo'] = 'Checklist - EletroTech';
-        $data['checklists'] = $this->ChecklistModel->get_all();
+        $all = $this->ChecklistModel->get_all();
+        $tipo = $this->input->get('tipo', TRUE);
+        $titulo = $this->input->get('titulo', TRUE);
+
+        // Apply title filter first (partial, case-insensitive), then type filter
+        $filtered = $all;
+        if (!empty($titulo)) {
+            $filtered = array_values(array_filter($filtered, function ($c) use ($titulo) {
+                return isset($c['titulo']) && stripos($c['titulo'], $titulo) !== false;
+            }));
+        }
+
+        if (!empty($tipo) && in_array($tipo, ['inicio', 'fim'])) {
+            $filtered = array_values(array_filter($filtered, function ($c) use ($tipo) {
+                return isset($c['tipo']) && $c['tipo'] === $tipo;
+            }));
+        }
+
+        $data['checklists'] = $filtered;
+        $data['filterTipo'] = $tipo ?? '';
+        $data['filterTitulo'] = $titulo ?? '';
         $data['selectedInicio'] = $this->ChecklistModel->get_selected_by_type('inicio');
         $data['selectedFim'] = $this->ChecklistModel->get_selected_by_type('fim');
 
@@ -25,7 +45,21 @@ class ChecklistController extends Auth_Controller
         $this->form_validation->set_rules('tipo', 'Tipo', 'required|in_list[inicio,fim]');
 
         $perguntas = $this->input->post('pergunta', TRUE) ?: [];
-        $perguntasValidas = array_values(array_filter(array_map('trim', $perguntas)));
+        $tipos = $this->input->post('tipo_resposta', TRUE) ?: [];
+        $bloqueios = $this->input->post('bloqueia_abertura', TRUE) ?: [];
+
+        $perguntasValidas = [];
+        foreach ($perguntas as $i => $texto) {
+            $texto = trim((string) $texto);
+            if ($texto === '') continue;
+            $tipoResp = isset($tipos[$i]) && in_array($tipos[$i], ['radio', 'text']) ? $tipos[$i] : 'text';
+            $bloq = isset($bloqueios[$i]) ? trim((string) $bloqueios[$i]) : null;
+            $perguntasValidas[] = [
+                'texto' => $texto,
+                'tipo_resposta' => $tipoResp,
+                'bloqueia_abertura' => $bloq,
+            ];
+        }
 
         if ($this->form_validation->run() === FALSE || empty($perguntasValidas)) {
             $this->session->set_flashdata('erro', 'Preencha o título e pelo menos uma pergunta válida.');
@@ -93,5 +127,22 @@ class ChecklistController extends Auth_Controller
             echo '<li class="list-group-item bg-dark text-white border-secondary">' . htmlspecialchars($p['texto_pergunta']) . '</li>';
         }
         echo '</ul></div>';
+    }
+
+    public function excluir($id = null)
+    {
+        if (empty($id) || !is_numeric($id)) {
+            $this->session->set_flashdata('erro', 'Checklist inválido.');
+            redirect('checklist');
+            return;
+        }
+
+        if ($this->ChecklistModel->delete_checklist((int) $id)) {
+            $this->session->set_flashdata('sucesso', 'Checklist excluído com sucesso.');
+        } else {
+            $this->session->set_flashdata('erro', 'Erro ao excluir checklist. Verifique se ele não está selecionado como padrão ou se possui perguntas associadas.');
+        }
+
+        redirect('checklist');
     }
 }

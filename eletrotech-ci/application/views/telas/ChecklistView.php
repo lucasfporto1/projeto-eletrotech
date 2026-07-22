@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <title><?= $titulo ?></title>
     <style>
+
         body {
             background-color: #3c3b3b;
             color: white;
@@ -104,6 +105,34 @@
         .page-title span {
             color: #cccccc;
             font-size: 0.95rem;
+        }
+
+        /* Filtro (padrão da tela de metas) */
+        .filtro-container {
+            background-color: #282828;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #FBD814;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: flex-end;
+        }
+
+        .filtro-container select,
+        .filtro-container input {
+            background-color: #3c3b3b;
+            color: white;
+            border: 1px solid #777;
+            border-radius: 5px;
+            padding: 8px;
+        }
+
+        .filtro-container select:focus,
+        .filtro-container input:focus {
+            border-color: #FBD814;
+            outline: none;
         }
 
         table.table.custom-table,
@@ -227,6 +256,11 @@
             flex: 1;
         }
 
+        .subQuestion{
+            font-size: 12px;
+            color: #f7f7f7;
+        }
+
         .remove-pergunta {
             background: none;
             border: none;
@@ -270,12 +304,12 @@
             <div class="summary-box">
                 <strong>Checklist Início Selecionado</strong>
                 <p class="mb-0"><?= !empty($selectedInicio) ? htmlspecialchars($selectedInicio['titulo']) : 'Nenhum checklist de início selecionado' ?></p>
-                <small class="text-muted"><?= !empty($selectedInicio) ? count($selectedInicio['perguntas']) . ' pergunta(s)' : '' ?></small>
+                <small class="subQuestion"><?= !empty($selectedInicio) ? count($selectedInicio['perguntas']) . ' pergunta(s)' : '' ?></small>
             </div>
             <div class="summary-box">
                 <strong>Checklist Fim Selecionado</strong>
                 <p class="mb-0"><?= !empty($selectedFim) ? htmlspecialchars($selectedFim['titulo']) : 'Nenhum checklist de fim selecionado' ?></p>
-                <small class="text-muted"><?= !empty($selectedFim) ? count($selectedFim['perguntas']) . ' pergunta(s)' : '' ?></small>
+                <small class="subQuestion"><?= !empty($selectedFim) ? count($selectedFim['perguntas']) . ' pergunta(s)' : '' ?></small>
             </div>
         </div>
 
@@ -284,6 +318,28 @@
                 <i class="fa-solid fa-plus"></i> Novo Checklist
             </button>
         </div>
+
+    <div class="container mt-2">
+        <form method="GET" action="<?= site_url('checklist') ?>" class="filtro-container">
+            <div style="flex-grow:1; min-width:220px;">
+                <label for="filtro_titulo" style="font-size: 12px; color: #FBD814; font-weight: bold;">Buscar por título:</label>
+                <input type="text" name="titulo" id="filtro_titulo" class="w-100"
+                       placeholder="Digite o título do checklist"
+                       value="<?= isset($filterTitulo) ? htmlspecialchars($filterTitulo) : '' ?>">
+            </div>
+            <div style="flex-grow:1; min-width:180px;">
+                <label for="filtro_tipo" style="font-size: 12px; color: #FBD814; font-weight: bold;">Filtrar por tipo:</label>
+                <select name="tipo" id="filtro_tipo" class="w-100">
+                    <option value="" <?= empty($filterTipo) ? 'selected' : '' ?>>Todos</option>
+                    <option value="inicio" <?= (isset($filterTipo) && $filterTipo === 'inicio') ? 'selected' : '' ?>>Início</option>
+                    <option value="fim" <?= (isset($filterTipo) && $filterTipo === 'fim') ? 'selected' : '' ?>>Fim</option>
+                </select>
+            </div>
+            <div>
+                <button type="submit" class="btn btn-outline-warning" style="padding: 8px 15px;"><i class="fa-solid fa-search"></i> Buscar</button>
+                <a href="<?= site_url('checklist') ?>" class="btn btn-outline-secondary" style="padding: 8px 15px;" title="Limpar Filtros"><i class="fa-solid fa-times"></i></a>
+            </div>
+        </form>
 
         <div class="table-responsive">
             <table class="table table-dark table-hover table-bordered custom-table text-center">
@@ -305,6 +361,9 @@
                                     <button type="button" class="btn btn-sm btn-outline-info" onclick="fetchPerguntas(<?= $checklist['id'] ?>)">
                                         <i class="fa-solid fa-eye"></i>
                                     </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="if(confirm('Tem certeza que deseja excluir este checklist?')) { window.location.href='<?= site_url('checklist/excluir/' . $checklist['id']) ?>'; }">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
                                 </td>
                                 <td><?= $checklist['id'] ?></td>
                                 <td><?= htmlspecialchars($checklist['titulo']) ?></td>
@@ -325,7 +384,7 @@
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="5" class="table-empty">Nenhum checklist cadastrado no momento.</td>
+                            <td colspan="6" class="table-empty">Nenhum checklist encontrado para os filtros selecionados.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>
@@ -355,7 +414,20 @@
 
                     <div id="perguntas_container">
                         <div class="question-row">
-                            <textarea name="pergunta[]" placeholder="Digite a primeira pergunta" required></textarea>
+                            <div style="flex:1">
+                                <textarea name="pergunta[]" placeholder="Digite a primeira pergunta" required></textarea>
+                            </div>
+                            <div style="width:160px; margin-left:10px">
+                                <label style="display:block; font-size:11px; margin-bottom:6px;">Tipo</label>
+                                <select name="tipo_resposta[]" onchange="onTipoChange(this)">
+                                    <option value="text">Text</option>
+                                    <option value="radio">Radio (Sim/Não)</option>
+                                </select>
+                            </div>
+                            <div style="width:180px; margin-left:10px">
+                                <label style="display:block; font-size:11px; margin-bottom:6px;">Bloqueia se</label>
+                                <input type="text" name="bloqueia_abertura[]" placeholder="Ex: nao (radio) ou texto" />
+                            </div>
                             <button type="button" class="remove-pergunta" onclick="removerPergunta(this)" title="Remover pergunta">&times;</button>
                         </div>
                     </div>
@@ -395,10 +467,35 @@
             const linha = document.createElement('div');
             linha.className = 'question-row';
             linha.innerHTML = `
-                <textarea name="pergunta[]" placeholder="Digite a pergunta" required></textarea>
+                <div style="flex:1">
+                    <textarea name="pergunta[]" placeholder="Digite a pergunta" required></textarea>
+                </div>
+                <div style="width:160px; margin-left:10px">
+                    <label style="display:block; font-size:11px; margin-bottom:6px;">Tipo</label>
+                    <select name="tipo_resposta[]" onchange="onTipoChange(this)">
+                        <option value="text">Text</option>
+                        <option value="radio">Radio (Sim/Não)</option>
+                    </select>
+                </div>
+                <div style="width:180px; margin-left:10px">
+                    <label style="display:block; font-size:11px; margin-bottom:6px;">Bloqueia se</label>
+                    <input type="text" name="bloqueia_abertura[]" placeholder="Ex: nao (radio) ou texto" />
+                </div>
                 <button type="button" class="remove-pergunta" onclick="removerPergunta(this)" title="Remover pergunta">&times;</button>
             `;
             container.appendChild(linha);
+        }
+
+        function onTipoChange(selectEl) {
+            const tipo = selectEl.value;
+            const row = selectEl.closest('.question-row');
+            const bloqueioInput = row.querySelector('input[name="bloqueia_abertura[]"]');
+            if (!bloqueioInput) return;
+            if (tipo === 'radio') {
+                bloqueioInput.placeholder = 'Digite: sim ou nao';
+            } else {
+                bloqueioInput.placeholder = 'Texto que bloqueia (opcional)';
+            }
         }
 
         function removerPergunta(button) {
@@ -410,7 +507,7 @@
 
         function fetchPerguntas(id) {
             const container = document.getElementById('modalPerguntasBody');
-            container.innerHTML = '<p class="text-center">Carregando...</p>'; 
+            container.innerHTML = '<p class="text-center">Carregando...</p>';
             fetch('<?= site_url('checklist/perguntas') ?>/' + id)
                 .then(response => response.text())
                 .then(html => {

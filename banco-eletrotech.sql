@@ -52,6 +52,8 @@ CREATE TABLE `tabela_checklist_perguntas` (
   `id_checklist` int NOT NULL,
   `texto_pergunta` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `ordem` int NOT NULL DEFAULT '0',
+  `tipo_resposta` enum('radio','text') NOT NULL DEFAULT 'text',
+  `bloqueia_abertura` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `id_checklist` (`id_checklist`),
   CONSTRAINT `tabela_checklist_perguntas_ibfk_1` FOREIGN KEY (`id_checklist`) REFERENCES `tabela_checklist` (`id`) ON DELETE CASCADE

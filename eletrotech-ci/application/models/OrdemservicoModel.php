@@ -186,4 +186,6 @@ class OrdemServicoModel extends CI_Model
 
         return $this->db->trans_status() !== FALSE;
     }
+
+    
 }

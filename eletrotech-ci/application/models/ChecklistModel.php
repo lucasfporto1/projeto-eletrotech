@@ -71,7 +71,17 @@ class ChecklistModel extends CI_Model
 
         $ordem = 1;
         foreach ($perguntas as $pergunta) {
-            $texto = trim((string) $pergunta);
+            // Expecting each pergunta to be an array with keys: texto, tipo_resposta, bloqueia_abertura
+            if (is_array($pergunta)) {
+                $texto = trim((string) ($pergunta['texto'] ?? ''));
+                $tipoResp = isset($pergunta['tipo_resposta']) && in_array($pergunta['tipo_resposta'], ['radio', 'text']) ? $pergunta['tipo_resposta'] : 'text';
+                $bloq = isset($pergunta['bloqueia_abertura']) ? trim((string) $pergunta['bloqueia_abertura']) : null;
+            } else {
+                $texto = trim((string) $pergunta);
+                $tipoResp = 'text';
+                $bloq = null;
+            }
+
             if ($texto === '') {
                 continue;
             }
@@ -79,6 +89,8 @@ class ChecklistModel extends CI_Model
             $this->db->insert($this->tablePerguntas, [
                 'id_checklist' => $idChecklist,
                 'texto_pergunta' => $texto,
+                'tipo_resposta' => $tipoResp,
+                'bloqueia_abertura' => $bloq,
                 'ordem' => $ordem++,
             ]);
         }
@@ -104,6 +116,15 @@ class ChecklistModel extends CI_Model
         $this->db->trans_start();
         $this->clear_selected($tipo);
         $this->db->where('id', $idChecklist)->update($this->table, ['selecionado' => 1]);
+        $this->db->trans_complete();
+
+        return $this->db->trans_status() !== FALSE;
+    }
+
+    public function delete_checklist($idChecklist)
+    {
+        $this->db->trans_start();
+        $this->db->where('id', $idChecklist)->delete($this->table);
         $this->db->trans_complete();
 
         return $this->db->trans_status() !== FALSE;
