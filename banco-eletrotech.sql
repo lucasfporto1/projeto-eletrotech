@@ -249,6 +249,25 @@ INSERT INTO `tabela_os_materiais` VALUES (1,1,3,30),(2,2,1,50),(3,2,1,1),(4,3,5,
 UNLOCK TABLES;
 
 --
+-- Table structure for table `tabela_os_comentarios`
+--
+
+DROP TABLE IF EXISTS `tabela_os_comentarios`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tabela_os_comentarios` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `id_os` int NOT NULL,
+  `comentario` text COLLATE utf8mb4_unicode_ci,
+  `foto` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `data_comentario` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `id_os` (`id_os`),
+  CONSTRAINT `fk_coment_os` FOREIGN KEY (`id_os`) REFERENCES `tabela_ordens_servico` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `tabela_produtos`
 --
 

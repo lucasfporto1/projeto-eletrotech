@@ -331,7 +331,7 @@
                 </div>
                 <div class="modal-body p-4">
                     <p class="mb-3" style="color:#FBD814; font-size:12px; font-weight:bold;">* campos obrigatórios</p>
-                    <?= form_open('ordemServico/cadastrar', ['class' => 'eletrotech-form', 'id' => 'formOS']) ?>
+                    <?= form_open('ordemServico/cadastrar', ['class' => 'eletrotech-form', 'id' => 'formOS', 'enctype' => 'multipart/form-data']) ?>
 
                     <div class="row">
                         <div class="col-md-6">
@@ -396,6 +396,19 @@
                         <div class="alert alert-warning text-center">Nenhum checklist de início selecionado. Acesse Checklist e escolha um checklist de início padrão para abrir uma OS.</div>
                     <?php endif; ?>
 
+                    <div class="foto-os-campo mt-4">
+                        <label>Foto da Abertura (opcional)</label>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-outline-warning" style="border-radius:20px;font-weight:bold;"
+                                onclick="this.parentElement.querySelector('.js-foto-input').click()">
+                                <i class="fa-solid fa-camera"></i> Tirar / Anexar Foto
+                            </button>
+                            <span class="js-foto-nome" style="font-size:12px;color:#FBD814;margin-left:8px;"></span>
+                            <input type="file" name="foto_abertura" accept="image/*" capture="environment" class="d-none js-foto-input">
+                        </div>
+                        <div class="js-foto-preview mt-2"></div>
+                    </div>
+
                     <button type="submit" class="btn-submit" <?= empty($checklistInicio['perguntas']) ? 'disabled' : '' ?>>Registrar OS e Baixar Estoque</button>
 
                     <?= form_close() ?>
@@ -429,7 +442,7 @@
                 </div>
                 <div class="modal-body p-4">
                     <p class="mb-3" style="color:#FBD814; font-size:12px; font-weight:bold;">* campos obrigatórios</p>
-                    <?= form_open('ordemServico/fechar', ['class' => 'eletrotech-form', 'id' => 'formFecharOS']) ?>
+                    <?= form_open('ordemServico/fechar', ['class' => 'eletrotech-form', 'id' => 'formFecharOS', 'enctype' => 'multipart/form-data']) ?>
                     <input type="hidden" name="id_os" id="id_os_fechamento" value="">
 
                     <?php if (!empty($checklistFim['perguntas'])): ?>
@@ -443,6 +456,20 @@
                             </select>
                             <textarea name="motivo_nao[<?= $pergunta['id'] ?>]" class="motivo-nao form-control" placeholder="Explique o motivo do não" style="display:none; margin-top:10px;"></textarea>
                         <?php endforeach; ?>
+
+                        <div class="foto-os-campo mt-4">
+                            <label>Foto do Fechamento (opcional)</label>
+                            <div>
+                                <button type="button" class="btn btn-sm btn-outline-warning" style="border-radius:20px;font-weight:bold;"
+                                    onclick="this.parentElement.querySelector('.js-foto-input').click()">
+                                    <i class="fa-solid fa-camera"></i> Tirar / Anexar Foto
+                                </button>
+                                <span class="js-foto-nome" style="font-size:12px;color:#FBD814;margin-left:8px;"></span>
+                                <input type="file" name="foto_fechamento" accept="image/*" capture="environment" class="d-none js-foto-input">
+                            </div>
+                            <div class="js-foto-preview mt-2"></div>
+                        </div>
+
                         <button type="submit" class="btn-submit">Fechar OS</button>
                     <?php else: ?>
                         <div class="alert alert-warning text-center">Nenhum checklist de fim selecionado. Defina um checklist de fim na tela de Checklist antes de fechar ordens.</div>
@@ -578,6 +605,45 @@
             }
         });
 
+        document.addEventListener('submit', function(event) {
+            if (event.target.id !== 'formComentario') {
+                return;
+            }
+            event.preventDefault();
+
+            const form = event.target;
+            const idOs = form.querySelector('input[name="id_os"]').value;
+            const erroBox = document.getElementById('erroComentario');
+            const btn = form.querySelector('button[type="submit"]');
+            erroBox.textContent = '';
+            btn.disabled = true;
+
+            fetch('<?= site_url('ordemServico/adicionarComentario') ?>', {
+                    method: 'POST',
+                    body: new FormData(form)
+                })
+                .then(function(response) {
+                    return response.json().then(function(dados) {
+                        return {
+                            ok: response.ok,
+                            dados: dados
+                        };
+                    });
+                })
+                .then(function(res) {
+                    if (res.ok && res.dados.sucesso) {
+                        carregarDetalhesOS(idOs);
+                    } else {
+                        erroBox.textContent = res.dados.mensagem || 'Erro ao enviar comentário.';
+                        btn.disabled = false;
+                    }
+                })
+                .catch(function() {
+                    erroBox.textContent = 'Erro de conexão ao enviar comentário.';
+                    btn.disabled = false;
+                });
+        });
+
         function abrirModalFechamento(idOs) {
             const inputId = document.getElementById('id_os_fechamento');
             inputId.value = idOs;
@@ -586,7 +652,34 @@
             modal.show();
         }
 
+        function preverFoto(input, nomeSpan, previewDiv) {
+            const arquivo = input.files && input.files[0];
+            if (nomeSpan) nomeSpan.textContent = arquivo ? arquivo.name : '';
+            if (previewDiv) {
+                previewDiv.innerHTML = '';
+                if (arquivo) {
+                    const img = document.createElement('img');
+                    img.src = URL.createObjectURL(arquivo);
+                    img.style.maxWidth = '100%';
+                    img.style.maxHeight = '200px';
+                    img.style.borderRadius = '6px';
+                    previewDiv.appendChild(img);
+                }
+            }
+        }
+
         document.addEventListener('change', function(event) {
+            if (event.target.classList && event.target.classList.contains('js-foto-input')) {
+                const campo = event.target.closest('.foto-os-campo');
+                if (campo) {
+                    preverFoto(event.target, campo.querySelector('.js-foto-nome'), campo.querySelector('.js-foto-preview'));
+                }
+                return;
+            }
+            if (event.target.id === 'inputFotoComentario') {
+                preverFoto(event.target, document.getElementById('nomeFotoComentario'), document.getElementById('previewFotoComentario'));
+                return;
+            }
             if (!event.target.matches('.select-checklist-fim')) {
                 return;
             }

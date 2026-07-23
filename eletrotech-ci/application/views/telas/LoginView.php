@@ -100,8 +100,6 @@
     </form>
   </div>
 
-  <?php $this->load->view('components/Chatbot'); ?>
-
   <script src="<?= base_url('assets/js/myLibrary.js') ?>"></script>
   <script>
     MyLib.initPasswordToggle({

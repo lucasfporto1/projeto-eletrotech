@@ -97,7 +97,16 @@ class OrdensServicoController extends Auth_Controller
         $idOs = $this->OrdemservicoModel->registrar_os($eletricistaId, $dataOs ?: null, $produtos, $checklistRespostas);
 
         if ($idOs) {
-            $this->session->set_flashdata('sucesso', 'OS #' . str_pad($idOs, 5, '0', STR_PAD_LEFT) . ' registrada e estoque atualizado!');
+            $mensagem = 'OS #' . str_pad($idOs, 5, '0', STR_PAD_LEFT) . ' registrada e estoque atualizado!';
+
+            $foto = $this->uploadFoto('foto_abertura');
+            if ($foto['status'] === 'ok') {
+                $this->OrdemservicoModel->add_comentario($idOs, 'Foto registrada na abertura da OS.', $foto['nome']);
+            } elseif ($foto['status'] === 'erro') {
+                $mensagem .= ' (Não foi possível anexar a foto de abertura: ' . $foto['erro'] . ')';
+            }
+
+            $this->session->set_flashdata('sucesso', $mensagem);
         } else {
             $this->session->set_flashdata('erro', 'Erro ao registrar OS. Verifique se há estoque suficiente para os materiais selecionados e tente novamente.');
         }
@@ -158,7 +167,16 @@ class OrdensServicoController extends Auth_Controller
         }
 
         if ($this->OrdemservicoModel->fechar_os($idOs, $fechamentoRespostas)) {
-            $this->session->set_flashdata('sucesso', 'OS #' . str_pad($idOs, 5, '0', STR_PAD_LEFT) . ' fechada com sucesso.');
+            $mensagem = 'OS #' . str_pad($idOs, 5, '0', STR_PAD_LEFT) . ' fechada com sucesso.';
+
+            $foto = $this->uploadFoto('foto_fechamento');
+            if ($foto['status'] === 'ok') {
+                $this->OrdemservicoModel->add_comentario($idOs, 'Foto registrada no fechamento da OS.', $foto['nome']);
+            } elseif ($foto['status'] === 'erro') {
+                $mensagem .= ' (Não foi possível anexar a foto de fechamento: ' . $foto['erro'] . ')';
+            }
+
+            $this->session->set_flashdata('sucesso', $mensagem);
         } else {
             $this->session->set_flashdata('erro', 'Erro ao fechar a OS. Verifique se a OS ainda está aberta e tente novamente.');
         }
@@ -175,11 +193,117 @@ class OrdensServicoController extends Auth_Controller
 
         $materiais = $this->OrdemservicoModel->get_materiais_by_os($idOs);
         $respostas = $this->OrdemservicoModel->get_checklist_respostas_by_os($idOs);
+        $comentarios = $this->OrdemservicoModel->get_comentarios_by_os($idOs);
 
         $this->load->view('telas/Detalhes', [
+            'idOs' => (int) $idOs,
             'materiais' => $materiais,
             'respostas' => $respostas,
+            'comentarios' => $comentarios,
         ]);
     }
-}
 
+    public function adicionarComentario()
+    {
+        $this->output->set_content_type('application/json');
+
+        $idOs = (int) $this->input->post('id_os', TRUE);
+        $comentario = trim((string) $this->input->post('comentario', TRUE));
+
+        if ($idOs <= 0) {
+            return $this->output->set_status_header(400)
+                ->set_output(json_encode(['sucesso' => false, 'mensagem' => 'OS inválida.']));
+        }
+
+        $temFoto = isset($_FILES['foto']) && isset($_FILES['foto']['error']) && $_FILES['foto']['error'] !== UPLOAD_ERR_NO_FILE;
+
+        if ($comentario === '' && !$temFoto) {
+            return $this->output->set_status_header(422)
+                ->set_output(json_encode(['sucesso' => false, 'mensagem' => 'Escreva um comentário ou anexe uma foto.']));
+        }
+
+        $fotoNome = null;
+
+        if ($temFoto) {
+            $foto = $this->uploadFoto('foto');
+            if ($foto['status'] === 'erro') {
+                return $this->output->set_status_header(422)
+                    ->set_output(json_encode(['sucesso' => false, 'mensagem' => $foto['erro']]));
+            }
+            $fotoNome = $foto['nome'];
+        }
+
+        if (!$this->OrdemservicoModel->add_comentario($idOs, $comentario, $fotoNome)) {
+            if ($fotoNome) {
+                @unlink(FCPATH . 'assets/uploads/os/' . $fotoNome);
+                @unlink(FCPATH . 'assets/uploads/os/' . preg_replace('/(\.[^.]+)$/', '_thumb$1', $fotoNome));
+            }
+            return $this->output->set_status_header(500)
+                ->set_output(json_encode(['sucesso' => false, 'mensagem' => 'Não foi possível salvar o comentário.']));
+        }
+
+        return $this->output->set_output(json_encode(['sucesso' => true]));
+    }
+
+    /**
+     * Faz o upload de uma foto para assets/uploads/os/.
+     *
+     * @return array{status: 'ok'|'erro'|'vazio', nome: string|null, erro: string|null}
+     */
+    private function uploadFoto($campo = 'foto')
+    {
+        if (!isset($_FILES[$campo]) || !isset($_FILES[$campo]['error']) || $_FILES[$campo]['error'] === UPLOAD_ERR_NO_FILE) {
+            return ['status' => 'vazio', 'nome' => null, 'erro' => null];
+        }
+
+        $diretorio = FCPATH . 'assets/uploads/os/';
+        if (!is_dir($diretorio)) {
+            @mkdir($diretorio, 0755, true);
+        }
+
+        $this->upload->initialize([
+            'upload_path' => $diretorio,
+            'allowed_types' => 'jpg|jpeg|png|gif|webp',
+            'max_size' => 8192,
+            'encrypt_name' => true,
+        ]);
+
+        if (!$this->upload->do_upload($campo)) {
+            return ['status' => 'erro', 'nome' => null, 'erro' => strip_tags($this->upload->display_errors('', ''))];
+        }
+
+        $dados = $this->upload->data();
+
+        // Gera uma miniatura para exibição leve no histórico. Se falhar (ex.: GD
+        // indisponível para o formato), seguimos com a foto original — a listagem
+        // faz fallback para o arquivo cheio quando a thumb não existe.
+        $this->gerarThumb($dados['full_path']);
+
+        return ['status' => 'ok', 'nome' => $dados['file_name'], 'erro' => null];
+    }
+
+    /**
+     * Cria uma miniatura (sufixo _thumb) ao lado da imagem original.
+     * Retorna true em sucesso; não lança erro se a GD não suportar o formato.
+     */
+    private function gerarThumb($caminhoOrigem)
+    {
+        $this->load->library('image_lib');
+        $this->image_lib->clear();
+
+        $this->image_lib->initialize([
+            'image_library'  => 'gd2',
+            'source_image'   => $caminhoOrigem,
+            'create_thumb'   => true,
+            'thumb_marker'   => '_thumb',
+            'maintain_ratio' => true,
+            'width'          => 600,
+            'height'         => 600,
+        ]);
+
+        $ok = $this->image_lib->resize();
+        $this->image_lib->clear();
+
+        return $ok;
+    }
+}

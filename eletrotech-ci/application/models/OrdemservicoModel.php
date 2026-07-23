@@ -6,6 +6,7 @@ class OrdemServicoModel extends CI_Model
     protected $table = 'tabela_ordens_servico';
     protected $tabelaPivot = 'tabela_os_materiais';
     protected $tableRespostas = 'tabela_os_checklist_respostas';
+    protected $tableComentarios = 'tabela_os_comentarios';
 
     public function __construct()
     {
@@ -96,6 +97,36 @@ class OrdemServicoModel extends CI_Model
         }
 
         return $query->result_array();
+    }
+
+    public function get_comentarios_by_os($idOs)
+    {
+        $query = $this->db->select('id, comentario, foto, data_comentario')
+            ->from($this->tableComentarios)
+            ->where('id_os', $idOs)
+            ->order_by('data_comentario', 'DESC')
+            ->get();
+
+        if ($query === false) {
+            return [];
+        }
+
+        return $query->result_array();
+    }
+
+    public function add_comentario($idOs, $comentario, $foto = null)
+    {
+        $ordem = $this->db->select('id')->where('id', $idOs)->get($this->table)->row_array();
+
+        if (empty($ordem)) {
+            return false;
+        }
+
+        return $this->db->insert($this->tableComentarios, [
+            'id_os' => (int) $idOs,
+            'comentario' => ($comentario !== '' ? $comentario : null),
+            'foto' => $foto,
+        ]);
     }
 
     public function registrar_os($eletricistaId, $dataOs, array $produtos, array $respostas = [])
