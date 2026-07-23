@@ -69,6 +69,29 @@ class BaixasModel extends CI_Model
     }
 
 
+    public function consultar_por_ids(array $ids)
+    {
+        if (empty($ids)) {
+            return array();
+        }
+
+        $this->db
+            ->select('m.id, m.tipo, m.quantidade, m.valor_unitario,
+                      (m.quantidade * m.valor_unitario) AS valor_total,
+                      m.data_mov, m.origem, p.nome_produto,
+                      CASE WHEN m.tipo = "entrada" THEN (m.quantidade * m.valor_unitario) ELSE 0 END AS valor_entrada,
+                      CASE WHEN m.tipo = "saida" THEN (m.quantidade * m.valor_unitario) ELSE 0 END AS valor_saida')
+            ->from('tabela_movimentacoes m')
+            ->join('tabela_produtos p', 'm.id_produto = p.id', 'inner')
+            ->where_in('m.id', array_map('intval', $ids))
+            ->order_by('m.data_mov', 'DESC')
+            ->order_by('m.id', 'DESC');
+
+        $query = $this->db->get();
+
+        return $query === false ? array() : $query->result_array();
+    }
+
     public function detalhe($id)
     {
         $query = $this->db

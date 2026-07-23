@@ -44,6 +44,36 @@ class BaixasController extends Auth_Controller
         $this->load->view('telas/BaixasView', $data);
     }
 
+    public function relatorio_misto()
+    {
+        $ids = $this->input->post('ids');
+        $ids = array_filter(array_map('intval', (array) $ids));
+
+        if (empty($ids)) {
+            $this->session->set_flashdata('erro', 'Selecione pelo menos uma movimentação para criar o relatório misto.');
+            redirect('baixas');
+            return;
+        }
+
+        $movimentacoes = $this->BaixasModel->consultar_por_ids($ids);
+
+        if (empty($movimentacoes)) {
+            $this->session->set_flashdata('erro', 'Nenhuma movimentação válida foi encontrada para o relatório selecionado.');
+            redirect('baixas');
+            return;
+        }
+
+        $data = array(
+            'titulo'          => 'Relatório Misto - EletroTech',
+            'movimentacoes'   => $movimentacoes,
+            'total_registros' => count($movimentacoes),
+            'total_entrada'   => array_sum(array_column($movimentacoes, 'valor_entrada')),
+            'total_saida'     => array_sum(array_column($movimentacoes, 'valor_saida')),
+        );
+
+        $this->load->view('telas/BaixaRelatorioMistoView', $data);
+    }
+
     public function detalhes($id = null)
     {
         if (empty($id) || !is_numeric($id)) {

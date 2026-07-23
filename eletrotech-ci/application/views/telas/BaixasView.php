@@ -210,6 +210,7 @@ $totalSaida   = $totais['total_saida'];
             font-size: 18px;
             text-decoration: none;
             transition: 0.2s;
+            margin-left: 10px;
         }
 
         .btn-detalhes:hover {
@@ -279,51 +280,60 @@ $totalSaida   = $totais['total_saida'];
                 </div>
             </div>
 
-            <table class="table table-dark table-hover table-bordered custom-table text-center">
-                <thead>
-                    <tr>
-                        <th>Ações</th>
-                        <th>Data</th>
-                        <th>Produto</th>
-                        <th>Tipo</th>
-                        <th>Qtd</th>
-                        <th>Valor Unit.</th>
-                        <th>Valor Total</th>
-                        <th>Origem</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (!empty($movimentacoes)): ?>
-                        <?php foreach ($movimentacoes as $m): ?>
-                            <tr>
-                                <td>
-                                    <a href="<?= site_url('baixas/detalhes/' . $m['id']) ?>" class="btn-detalhes" title="Ver relatório detalhado">
-                                        <i class="fa-solid fa-file-lines"></i>
-                                    </a>
-                                </td>
-                                <td><?= date('d/m/Y', strtotime($m['data_mov'])) ?></td>
-                                <td><?= htmlspecialchars($m['nome_produto']) ?></td>
-                                <td>
-                                    <?php if ($m['tipo'] === 'entrada'): ?>
-                                        <span class="badge-entrada"><i class="fa-solid fa-arrow-down"></i> Entrada</span>
-                                    <?php else: ?>
-                                        <span class="badge-saida"><i class="fa-solid fa-arrow-up"></i> Saída</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td><?= (int) $m['quantidade'] ?></td>
-                                <td>R$ <?= number_format($m['valor_unitario'], 2, ',', '.') ?></td>
-                                <td>R$ <?= number_format($m['valor_total'], 2, ',', '.') ?></td>
-                                <td><?= htmlspecialchars($m['origem']) ?></td>
+            <form action="<?= site_url('baixas/relatorio_misto') ?>" method="POST" class="mb-3">
+                <div class="d-flex justify-content-end mb-3">
+                    <button type="submit" id="btn-relatorio-misto" class="btn-consultar" style="display:none;">
+                        <i class="fa-solid fa-file-lines"></i> Criar relatório misto
+                    </button>
+                </div>
 
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php else: ?>
+                <table class="table table-dark table-hover table-bordered custom-table text-center">
+                    <thead>
                         <tr>
-                            <td colspan="8" class="empty-state">Nenhuma movimentação encontrada para os filtros selecionados.</td>
+                            <th>Ações</th>
+                            <th>Data</th>
+                            <th>Produto</th>
+                            <th>Tipo</th>
+                            <th>Qtd</th>
+                            <th>Valor Unit.</th>
+                            <th>Valor Total</th>
+                            <th>Origem</th>
                         </tr>
-                    <?php endif; ?>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <?php if (!empty($movimentacoes)): ?>
+                            <?php foreach ($movimentacoes as $m): ?>
+                                <tr>
+                                    <td>
+                                        <input type="checkbox" name="ids[]" value="<?= (int) $m['id'] ?>" class="form-check-input" style="accent-color:#FBD814;">
+
+                                        <a href="<?= site_url('baixas/detalhes/' . $m['id']) ?>" class="btn-detalhes" title="Ver relatório detalhado">
+                                            <i class="fa-solid fa-file-lines"></i>
+                                        </a>
+                                    </td>
+                                    <td><?= date('d/m/Y', strtotime($m['data_mov'])) ?></td>
+                                    <td><?= htmlspecialchars($m['nome_produto']) ?></td>
+                                    <td>
+                                        <?php if ($m['tipo'] === 'entrada'): ?>
+                                            <span class="badge-entrada"><i class="fa-solid fa-arrow-down"></i> Entrada</span>
+                                        <?php else: ?>
+                                            <span class="badge-saida"><i class="fa-solid fa-arrow-up"></i> Saída</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td><?= (int) $m['quantidade'] ?></td>
+                                    <td>R$ <?= number_format($m['valor_unitario'], 2, ',', '.') ?></td>
+                                    <td>R$ <?= number_format($m['valor_total'], 2, ',', '.') ?></td>
+                                    <td><?= htmlspecialchars($m['origem']) ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="9" class="empty-state">Nenhuma movimentação encontrada para os filtros selecionados.</td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </form>
 
             <?php $this->load->view('components/Pagination'); ?>
         <?php else: ?>
@@ -336,6 +346,26 @@ $totalSaida   = $totais['total_saida'];
     <?php $this->load->view('components/Chatbot'); ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const btnRelatorio = document.getElementById('btn-relatorio-misto');
+            const checkboxes = document.querySelectorAll('input[name="ids[]"]');
+
+            const atualizarBotao = function () {
+                const algumSelecionado = Array.from(checkboxes).some(function (checkbox) {
+                    return checkbox.checked;
+                });
+
+                btnRelatorio.style.display = algumSelecionado ? 'inline-flex' : 'none';
+            };
+
+            checkboxes.forEach(function (checkbox) {
+                checkbox.addEventListener('change', atualizarBotao);
+            });
+
+            atualizarBotao();
+        });
+    </script>
 </body>
 
 </html>
