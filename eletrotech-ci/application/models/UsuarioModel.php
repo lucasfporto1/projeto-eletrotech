@@ -3,13 +3,22 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 class UsuarioModel extends CI_Model
 {
-    public function listarUsuarios()
+    public function listarUsuarios($limite = null, $offset = 0)
     {
-        return $this->db
+        $this->db
             ->select('id, usuario')
-            ->order_by('id', 'DESC')
-            ->get('tabela_usuarios')
-            ->result();
+            ->order_by('id', 'DESC');
+
+        if ($limite !== null) {
+            $this->db->limit($limite, $offset);
+        }
+
+        return $this->db->get('tabela_usuarios')->result();
+    }
+
+    public function contarUsuarios()
+    {
+        return $this->db->count_all_results('tabela_usuarios');
     }
 
     public function buscarUsuarioPorId($id)

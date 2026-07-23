@@ -11,8 +11,12 @@ class ProdutosController extends Auth_Controller
 
     public function index()
     {
-        $data['titulo']   = 'Produtos - EletroTech';
-        $data['produtos'] = $this->ProdutosModel->get_all();
+        $data['titulo'] = 'Produtos - EletroTech';
+
+        $total = $this->ProdutosModel->contar();
+        $data  = array_merge($data, $this->paginar($total, site_url('produtos')));
+
+        $data['produtos'] = $this->ProdutosModel->get_all($data['por_pagina'], $data['offset']);
 
         $this->load->view('telas/ProdutosView', $data);
     }

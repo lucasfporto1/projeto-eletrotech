@@ -11,6 +11,7 @@
         body {
             background-color: #3c3b3b;
             color: white;
+            padding-bottom: 50px;
         }
 
         nav.navbar.navbar-custom {
@@ -125,6 +126,11 @@
             flex-direction: column;
         }
 
+        form.eletrotech-form label.required::after {
+            content: ' *';
+            color: #FBD814;
+        }
+
         form.eletrotech-form label {
             color: #ccc;
             font-size: 11px;
@@ -155,11 +161,6 @@
         form.eletrotech-form option {
             background-color: #282828;
             color: white;
-        }
-
-        form.eletrotech-form label.required::after {
-            content: ' *';
-            color: #FBD814;
         }
 
         form.eletrotech-form .btn-submit {
@@ -317,6 +318,8 @@
                 <?php endif; ?>
             </tbody>
         </table>
+
+        <?php $this->load->view('components/Pagination'); ?>
     </div>
 
     <div class="modal fade" id="modalNovaOS" tabindex="-1" aria-hidden="true">
@@ -332,7 +335,7 @@
 
                     <div class="row">
                         <div class="col-md-6">
-                            <label for="eletricista_os" class="required">Eletricista Responsável</label>
+                            <label for="eletricista_os">Eletricista Responsável</label>
                             <select name="eletricista_os" id="eletricista_os" required>
                                 <option value="" disabled selected hidden>Selecione (Apenas Ativos)</option>
                                 <?php foreach ($eletricistasAtivos as $eletricista): ?>
@@ -341,7 +344,7 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label for="data_os" class="required">Data da Operação</label>
+                            <label for="data_os">Data da Operação</label>
                             <input type="date" name="data_os" id="data_os" max="<?= date('Y-m-d') ?>" required>
                             <small class="form-text text-muted">Opcional: deixe em branco se a OS ainda não tiver data de início.</small>
                         </div>
@@ -353,7 +356,7 @@
                     <div id="lista-materiais">
                         <div class="linha-produto">
                             <div>
-                                <label class="required">Produto</label>
+                                <label>Produto</label>
                                 <select name="id_produto[]" required>
                                     <option value="" disabled selected hidden>Selecione o material...</option>
                                     <?php if (!empty($produtosDisponiveis)): ?>
@@ -366,7 +369,7 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="required">Quantidade</label>
+                                <label>Quantidade</label>
                                 <input type="number" name="qtd_utilizada[]" min="1" placeholder="Ex: 5" required>
                             </div>
                         </div>
@@ -445,7 +448,6 @@
                         <div class="alert alert-warning text-center">Nenhum checklist de fim selecionado. Defina um checklist de fim na tela de Checklist antes de fechar ordens.</div>
                         <button type="button" class="btn-submit" disabled>Fechar OS</button>
                     <?php endif; ?>
-
                     <?= form_close() ?>
                 </div>
             </div>

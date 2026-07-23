@@ -322,7 +322,7 @@
                             <td><?= htmlspecialchars($meta['nome_eletricista']) ?></td>
                             <td><?= htmlspecialchars($meta['mes_meta'] ?? '-') ?></td>
                             <td>R$ <?= number_format($meta['vlr_meta'], 2, ',', '.') ?></td>
-                            
+
                             <td><?= $meta['id'] ?></td>
                         </tr>
                     <?php endforeach; ?>
@@ -333,6 +333,7 @@
                 <?php endif; ?>
             </tbody>
         </table>
+        <?php $this->load->view('components/Pagination'); ?>
     </div>
 
     <div class="modal fade" id="modalNovaMeta" tabindex="-1" aria-hidden="true">

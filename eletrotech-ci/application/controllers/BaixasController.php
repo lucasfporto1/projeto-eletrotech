@@ -3,8 +3,6 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 class BaixasController extends Auth_Controller
 {
-    const POR_PAGINA = 10;
-
     public function __construct()
     {
         parent::__construct();
@@ -31,59 +29,19 @@ class BaixasController extends Auth_Controller
             'totais'        => array('total_entrada' => 0, 'total_saida' => 0),
             'total_rows'    => 0,
             'offset'        => 0,
-            'por_pagina'    => self::POR_PAGINA,
+            'por_pagina'    => self::POR_PAGINA_PADRAO,
             'paginacao'     => '',
         );
 
         if ($consultou) {
-            $offset = (int) $this->input->get('per_page');
-            $total  = $this->BaixasModel->contar($filtros);
+            $total = $this->BaixasModel->contar($filtros);
+            $data  = array_merge($data, $this->paginar($total, site_url('baixas')));
 
-            $data['movimentacoes'] = $this->BaixasModel->consultar($filtros, self::POR_PAGINA, $offset);
+            $data['movimentacoes'] = $this->BaixasModel->consultar($filtros, $data['por_pagina'], $data['offset']);
             $data['totais']        = $this->BaixasModel->totais($filtros);
-            $data['total_rows']    = $total;
-            $data['offset']        = $offset;
-            $data['paginacao']     = $this->montar_paginacao($total);
         }
 
         $this->load->view('telas/BaixasView', $data);
-    }
-
-
-    private function montar_paginacao($total)
-    {
-        $config = array(
-            'base_url'            => site_url('baixas'),
-            'total_rows'          => $total,
-            'per_page'            => self::POR_PAGINA,
-            'page_query_string'   => TRUE,
-            'query_string_segment' => 'per_page',
-            'reuse_query_string'  => TRUE,
-            'num_links'           => 2,
-            'first_link'          => 'Primeira',
-            'last_link'           => 'Última',
-            'prev_link'           => '&laquo;',
-            'next_link'           => '&raquo;',
-            'full_tag_open'       => '<ul class="pagination justify-content-center mb-0">',
-            'full_tag_close'      => '</ul>',
-            'first_tag_open'      => '<li class="page-item">',
-            'first_tag_close'     => '</li>',
-            'last_tag_open'       => '<li class="page-item">',
-            'last_tag_close'      => '</li>',
-            'prev_tag_open'       => '<li class="page-item">',
-            'prev_tag_close'      => '</li>',
-            'next_tag_open'       => '<li class="page-item">',
-            'next_tag_close'      => '</li>',
-            'num_tag_open'        => '<li class="page-item">',
-            'num_tag_close'       => '</li>',
-            'cur_tag_open'        => '<li class="page-item active"><span class="page-link">',
-            'cur_tag_close'       => '</span></li>',
-            'attributes'          => array('class' => 'page-link'),
-        );
-
-        $this->pagination->initialize($config);
-
-        return $this->pagination->create_links();
     }
 
     public function detalhes($id = null)

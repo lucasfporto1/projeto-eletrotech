@@ -280,6 +280,8 @@
                 <?php endif; ?>
             </tbody>
         </table>
+
+        <?php $this->load->view('components/Pagination'); ?>
     </div>
 
     <div class="modal fade" id="modalNovoProduto" tabindex="-1" aria-hidden="true">

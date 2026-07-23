@@ -10,7 +10,6 @@
 /** @var int    $por_pagina */
 /** @var string $paginacao */
 
-// Os totais vêm do model somando o filtro inteiro, não só a página exibida
 $totalEntrada = $totais['total_entrada'];
 $totalSaida   = $totais['total_saida'];
 ?>
@@ -216,39 +215,6 @@ $totalSaida   = $totais['total_saida'];
         .btn-detalhes:hover {
             color: #ffffff;
         }
-
-        .rodape-paginacao {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin: 20px 0 40px 0;
-        }
-
-        .rodape-paginacao .contagem {
-            color: #a0a0a0;
-            font-size: 14px;
-        }
-
-        .rodape-paginacao .page-link {
-            background-color: #282828;
-            border-color: #555;
-            color: #ffffff;
-        }
-
-        .rodape-paginacao .page-link:hover {
-            background-color: #FBD814;
-            border-color: #FBD814;
-            color: #282828;
-        }
-
-        .rodape-paginacao .page-item.active .page-link {
-            background-color: #FBD814;
-            border-color: #FBD814;
-            color: #282828;
-            font-weight: bold;
-        }
     </style>
 </head>
 
@@ -359,14 +325,7 @@ $totalSaida   = $totais['total_saida'];
                 </tbody>
             </table>
 
-            <?php if ($total_rows > $por_pagina): ?>
-                <div class="rodape-paginacao">
-                    <nav><?= $paginacao ?></nav>
-                    <span class="contagem">
-                        Mostrando <?= $offset + 1 ?>–<?= min($offset + $por_pagina, $total_rows) ?> de <?= $total_rows ?> registros
-                    </span>
-                </div>
-            <?php endif; ?>
+            <?php $this->load->view('components/Pagination'); ?>
         <?php else: ?>
             <div class="hint">
                 <i class="fa-solid fa-filter fa-2x" style="color:#FBD814; margin-bottom:15px;"></i>
@@ -374,7 +333,6 @@ $totalSaida   = $totais['total_saida'];
             </div>
         <?php endif; ?>
     </div>
-
     <?php $this->load->view('components/Chatbot'); ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

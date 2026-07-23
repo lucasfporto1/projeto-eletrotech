@@ -10,21 +10,15 @@ class MetasModel extends CI_Model
         parent::__construct();
     }
 
-    public function get_all($filtroEletricista = '', $filtroMes = '')
+    public function get_all($filtroEletricista = '', $filtroMes = '', $limite = null, $offset = 0)
     {
-        $this->db->select('m.*, e.nome as nome_eletricista')
-                  ->from('tabela_metas m')
-                  ->join('tabela_eletricistas e', 'm.eletricista_meta = e.id', 'inner');
-
-        if (!empty($filtroEletricista)) {
-            $this->db->where('m.eletricista_meta', (int) $filtroEletricista);
-        }
-
-        if (!empty($filtroMes)) {
-            $this->db->where('m.mes_meta', $filtroMes);
-        }
+        $this->aplicar_filtros($filtroEletricista, $filtroMes);
 
         $this->db->order_by('m.id', 'DESC');
+
+        if ($limite !== null) {
+            $this->db->limit($limite, $offset);
+        }
 
         $query = $this->db->get();
 
@@ -33,6 +27,28 @@ class MetasModel extends CI_Model
         }
 
         return $query->result_array();
+    }
+
+    public function contar($filtroEletricista = '', $filtroMes = '')
+    {
+        $this->aplicar_filtros($filtroEletricista, $filtroMes);
+
+        return $this->db->count_all_results();
+    }
+
+    private function aplicar_filtros($filtroEletricista, $filtroMes)
+    {
+        $this->db->from('tabela_metas m')
+                  ->join('tabela_eletricistas e', 'm.eletricista_meta = e.id', 'inner')
+                  ->select('m.*, e.nome as nome_eletricista');
+
+        if (!empty($filtroEletricista)) {
+            $this->db->where('m.eletricista_meta', (int) $filtroEletricista);
+        }
+
+        if (!empty($filtroMes)) {
+            $this->db->where('m.mes_meta', $filtroMes);
+        }
     }
     
     public function get_eletricistas_ativos()

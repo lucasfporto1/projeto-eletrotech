@@ -5,9 +5,10 @@ class UsuariosController extends Auth_Controller
 {
     public function index()
     {
-        $dados = array(
-            'usuarios' => $this->usuarios->listarUsuarios(),
-        );
+        $total = $this->usuarios->contarUsuarios();
+        $dados = $this->paginar($total, site_url('usuarios'));
+
+        $dados['usuarios'] = $this->usuarios->listarUsuarios($dados['por_pagina'], $dados['offset']);
 
         $this->load->view('telas/UsuariosView', $dados);
     }

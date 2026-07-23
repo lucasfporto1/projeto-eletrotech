@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <title><?= $titulo ?></title>
     <style>
-
         body {
             background-color: #3c3b3b;
             color: white;
@@ -49,6 +48,7 @@
             background-color: #ffffff;
             color: #282828;
         }
+
         nav.navbar.navbar-custom {
             background-color: #282828;
             padding-top: 15px;
@@ -107,7 +107,6 @@
             font-size: 0.95rem;
         }
 
-        /* Filtro (padrão da tela de metas) */
         .filtro-container {
             background-color: #282828;
             padding: 15px;
@@ -261,7 +260,7 @@
             flex: 1;
         }
 
-        .subQuestion{
+        .subQuestion {
             font-size: 12px;
             color: #f7f7f7;
         }
@@ -324,155 +323,155 @@
             </button>
         </div>
 
-    <div class="container mt-2">
-        <form method="GET" action="<?= site_url('checklist') ?>" class="filtro-container">
-            <div style="flex-grow:1; min-width:220px;">
-                <label for="filtro_titulo" style="font-size: 12px; color: #FBD814; font-weight: bold;">Buscar por título:</label>
-                <input type="text" name="titulo" id="filtro_titulo" class="w-100"
-                       placeholder="Digite o título do checklist"
-                       value="<?= isset($filterTitulo) ? htmlspecialchars($filterTitulo) : '' ?>">
-            </div>
-            <div style="flex-grow:1; min-width:180px;">
-                <label for="filtro_tipo" style="font-size: 12px; color: #FBD814; font-weight: bold;">Filtrar por tipo:</label>
-                <select name="tipo" id="filtro_tipo" class="w-100">
-                    <option value="" <?= empty($filterTipo) ? 'selected' : '' ?>>Todos</option>
-                    <option value="inicio" <?= (isset($filterTipo) && $filterTipo === 'inicio') ? 'selected' : '' ?>>Início</option>
-                    <option value="fim" <?= (isset($filterTipo) && $filterTipo === 'fim') ? 'selected' : '' ?>>Fim</option>
-                </select>
-            </div>
-            <div>
-                <button type="submit" class="btn btn-outline-warning" style="padding: 8px 15px;"><i class="fa-solid fa-search"></i> Buscar</button>
-                <a href="<?= site_url('checklist') ?>" class="btn btn-outline-secondary" style="padding: 8px 15px;" title="Limpar Filtros"><i class="fa-solid fa-times"></i></a>
-            </div>
-        </form>
-
-        <div class="table-responsive">
-            <table class="table table-dark table-hover table-bordered custom-table text-center">
-                <thead>
-                    <tr>
-                        <th scope="col" style="width: 8%;">Ações</th>
-                        <th scope="col" style="width: 5%;">ID</th>
-                        <th scope="col">Título</th>
-                        <th scope="col" style="width: 12%;">Tipo</th>
-                        <th scope="col" style="width: 12%;">Perguntas</th>
-                        <th scope="col" style="width: 18%;">Padrão</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (!empty($checklists)): ?>
-                        <?php foreach ($checklists as $checklist): ?>
-                            <tr>
-                                <td>
-                                    <button type="button" class="btn btn-sm btn-outline-info" onclick="fetchPerguntas(<?= $checklist['id'] ?>)">
-                                        <i class="fa-solid fa-eye"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="if(confirm('Tem certeza que deseja excluir este checklist?')) { window.location.href='<?= site_url('checklist/excluir/' . $checklist['id']) ?>'; }">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
-                                </td>
-                                <td><?= $checklist['id'] ?></td>
-                                <td><?= htmlspecialchars($checklist['titulo']) ?></td>
-                                <td><?= htmlspecialchars(ucfirst($checklist['tipo'] ?? '')) ?></td>
-                                <td><?= intval($checklist['total_perguntas']) ?></td>
-                                <td>
-                                    <?php if ($checklist['selecionado']): ?>
-                                        <span class="badge bg-success">Selecionado</span>
-                                    <?php else: ?>
-                                        <?= form_open('checklist/selecionar', ['style' => 'display:inline-block;margin:0;']) ?>
-                                        <input type="hidden" name="id_checklist" value="<?= $checklist['id'] ?>">
-                                        <input type="hidden" name="tipo" value="<?= $checklist['tipo'] ?>">
-                                        <button type="submit" class="btn btn-sm btn-outline-warning">Definir padrão</button>
-                                        <?= form_close() ?>
-                                    <?php endif; ?>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <tr>
-                            <td colspan="6" class="table-empty">Nenhum checklist encontrado para os filtros selecionados.</td>
-                        </tr>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <div class="modal fade" id="modalNovoChecklist" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content eletrotech-modal">
-                <div class="modal-header">
-                    <h5 class="modal-title">Cadastrar Checklist</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="container mt-2">
+            <form method="GET" action="<?= site_url('checklist') ?>" class="filtro-container">
+                <div style="flex-grow:1; min-width:220px;">
+                    <label for="filtro_titulo" style="font-size: 12px; color: #FBD814; font-weight: bold;">Buscar por título:</label>
+                    <input type="text" name="titulo" id="filtro_titulo" class="w-100"
+                        placeholder="Digite o título do checklist"
+                        value="<?= isset($filterTitulo) ? htmlspecialchars($filterTitulo) : '' ?>">
                 </div>
-                <div class="modal-body p-4">
-                    <p class="mb-3" style="color:#FBD814; font-size:12px; font-weight:bold;">* campos obrigatórios</p>
-                    <?= form_open('checklist/cadastrar', ['class' => 'eletrotech-form']) ?>
-
-                    <label for="titulo_checklist" class="required">Título do checklist</label>
-                    <input type="text" name="titulo" id="titulo_checklist" placeholder="Ex: Checklist de abertura de OS" required>
-
-                    <label for="tipo_checklist" class="required">Tipo do Checklist</label>
-                    <select name="tipo" id="tipo_checklist" required>
-                        <option value="" disabled selected hidden>Selecione o tipo</option>
-                        <option value="inicio">Início</option>
-                        <option value="fim">Fim</option>
+                <div style="flex-grow:1; min-width:180px;">
+                    <label for="filtro_tipo" style="font-size: 12px; color: #FBD814; font-weight: bold;">Filtrar por tipo:</label>
+                    <select name="tipo" id="filtro_tipo" class="w-100">
+                        <option value="" <?= empty($filterTipo) ? 'selected' : '' ?>>Todos</option>
+                        <option value="inicio" <?= (isset($filterTipo) && $filterTipo === 'inicio') ? 'selected' : '' ?>>Início</option>
+                        <option value="fim" <?= (isset($filterTipo) && $filterTipo === 'fim') ? 'selected' : '' ?>>Fim</option>
                     </select>
+                </div>
+                <div>
+                    <button type="submit" class="btn btn-outline-warning" style="padding: 8px 15px;"><i class="fa-solid fa-search"></i> Buscar</button>
+                    <a href="<?= site_url('checklist') ?>" class="btn btn-outline-secondary" style="padding: 8px 15px;" title="Limpar Filtros"><i class="fa-solid fa-times"></i></a>
+                </div>
+            </form>
 
-                    <div id="perguntas_container">
-                        <div class="question-row">
-                            <div style="flex:1">
-                                <textarea name="pergunta[]" placeholder="Digite a primeira pergunta" required></textarea>
-                            </div>
-                            <div style="width:160px; margin-left:10px">
-                                <label style="display:block; font-size:11px; margin-bottom:6px;">Tipo</label>
-                                <select name="tipo_resposta[]" onchange="onTipoChange(this)">
-                                    <option value="text">Text</option>
-                                    <option value="radio">Radio (Sim/Não)</option>
-                                </select>
-                            </div>
-                            <div style="width:180px; margin-left:10px">
-                                <label style="display:block; font-size:11px; margin-bottom:6px;">Bloqueia se</label>
-                                <input type="text" name="bloqueia_abertura[]" placeholder="Ex: nao (radio) ou texto" />
-                            </div>
-                            <button type="button" class="remove-pergunta" onclick="removerPergunta(this)" title="Remover pergunta">&times;</button>
-                        </div>
+            <div class="table-responsive">
+                <table class="table table-dark table-hover table-bordered custom-table text-center">
+                    <thead>
+                        <tr>
+                            <th scope="col" style="width: 8%;">Ações</th>
+                            <th scope="col" style="width: 5%;">ID</th>
+                            <th scope="col">Título</th>
+                            <th scope="col" style="width: 12%;">Tipo</th>
+                            <th scope="col" style="width: 12%;">Perguntas</th>
+                            <th scope="col" style="width: 18%;">Padrão</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (!empty($checklists)): ?>
+                            <?php foreach ($checklists as $checklist): ?>
+                                <tr>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-outline-info" onclick="fetchPerguntas(<?= $checklist['id'] ?>)">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="if(confirm('Tem certeza que deseja excluir este checklist?')) { window.location.href='<?= site_url('checklist/excluir/' . $checklist['id']) ?>'; }">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </td>
+                                    <td><?= $checklist['id'] ?></td>
+                                    <td><?= htmlspecialchars($checklist['titulo']) ?></td>
+                                    <td><?= htmlspecialchars(ucfirst($checklist['tipo'] ?? '')) ?></td>
+                                    <td><?= intval($checklist['total_perguntas']) ?></td>
+                                    <td>
+                                        <?php if ($checklist['selecionado']): ?>
+                                            <span class="badge bg-success">Selecionado</span>
+                                        <?php else: ?>
+                                            <?= form_open('checklist/selecionar', ['style' => 'display:inline-block;margin:0;']) ?>
+                                            <input type="hidden" name="id_checklist" value="<?= $checklist['id'] ?>">
+                                            <input type="hidden" name="tipo" value="<?= $checklist['tipo'] ?>">
+                                            <button type="submit" class="btn btn-sm btn-outline-warning">Definir padrão</button>
+                                            <?= form_close() ?>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="6" class="table-empty">Nenhum checklist encontrado para os filtros selecionados.</td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+
+                <?php $this->load->view('components/Pagination'); ?>
+            </div>
+        </div>
+
+        <div class="modal fade" id="modalNovoChecklist" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content eletrotech-modal">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Cadastrar Checklist</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
+                    <div class="modal-body p-4">
+                        <p class="mb-3" style="color:#FBD814; font-size:12px; font-weight:bold;">* campos obrigatórios</p>
+                        <?= form_open('checklist/cadastrar', ['class' => 'eletrotech-form']) ?>
 
-                    <button type="button" class="btn btn-sm btn-outline-light mb-3" onclick="adicionarPergunta()">
-                        <i class="fa-solid fa-plus"></i> Adicionar pergunta
-                    </button>
+                        <label for="titulo_checklist" class="required">Título do checklist</label>
+                        <input type="text" name="titulo" id="titulo_checklist" placeholder="Ex: Checklist de abertura de OS" required>
 
-                    <button type="submit" class="btn-submit">Salvar Checklist</button>
+                        <label for="tipo_checklist" class="required">Tipo do Checklist</label>
+                        <select name="tipo" id="tipo_checklist" required>
+                            <option value="" disabled selected hidden>Selecione o tipo</option>
+                            <option value="inicio">Início</option>
+                            <option value="fim">Fim</option>
+                        </select>
 
-                    <?= form_close() ?>
+                        <div id="perguntas_container">
+                            <div class="question-row">
+                                <div style="flex:1">
+                                    <textarea name="pergunta[]" placeholder="Digite a primeira pergunta" required></textarea>
+                                </div>
+                                <div style="width:160px; margin-left:10px">
+                                    <label style="display:block; font-size:11px; margin-bottom:6px;">Tipo</label>
+                                    <select name="tipo_resposta[]" onchange="onTipoChange(this)">
+                                        <option value="text">Text</option>
+                                        <option value="radio">Radio (Sim/Não)</option>
+                                    </select>
+                                </div>
+                                <div style="width:180px; margin-left:10px">
+                                    <label style="display:block; font-size:11px; margin-bottom:6px;">Bloqueia se</label>
+                                    <input type="text" name="bloqueia_abertura[]" placeholder="Ex: nao (radio) ou texto" />
+                                </div>
+                                <button type="button" class="remove-pergunta" onclick="removerPergunta(this)" title="Remover pergunta">&times;</button>
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn btn-sm btn-outline-light mb-3" onclick="adicionarPergunta()">
+                            <i class="fa-solid fa-plus"></i> Adicionar pergunta
+                        </button>
+
+                        <button type="submit" class="btn-submit">Salvar Checklist</button>
+
+                        <?= form_close() ?>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+        <?php $this->load->view('components/Chatbot'); ?>
 
-    <?php $this->load->view('components/Chatbot'); ?>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Modal for perguntas -->
-    <div class="modal fade" id="modalPerguntas" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content eletrotech-modal">
-                <div class="modal-header">
-                    <h5 class="modal-title">Perguntas do Checklist</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body p-4" id="modalPerguntasBody">
-                    <p class="text-center">Carregando...</p>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+        <div class="modal fade" id="modalPerguntas" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content eletrotech-modal">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Perguntas do Checklist</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4" id="modalPerguntasBody">
+                        <p class="text-center">Carregando...</p>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-    <script>
-        function adicionarPergunta() {
-            const container = document.getElementById('perguntas_container');
-            const linha = document.createElement('div');
-            linha.className = 'question-row';
-            linha.innerHTML = `
+        <script>
+            function adicionarPergunta() {
+                const container = document.getElementById('perguntas_container');
+                const linha = document.createElement('div');
+                linha.className = 'question-row';
+                linha.innerHTML = `
                 <div style="flex:1">
                     <textarea name="pergunta[]" placeholder="Digite a pergunta" required></textarea>
                 </div>
@@ -489,43 +488,44 @@
                 </div>
                 <button type="button" class="remove-pergunta" onclick="removerPergunta(this)" title="Remover pergunta">&times;</button>
             `;
-            container.appendChild(linha);
-        }
-
-        function onTipoChange(selectEl) {
-            const tipo = selectEl.value;
-            const row = selectEl.closest('.question-row');
-            const bloqueioInput = row.querySelector('input[name="bloqueia_abertura[]"]');
-            if (!bloqueioInput) return;
-            if (tipo === 'radio') {
-                bloqueioInput.placeholder = 'Digite: sim ou nao';
-            } else {
-                bloqueioInput.placeholder = 'Texto que bloqueia (opcional)';
+                container.appendChild(linha);
             }
-        }
 
-        function removerPergunta(button) {
-            const container = document.getElementById('perguntas_container');
-            if (container.querySelectorAll('.question-row').length > 1) {
-                button.closest('.question-row').remove();
+            function onTipoChange(selectEl) {
+                const tipo = selectEl.value;
+                const row = selectEl.closest('.question-row');
+                const bloqueioInput = row.querySelector('input[name="bloqueia_abertura[]"]');
+                if (!bloqueioInput) return;
+                if (tipo === 'radio') {
+                    bloqueioInput.placeholder = 'Digite: sim ou nao';
+                } else {
+                    bloqueioInput.placeholder = 'Texto que bloqueia (opcional)';
+                }
             }
-        }
 
-        function fetchPerguntas(id) {
-            const container = document.getElementById('modalPerguntasBody');
-            container.innerHTML = '<p class="text-center">Carregando...</p>';
-            fetch('<?= site_url('checklist/perguntas') ?>/' + id)
-                .then(response => response.text())
-                .then(html => {
-                    container.innerHTML = html;
-                    const modalEl = document.getElementById('modalPerguntas');
-                    const modal = new bootstrap.Modal(modalEl);
-                    modal.show();
-                })
-                .catch(() => {
-                    container.innerHTML = '<p class="text-center text-danger">Erro ao carregar perguntas.</p>';
-                });
-        }
-    </script>
+            function removerPergunta(button) {
+                const container = document.getElementById('perguntas_container');
+                if (container.querySelectorAll('.question-row').length > 1) {
+                    button.closest('.question-row').remove();
+                }
+            }
+
+            function fetchPerguntas(id) {
+                const container = document.getElementById('modalPerguntasBody');
+                container.innerHTML = '<p class="text-center">Carregando...</p>';
+                fetch('<?= site_url('checklist/perguntas') ?>/' + id)
+                    .then(response => response.text())
+                    .then(html => {
+                        container.innerHTML = html;
+                        const modalEl = document.getElementById('modalPerguntas');
+                        const modal = new bootstrap.Modal(modalEl);
+                        modal.show();
+                    })
+                    .catch(() => {
+                        container.innerHTML = '<p class="text-center text-danger">Erro ao carregar perguntas.</p>';
+                    });
+            }
+        </script>
 </body>
+
 </html>

@@ -211,8 +211,7 @@ $ehEntrada = $m['tipo'] === 'entrada';
 
             nav.navbar,
             .acoes,
-            #chatbot,
-            .chatbot {
+            #chat-widget {
                 display: none !important;
             }
 
@@ -389,7 +388,8 @@ $ehEntrada = $m['tipo'] === 'entrada';
                     <p class="sem-os">Nenhuma resposta de checklist registrada para esta OS.</p>
                 <?php endif; ?>
             <?php else: ?>
-                <p class="sem-os">Esta movimentação não veio de uma ordem de serviço.</p>
+                <p class="sem-os">Es
+                    ta movimentação não veio de uma ordem de serviço.</p>
             <?php endif; ?>
 
             <div class="acoes">

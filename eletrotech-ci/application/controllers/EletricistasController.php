@@ -12,7 +12,11 @@ class EletricistasController extends Auth_Controller
     public function index()
     {
         $data['titulo'] = 'Eletricistas - EletroTech';
-        $data['eletricistas'] = $this->EletricistasModel->get_all();
+
+        $total = $this->EletricistasModel->contar();
+        $data  = array_merge($data, $this->paginar($total, site_url('eletricistas')));
+
+        $data['eletricistas'] = $this->EletricistasModel->get_all($data['por_pagina'], $data['offset']);
 
         $this->load->view('telas/EletricistasView', $data);
     }

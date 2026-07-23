@@ -13,7 +13,11 @@ class OrdensServicoController extends Auth_Controller
     public function index()
     {
         $data['titulo'] = 'Ordens de Serviço - EletroTech';
-        $data['ordensServico'] = $this->OrdemservicoModel->get_all();
+
+        $total = $this->OrdemservicoModel->contar();
+        $data  = array_merge($data, $this->paginar($total, site_url('ordemServico')));
+
+        $data['ordensServico'] = $this->OrdemservicoModel->get_all($data['por_pagina'], $data['offset']);
         $data['eletricistasAtivos'] = $this->OrdemservicoModel->get_eletricistas_ativos();
         $data['produtosDisponiveis'] = $this->OrdemservicoModel->get_produtos_disponiveis();
         $data['checklistInicio'] = $this->ChecklistModel->get_selected_by_type('inicio');

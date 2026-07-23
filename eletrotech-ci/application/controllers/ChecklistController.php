@@ -16,7 +16,7 @@ class ChecklistController extends Auth_Controller
         $tipo = $this->input->get('tipo', TRUE);
         $titulo = $this->input->get('titulo', TRUE);
 
-        // Apply title filter first (partial, case-insensitive), then type filter
+
         $filtered = $all;
         if (!empty($titulo)) {
             $filtered = array_values(array_filter($filtered, function ($c) use ($titulo) {
@@ -30,7 +30,10 @@ class ChecklistController extends Auth_Controller
             }));
         }
 
-        $data['checklists'] = $filtered;
+        $total = count($filtered);
+        $data  = array_merge($data, $this->paginar($total, site_url('checklist')));
+
+        $data['checklists'] = array_slice($filtered, $data['offset'], $data['por_pagina']);
         $data['filterTipo'] = $tipo ?? '';
         $data['filterTitulo'] = $titulo ?? '';
         $data['selectedInicio'] = $this->ChecklistModel->get_selected_by_type('inicio');

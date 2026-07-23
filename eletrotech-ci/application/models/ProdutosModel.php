@@ -10,15 +10,26 @@ class ProdutosModel extends CI_Model
         parent::__construct();
     }
 
-    public function get_all()
+    public function get_all($limite = null, $offset = 0)
     {
-        $query = $this->db->order_by('id', 'DESC')->get($this->table);
+        $this->db->order_by('id', 'DESC');
+
+        if ($limite !== null) {
+            $this->db->limit($limite, $offset);
+        }
+
+        $query = $this->db->get($this->table);
 
         if ($query === false) {
             return [];
         }
 
         return $query->result_array();
+    }
+
+    public function contar()
+    {
+        return $this->db->count_all_results($this->table);
     }
 
     public function get_by_id($id)

@@ -1,5 +1,5 @@
 <?php
-defined('BASEPATH') OR exit('No direct script access allowed');
+defined('BASEPATH') or exit('No direct script access allowed');
 
 class EletricistasModel extends CI_Model
 {
@@ -10,7 +10,7 @@ class EletricistasModel extends CI_Model
         parent::__construct();
     }
 
-    public function get_all()
+    public function get_all($limite = null, $offset = 0)
     {
         $mesAtual = date('Y-m');
         $sql = "SELECT e.*,
@@ -22,13 +22,26 @@ class EletricistasModel extends CI_Model
                 FROM tabela_eletricistas e
                 ORDER BY e.id DESC";
 
-        $query = $this->db->query($sql, [$mesAtual]);
+        $params = [$mesAtual];
+
+        if ($limite !== null) {
+            $sql .= " LIMIT ? OFFSET ?";
+            $params[] = (int) $limite;
+            $params[] = (int) $offset;
+        }
+
+        $query = $this->db->query($sql, $params);
 
         if ($query === false) {
             return [];
         }
 
         return $query->result_array();
+    }
+
+    public function contar()
+    {
+        return $this->db->count_all_results($this->table);
     }
 
     public function get_by_id($id)

@@ -15,7 +15,11 @@ class MetasController extends Auth_Controller
         $filtroMes = $this->input->get('filtro_mes', TRUE);
 
         $data['titulo']  = 'Metas - EletroTech';
-        $data['metas'] = $this->MetasModel->get_all($filtroEletricista, $filtroMes);
+
+        $total = $this->MetasModel->contar($filtroEletricista, $filtroMes);
+        $data  = array_merge($data, $this->paginar($total, site_url('metas')));
+
+        $data['metas'] = $this->MetasModel->get_all($filtroEletricista, $filtroMes, $data['por_pagina'], $data['offset']);
         $data['eletricistasAtivos'] = $this->MetasModel->get_eletricistas_ativos();
         $data['filtroEletricista'] = $filtroEletricista ?? '';
         $data['filtroMes'] = $filtroMes ?? '';
