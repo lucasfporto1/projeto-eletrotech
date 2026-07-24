@@ -10,7 +10,7 @@
 
   <link rel="stylesheet" href="<?= base_url('assets/css/main.css') ?>" />
   <link rel="stylesheet" href="<?= base_url('assets/css/login.css') ?>" />
-  <title>Login - EletroTech</title>
+  <title>Login Eletricista - EletroTech</title>
 
   <style>
     #body-login .container-login .login-inputs .ml-input-wrapper {
@@ -51,14 +51,14 @@
       color: #FBD814;
     }
 
-    #body-login .container-login .login-inputs a#naoTemConta {
+    #body-login .container-login .login-inputs a#voltarAdmin {
       color: #282828;
       text-decoration: none;
       font-weight: 500;
       transition: color 0.3s ease;
     }
 
-    #body-login .container-login .login-inputs a#naoTemConta:hover {
+    #body-login .container-login .login-inputs a#voltarAdmin:hover {
       color: #FBD814;
       transition: color 0.3s ease;
     }
@@ -78,15 +78,15 @@
       <div class="alert alert-success" style="color: #198754; text-align: center; margin-bottom: 15px; font-weight: bold;"><?= $sucesso ?></div>
     <?php endif; ?>
 
-    <h1>Login</h1>
+    <h1>Login Eletricista</h1>
 
     <form action="<?= site_url('auth/entrar') ?>" method="POST" class="login-inputs">
-      <label for="login-nome">Nome de Usuário Admin</label>
-      <input type="text" id="login-nome" name="nome" placeholder="Usuário admin ou nome do eletricista" required />
+      <label for="login-nome">Nome do Eletricista</label>
+      <input type="text" id="login-nome" name="nome" placeholder="Seu nome completo" required />
 
-      <label for="login-senha">Senha</label>
+      <label for="login-senha">CPF</label>
       <div class="ml-input-wrapper">
-        <input type="password" id="login-senha" name="senha" class="ml-input-field" placeholder="Senha do admin ou CPF do eletricista" required />
+        <input type="password" id="login-senha" name="senha" class="ml-input-field" placeholder="Seu CPF" required />
         <i class="fa-regular fa-eye ml-input-icon"></i>
       </div>
 
@@ -95,11 +95,7 @@
       </div>
 
       <div style="margin-top: 15px; justify-content: center; display: flex;">
-        <a id="naoTemConta" href="<?= site_url('auth/cadastro') ?>">Não tem conta? Cadastre-se</a>
-      </div>
-
-      <div style="margin-top: 15px; justify-content: center; display: flex;">
-        <a id="naoTemConta" href="<?= site_url('auth/loginEletri') ?>">Sou eletricista</a>
+        <a id="voltarAdmin" href="<?= site_url('auth') ?>">Sou administrador</a>
       </div>
 
     </form>

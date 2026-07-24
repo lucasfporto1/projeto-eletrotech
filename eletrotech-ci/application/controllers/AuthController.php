@@ -7,13 +7,21 @@ class AuthController extends MY_Controller
     {
         parent::__construct();
         $this->load->model('UsuarioModel', 'usuarios');
+        $this->load->model('EletricistasModel', 'eletricistas');
         $this->load->library('form_validation');
     }
 
     public function index()
     {
         if ($this->session->userdata('user_id')) {
+            $role = $this->session->userdata('role');
+            if ($role === 'eletricista') {
+                $this->load->view('telas/DashboardEletricistaView');
+                return;
+            }
+
             redirect('home');
+            return;
         }
 
         $this->load->view('telas/LoginView');
@@ -47,8 +55,37 @@ class AuthController extends MY_Controller
             $this->session->set_userdata(array(
                 'user_id' => $usuario->id,
                 'usuario' => $nomeUsuario,
+                'role' => 'admin',
             ));
             redirect('home');
+        }
+
+        $eletricista = $this->eletricistas->get_by_name_and_cpf($nomeUsuario, $senha);
+
+        if ($eletricista && empty($eletricista['data_demissao'])) {
+            $this->load->model('OrdemservicoModel', 'ordensServico');
+            $totalAbertas  = $this->ordensServico->totalAbertasPorEletricista($eletricista['id']);
+            $totalFechadas = $this->ordensServico->totalFechadasPorEletricista($eletricista['id']);
+
+            $data = array(
+                'titulo'         => 'Dashboard Eletricista - EletroTech',
+                'ativo'          => 'ordemServico',
+                'ordensServico'  => $this->ordensServico->get_all_by_eletricista($eletricista['id']),
+                'totalAbertas'   => $totalAbertas,
+                'totalFechadas'  => $totalFechadas,
+                'totalGeral'     => $totalAbertas + $totalFechadas,
+                'ultimasOS'      => $this->ordensServico->ultimasOSs(),
+            );
+
+
+            $this->session->set_userdata(array(
+                'user_id' => $eletricista['id'],
+                'usuario' => $eletricista['nome'],
+                'role' => 'eletricista',
+                'eletricista_id' => (int) $eletricista['id'],
+            ));
+            $this->load->view('telas/DashboardEletricistaView', $data);
+            return;
         }
 
         $this->session->set_flashdata('erro', 'Credenciais inválidas.');
@@ -138,5 +175,36 @@ class AuthController extends MY_Controller
         }
 
         return false;
+    }
+
+    public function loginEletri()
+    {
+        $this->load->view('telas/LoginEletricistaView');
+    }
+    
+    public function dashboardEletricista()
+    {
+        $eletricistaId = $this->session->userdata('eletricista_id');
+
+        if (!$eletricistaId) {
+            redirect('auth');
+            return;
+        }
+
+        $this->load->model('OrdemservicoModel', 'ordensServico');
+        $totalAbertas  = $this->ordensServico->totalAbertasPorEletricista($eletricistaId);
+        $totalFechadas = $this->ordensServico->totalFechadasPorEletricista($eletricistaId);
+
+        $data = array(
+            'titulo'         => 'Dashboard Eletricista - EletroTech',
+            'ativo'          => 'ordemServico',
+            'ordensServico'  => $this->ordensServico->get_all_by_eletricista($eletricistaId),
+            'totalAbertas'   => $totalAbertas,
+            'totalFechadas'  => $totalFechadas,
+            'totalGeral'     => $totalAbertas + $totalFechadas,
+            'ultimasOS'      => $this->ordensServico->ultimasOSs(),
+        );
+
+        $this->load->view('telas/DashboardEletricistaView', $data);
     }
 }

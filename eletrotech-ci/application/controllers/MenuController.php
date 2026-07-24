@@ -21,4 +21,5 @@ class MenuController extends Auth_Controller
 
         $this->load->view('telas/MenuView', $dados);
     }
+
 }

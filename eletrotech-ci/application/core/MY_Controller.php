@@ -80,16 +80,33 @@ class Auth_Controller extends MY_Controller
         parent::__construct();
 
         $userId = $this->session->userdata('user_id');
+        $role = $this->session->userdata('role');
 
-        if (!$userId) {
+        if (!$userId || !$role) {
             redirect('auth');
         }
 
         $this->load->model('UsuarioModel', 'usuarios');
 
-        if (!$this->usuarios->buscarUsuarioPorId($userId)) {
+        if ($role === 'admin' && !$this->usuarios->buscarUsuarioPorId($userId)) {
             $this->session->sess_destroy();
             redirect('auth');
+        }
+
+        if ($role === 'eletricista') {
+            $eletricistaId = (int) $this->session->userdata('eletricista_id');
+
+            if ($eletricistaId <= 0) {
+                $this->session->sess_destroy();
+                redirect('auth');
+            }
+
+            $controller = strtolower($this->router->class ?? '');
+            $rotasEletricista = array('ordensservicocontroller', 'homecontroller', 'menucontroller');
+
+            if (!in_array($controller, $rotasEletricista, true)) {
+                redirect('ordemServico');
+            }
         }
     }
 }

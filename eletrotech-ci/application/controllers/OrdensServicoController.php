@@ -13,6 +13,23 @@ class OrdensServicoController extends Auth_Controller
     public function index()
     {
         $data['titulo'] = 'Ordens de Serviço - EletroTech';
+        $role = $this->session->userdata('role');
+        $eletricistaId = (int) $this->session->userdata('eletricista_id');
+
+        if ($role === 'eletricista' && $eletricistaId > 0) {
+            $total = $this->OrdemservicoModel->contar_por_eletricista($eletricistaId);
+            $data  = array_merge($data, $this->paginar($total, site_url('ordemServico')));
+
+            $data['ordensServico'] = $this->OrdemservicoModel->get_all_by_eletricista($eletricistaId, $data['por_pagina'], $data['offset']);
+            $data['eletricistasAtivos'] = [];
+            $data['produtosDisponiveis'] = [];
+            $data['checklistInicio'] = $this->ChecklistModel->get_selected_by_type('inicio');
+            $data['checklistFim'] = $this->ChecklistModel->get_selected_by_type('fim');
+            $data['perfilEletricista'] = true;
+
+            $this->load->view('telas/OrdemServicoView', $data);
+            return;
+        }
 
         $total = $this->OrdemservicoModel->contar();
         $data  = array_merge($data, $this->paginar($total, site_url('ordemServico')));
@@ -22,12 +39,19 @@ class OrdensServicoController extends Auth_Controller
         $data['produtosDisponiveis'] = $this->OrdemservicoModel->get_produtos_disponiveis();
         $data['checklistInicio'] = $this->ChecklistModel->get_selected_by_type('inicio');
         $data['checklistFim'] = $this->ChecklistModel->get_selected_by_type('fim');
+        $data['perfilEletricista'] = false;
 
         $this->load->view('telas/OrdemServicoView', $data);
     }
 
     public function cadastrar()
     {
+        if ($this->session->userdata('role') !== 'admin') {
+            $this->session->set_flashdata('erro', 'Apenas o usuário administrador pode registrar novas ordens de serviço.');
+            redirect('ordemServico');
+            return;
+        }
+
         $this->form_validation->set_rules('eletricista_os', 'Eletricista', 'required|numeric');
         $this->form_validation->set_rules('id_produto[]', 'Produto', 'required');
         $this->form_validation->set_rules('qtd_utilizada[]', 'Quantidade', 'required|integer|greater_than[0]');
@@ -116,6 +140,20 @@ class OrdensServicoController extends Auth_Controller
 
     public function fechar()
     {
+        $role = $this->session->userdata('role');
+        $eletricistaId = (int) $this->session->userdata('eletricista_id');
+
+        if ($role === 'eletricista') {
+            $idOs = (int) $this->input->post('id_os', TRUE);
+            $ordem = $this->OrdemservicoModel->get_by_id($idOs);
+
+            if (empty($ordem) || (int) $ordem['eletricista_os'] !== $eletricistaId) {
+                $this->session->set_flashdata('erro', 'Você só pode fechar ordens atribuídas ao seu perfil.');
+                redirect('ordemServico');
+                return;
+            }
+        }
+
         $this->form_validation->set_rules('id_os', 'OS', 'required|numeric');
 
         $checklistFim = $this->ChecklistModel->get_selected_by_type('fim');
@@ -191,6 +229,18 @@ class OrdensServicoController extends Auth_Controller
             return;
         }
 
+        $role = $this->session->userdata('role');
+        $eletricistaId = (int) $this->session->userdata('eletricista_id');
+
+        if ($role === 'eletricista') {
+            $ordem = $this->OrdemservicoModel->get_by_id((int) $idOs);
+
+            if (empty($ordem) || (int) $ordem['eletricista_os'] !== $eletricistaId) {
+                echo '<p class="text-center text-danger">Você não tem acesso a esta ordem.</p>';
+                return;
+            }
+        }
+
         $materiais = $this->OrdemservicoModel->get_materiais_by_os($idOs);
         $respostas = $this->OrdemservicoModel->get_checklist_respostas_by_os($idOs);
         $comentarios = $this->OrdemservicoModel->get_comentarios_by_os($idOs);
@@ -209,10 +259,21 @@ class OrdensServicoController extends Auth_Controller
 
         $idOs = (int) $this->input->post('id_os', TRUE);
         $comentario = trim((string) $this->input->post('comentario', TRUE));
+        $role = $this->session->userdata('role');
+        $eletricistaId = (int) $this->session->userdata('eletricista_id');
 
         if ($idOs <= 0) {
             return $this->output->set_status_header(400)
                 ->set_output(json_encode(['sucesso' => false, 'mensagem' => 'OS inválida.']));
+        }
+
+        if ($role === 'eletricista') {
+            $ordem = $this->OrdemservicoModel->get_by_id($idOs);
+
+            if (empty($ordem) || (int) $ordem['eletricista_os'] !== $eletricistaId) {
+                return $this->output->set_status_header(403)
+                    ->set_output(json_encode(['sucesso' => false, 'mensagem' => 'Você não tem acesso a esta ordem.']));
+            }
         }
 
         $temFoto = isset($_FILES['foto']) && isset($_FILES['foto']['error']) && $_FILES['foto']['error'] !== UPLOAD_ERR_NO_FILE;

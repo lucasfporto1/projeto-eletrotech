@@ -13,6 +13,15 @@ class OrdemServicoModel extends CI_Model
         parent::__construct();
     }
 
+    public function get_by_id($idOs)
+    {
+        return $this->db
+            ->select('id, eletricista_os, status, data_os, data_fechamento')
+            ->where('id', (int) $idOs)
+            ->get($this->table)
+            ->row_array();
+    }
+
     public function get_all($limite = null, $offset = 0)
     {
         $this->db->select('os.id, os.data_os, os.data_fechamento, os.status, e.nome as nome_eletricista')
@@ -38,6 +47,35 @@ class OrdemServicoModel extends CI_Model
         return $this->db->from('tabela_ordens_servico os')
             ->join('tabela_eletricistas e', 'os.eletricista_os = e.id', 'inner')
             ->count_all_results();
+    }
+
+    public function contar_por_eletricista($idEletricista)
+    {
+        return $this->db->from('tabela_ordens_servico os')
+            ->join('tabela_eletricistas e', 'os.eletricista_os = e.id', 'inner')
+            ->where('os.eletricista_os', (int) $idEletricista)
+            ->count_all_results();
+    }
+
+    public function get_all_by_eletricista($idEletricista, $limite = null, $offset = 0)
+    {
+        $this->db->select('os.id, os.data_os, os.data_fechamento, os.status, e.nome as nome_eletricista')
+            ->from('tabela_ordens_servico os')
+            ->join('tabela_eletricistas e', 'os.eletricista_os = e.id', 'inner')
+            ->where('os.eletricista_os', (int) $idEletricista)
+            ->order_by('os.id', 'DESC');
+
+        if ($limite !== null) {
+            $this->db->limit($limite, $offset);
+        }
+
+        $query = $this->db->get();
+
+        if ($query === false) {
+            return [];
+        }
+
+        return $query->result_array();
     }
 
     public function get_eletricistas_ativos()
@@ -228,5 +266,45 @@ class OrdemServicoModel extends CI_Model
         $this->db->trans_complete();
 
         return $this->db->trans_status() !== FALSE;
+    }
+
+
+    public function totalAbertasPorEletricista($idEletricista)
+    {
+        return $this->db->from($this->table)
+            ->where('status', 'aberta')
+            ->where('eletricista_os', (int) $idEletricista)
+            ->count_all_results();
+    }
+
+    public function totalFechadasPorEletricista($idEletricista)
+    {
+        return $this->db->from($this->table)
+            ->where('status', 'fechada')
+            ->where('eletricista_os', (int) $idEletricista)
+            ->count_all_results();
+    }
+
+    public function totalPorEletricista($idEletricista)
+    {
+        return $this->db->from($this->table)
+            ->where('eletricista_os', (int) $idEletricista)
+            ->count_all_results();
+    }
+
+    public function ultimasOSs($limite = 3)
+    {
+        $query = $this->db->select('os.id, os.data_os, os.data_fechamento, os.status, e.nome as nome_eletricista')
+            ->from('tabela_ordens_servico os')
+            ->join('tabela_eletricistas e', 'os.eletricista_os = e.id', 'inner')
+            ->order_by('os.id', 'DESC')
+            ->limit((int) $limite)
+            ->get();
+    
+        if ($query === false) {
+            return [];
+        }
+
+        return $query->result_array();
     }
 }

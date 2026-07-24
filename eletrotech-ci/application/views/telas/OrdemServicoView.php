@@ -78,6 +78,30 @@
             color: #282828;
         }
 
+        #filtro-status-os .btn-filtro-os {
+            background-color: transparent;
+            color: #ffffff;
+            border: 1px solid #FBD814;
+            border-radius: 30px;
+            padding: 8px 18px;
+            font-weight: bold;
+            font-size: 14px;
+            transition: 0.3s;
+        }
+
+        #filtro-status-os .btn-filtro-os:hover {
+            background-color: rgba(251, 216, 20, 0.15);
+        }
+
+        #filtro-status-os .btn-filtro-os.active {
+            background-color: #ebca1e;
+            color: #282828;
+        }
+
+        tr.linha-oculta-filtro {
+            display: none !important;
+        }
+
         table.table.custom-table,
         table.table.custom-table th,
         table.table.custom-table td {
@@ -259,13 +283,27 @@
         <?php endif; ?>
     </div>
 
-    <div id="acoes_id">
-        <button data-bs-toggle="modal" data-bs-target="#modalNovaOS">
-            <i class="fa-solid fa-plus"></i> Registrar Nova OS
-        </button>
-    </div>
+    <?php if (empty($perfilEletricista)): ?>
+        <div id="acoes_id">
+            <button data-bs-toggle="modal" data-bs-target="#modalNovaOS">
+                <i class="fa-solid fa-plus"></i> Registrar Nova OS
+            </button>
+        </div>
+    <?php endif; ?>
 
     <div class="container mt-2">
+        <div id="filtro-status-os" class="mb-3 d-flex justify-content-center gap-2" style="gap:10px;">
+            <button type="button" class="btn-filtro-os active" data-filtro="todas">
+                <i class="fa-solid fa-list"></i> Todas
+            </button>
+            <button type="button" class="btn-filtro-os" data-filtro="aberta">
+                <i class="fa-solid fa-lock-open"></i> Abertas
+            </button>
+            <button type="button" class="btn-filtro-os" data-filtro="fechada">
+                <i class="fa-solid fa-lock"></i> Fechadas
+            </button>
+        </div>
+
         <table class="table table-dark table-hover table-bordered custom-table text-center">
             <thead>
                 <tr>
@@ -280,7 +318,7 @@
             <tbody>
                 <?php if (!empty($ordensServico)): ?>
                     <?php foreach ($ordensServico as $os): ?>
-                        <tr>
+                        <tr data-status="<?= $os['status'] ?>">
                             <td>
                                 <button class="btn btn-sm btn-outline-info mb-1" title="Ver Detalhes"
                                     data-bs-toggle="modal"
@@ -697,6 +735,40 @@
                 textarea.required = false;
                 textarea.value = '';
             }
+        });
+
+        document.querySelectorAll('#filtro-status-os .btn-filtro-os').forEach(function(botao) {
+            botao.addEventListener('click', function() {
+                const filtro = botao.dataset.filtro;
+
+                document.querySelectorAll('#filtro-status-os .btn-filtro-os').forEach(function(b) {
+                    b.classList.remove('active');
+                });
+                botao.classList.add('active');
+
+                const linhas = document.querySelectorAll('table.custom-table tbody tr[data-status]');
+                let algumaVisivel = false;
+
+                linhas.forEach(function(linha) {
+                    const mostrar = filtro === 'todas' || linha.dataset.status === filtro;
+                    linha.classList.toggle('linha-oculta-filtro', !mostrar);
+                    if (mostrar) algumaVisivel = true;
+                });
+
+                let vazio = document.getElementById('linha-vazia-filtro');
+                if (!algumaVisivel) {
+                    if (!vazio) {
+                        const tbody = document.querySelector('table.custom-table tbody');
+                        vazio = document.createElement('tr');
+                        vazio.id = 'linha-vazia-filtro';
+                        vazio.innerHTML = '<td colspan="6" class="empty-state">Nenhuma Ordem de Serviço encontrada para este filtro.</td>';
+                        tbody.appendChild(vazio);
+                    }
+                    vazio.style.display = '';
+                } else if (vazio) {
+                    vazio.style.display = 'none';
+                }
+            });
         });
     </script>
     <?php $this->load->view('components/Chatbot'); ?>

@@ -54,6 +54,15 @@ class EletricistasModel extends CI_Model
         return $this->db->get_where($this->table, ['cpf' => $cpf])->row_array();
     }
 
+    public function get_by_name_and_cpf($nome, $cpf)
+    {
+        return $this->db
+            ->where('LOWER(nome)', strtolower(trim($nome)))
+            ->where('cpf', trim($cpf))
+            ->get($this->table)
+            ->row_array();
+    }
+
     public function get_os_by_eletricista($idEletricista)
     {
         $query = $this->db
