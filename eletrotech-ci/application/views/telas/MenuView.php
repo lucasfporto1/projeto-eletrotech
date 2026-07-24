@@ -1,9 +1,12 @@
 <?php
+
 /** @var array $totais */
 /** @var string $usuario */
 /** @var string $mesFiltro */
 /** @var array $graficoEletricista */
 /** @var array $graficoMes */
+/** @var array $graficoStatus */
+/** @var array $graficoMovimentacao */
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -223,6 +226,20 @@
                     <canvas id="graficoOsMes" class="mt-3"></canvas>
                 </div>
             </div>
+
+            <div class="col-lg-6">
+                <div class="chart-panel">
+                    <h3>OS abertas x fechadas</h3>
+                    <canvas id="graficoOsStatus"></canvas>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="chart-panel">
+                    <h3>Movimentação de estoque por mês (R$)</h3>
+                    <canvas id="graficoMovimentacao"></canvas>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -240,6 +257,8 @@
     <script>
         const osEletricista = <?= json_encode($graficoEletricista) ?>;
         const osMes = <?= json_encode($graficoMes) ?>;
+        const osStatus = <?= json_encode($graficoStatus) ?>;
+        const movimentacao = <?= json_encode($graficoMovimentacao) ?>;
 
         const labelsEletricista = osEletricista.map(item => item.eletricista || 'Sem nome');
         const valoresEletricista = osEletricista.map(item => Number(item.total || 0));
@@ -247,7 +266,10 @@
         const labelsMes = osMes.map(item => {
             const [ano, mes] = String(item.mes || '').split('-');
             if (!ano || !mes) return item.mes || 'Sem mês';
-            return new Date(Number(ano), Number(mes) - 1, 1).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
+            return new Date(Number(ano), Number(mes) - 1, 1).toLocaleDateString('pt-BR', {
+                month: 'short',
+                year: 'numeric'
+            });
         });
         const valoresMes = osMes.map(item => Number(item.total || 0));
 
@@ -259,6 +281,50 @@
                     label: 'Quantidade de OS',
                     data: valoresEletricista,
                     backgroundColor: ['#FBD814', '#ffcc00', '#f9d65e', '#f6d24b', '#f8a81e', '#e4b101'],
+                    borderColor: '#ffffff',
+                    borderWidth: 1,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#ffffff'
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            color: '#ffffff'
+                        },
+                        grid: {
+                            color: 'rgba(255,255,255,0.08)'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: '#ffffff'
+                        },
+                        grid: {
+                            color: 'rgba(255,255,255,0.08)'
+                        }
+                    }
+                }
+            }
+        });
+
+        new Chart(document.getElementById('graficoOsMes'), {
+            type: 'bar',
+            data: {
+                labels: labelsMes,
+                datasets: [{
+                    label: 'Quantidade de OS',
+                    data: valoresMes,
+                    backgroundColor: '#FBD814',
                     borderColor: '#ffffff',
                     borderWidth: 1,
                     borderRadius: 8
@@ -283,24 +349,90 @@
             }
         });
 
-        new Chart(document.getElementById('graficoOsMes'), {
-            type: 'pie',
+        new Chart(document.getElementById('graficoOsStatus'), {
+            type: 'doughnut',
             data: {
-                labels: labelsMes,
+                labels: ['Abertas', 'Fechadas'],
                 datasets: [{
-                    label: 'OS por mês',
-                    data: valoresMes,
-                    backgroundColor: ['#FBD814', '#ffcc00', '#f9d65e', '#f6d24b', '#f8a81e', '#e4b101'],
-                    borderColor: '#ffffff',
-                    borderWidth: 1
+                    label: 'Ordens de Serviço',
+                    data: [Number(osStatus.aberta || 0), Number(osStatus.fechada || 0)],
+                    backgroundColor: ['#f8a81e', '#4ade80'],
+                    borderColor: '#282828',
+                    borderWidth: 2
                 }]
             },
             options: {
                 responsive: true,
                 plugins: {
                     legend: {
-                        labels: { color: '#ffffff' },
+                        labels: {
+                            color: '#ffffff'
+                        },
                         position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        const labelsMov = movimentacao.map(item => {
+            const [ano, mes] = String(item.mes || '').split('-');
+            if (!ano || !mes) return item.mes || 'Sem mês';
+            return new Date(Number(ano), Number(mes) - 1, 1).toLocaleDateString('pt-BR', {
+                month: 'short',
+                year: 'numeric'
+            });
+        });
+
+        new Chart(document.getElementById('graficoMovimentacao'), {
+            type: 'bar',
+            data: {
+                labels: labelsMov,
+                datasets: [{
+                        label: 'Entradas',
+                        data: movimentacao.map(item => Number(item.entrada || 0)),
+                        backgroundColor: '#4ade80'
+                    },
+                    {
+                        label: 'Saídas',
+                        data: movimentacao.map(item => Number(item.saida || 0)),
+                        backgroundColor: '#f87171'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#ffffff'
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => ctx.dataset.label + ': R$ ' + Number(ctx.raw).toLocaleString('pt-BR', {
+                                minimumFractionDigits: 2
+                            })
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            color: '#ffffff'
+                        },
+                        grid: {
+                            color: 'rgba(255,255,255,0.08)'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: '#ffffff',
+                            callback: valor => 'R$ ' + Number(valor).toLocaleString('pt-BR')
+                        },
+                        grid: {
+                            color: 'rgba(255,255,255,0.08)'
+                        }
                     }
                 }
             }

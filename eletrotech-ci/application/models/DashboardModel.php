@@ -46,6 +46,45 @@ class DashboardModel extends CI_Model
         return $query->result_array();
     }
 
+    public function getMovimentacaoPorMes()
+    {
+        $query = $this->db
+            ->select("DATE_FORMAT(data_mov, '%Y-%m') AS mes,
+                      SUM(CASE WHEN tipo = 'entrada' THEN quantidade * valor_unitario ELSE 0 END) AS entrada,
+                      SUM(CASE WHEN tipo = 'saida'   THEN quantidade * valor_unitario ELSE 0 END) AS saida", false)
+            ->from('tabela_movimentacoes')
+            ->group_by("DATE_FORMAT(data_mov, '%Y-%m')")
+            ->order_by('mes', 'ASC')
+            ->get();
+
+        if ($query === false || $query->num_rows() === 0) {
+            return [];
+        }
+
+        return $query->result_array();
+    }
+
+    public function getOsPorStatus()
+    {
+        $query = $this->db
+            ->select('status, COUNT(id) AS total')
+            ->from('tabela_ordens_servico')
+            ->group_by('status')
+            ->get();
+
+        $resultado = array('aberta' => 0, 'fechada' => 0);
+
+        if ($query === false) {
+            return $resultado;
+        }
+
+        foreach ($query->result_array() as $linha) {
+            $resultado[$linha['status']] = (int) $linha['total'];
+        }
+
+        return $resultado;
+    }
+
     public function getOsPorMes($mes = null)
     {
         $this->db

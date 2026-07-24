@@ -15,6 +15,8 @@ class MenuController extends Auth_Controller
             'mesFiltro'          => $mesFiltro ?? '',
             'graficoEletricista' => $this->dashboard->getOsPorEletricista(),
             'graficoMes'         => $this->dashboard->getOsPorMes($mesFiltro),
+            'graficoStatus'      => $this->dashboard->getOsPorStatus(),
+            'graficoMovimentacao' => $this->dashboard->getMovimentacaoPorMes(),
         );
 
         $this->load->view('telas/MenuView', $dados);
