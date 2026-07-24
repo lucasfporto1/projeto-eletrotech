@@ -292,7 +292,6 @@
 
         <div id="acoes_dashboard">
             <a href="<?= site_url('ordemServico') ?>"><button><i class="fa-solid fa-list"></i> Ver Minhas OSs</button></a>
-            <a href="<?= site_url('ordemServico') ?>"><button class="secundario"><i class="fa-solid fa-plus"></i> Registrar Nova OS</button></a>
         </div>
 
         <h2 class="titulo-secao">Últimas Ordens de Serviço</h2>
