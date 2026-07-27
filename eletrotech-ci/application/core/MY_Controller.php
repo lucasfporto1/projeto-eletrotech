@@ -75,38 +75,58 @@ class MY_Controller extends CI_Controller
 
 class Auth_Controller extends MY_Controller
 {
+    protected $ehAdmin = false;
+    protected $permissoes = array();
+    protected $eletricistaId = null;
+
     public function __construct()
     {
         parent::__construct();
 
         $userId = $this->session->userdata('user_id');
-        $role = $this->session->userdata('role');
 
-        if (!$userId || !$role) {
+        if (!$userId) {
             redirect('auth');
         }
 
         $this->load->model('UsuarioModel', 'usuarios');
+        $usuario = $this->usuarios->buscarUsuarioPorId($userId);
 
-        if ($role === 'admin' && !$this->usuarios->buscarUsuarioPorId($userId)) {
+        if (!$usuario) {
             $this->session->sess_destroy();
             redirect('auth');
         }
 
-        if ($role === 'eletricista') {
-            $eletricistaId = (int) $this->session->userdata('eletricista_id');
+        // Autorização vem do banco, não da sessão.
+        $this->ehAdmin       = ((int) $usuario->is_admin === 1);
+        $this->eletricistaId = $usuario->eletricista_id !== null ? (int) $usuario->eletricista_id : null;
+        $this->permissoes    = $this->ehAdmin
+            ? array_keys(permissoes_disponiveis())
+            : $this->usuarios->permissoesDoUsuario($userId);
 
-            if ($eletricistaId <= 0) {
-                $this->session->sess_destroy();
-                redirect('auth');
-            }
+        $this->session->set_userdata(array(
+            'is_admin'   => $this->ehAdmin,
+            'permissoes' => $this->permissoes,
+        ));
+    }
 
-            $controller = strtolower($this->router->class ?? '');
-            $rotasEletricista = array('ordensservicocontroller', 'homecontroller', 'menucontroller');
-
-            if (!in_array($controller, $rotasEletricista, true)) {
-                redirect('ordemServico');
-            }
+    protected function exigirPermissao($chave)
+    {
+        if ($this->ehAdmin || in_array($chave, $this->permissoes, true)) {
+            return;
         }
+
+        $this->session->set_flashdata('erro', 'Você não tem acesso a essa área.');
+        redirect(rota_inicial($this->ehAdmin, $this->permissoes) ?? 'auth/sair');
+    }
+
+    protected function exigirAdmin()
+    {
+        if ($this->ehAdmin) {
+            return;
+        }
+
+        $this->session->set_flashdata('erro', 'Área restrita ao administrador.');
+        redirect(rota_inicial($this->ehAdmin, $this->permissoes) ?? 'auth/sair');
     }
 }

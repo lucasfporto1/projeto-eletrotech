@@ -6,6 +6,7 @@ class MetasController extends Auth_Controller
     public function __construct()
     {
         parent::__construct();
+        $this->exigirPermissao('metas');
         $this->load->model('MetasModel');
     }
 

@@ -6,6 +6,7 @@ class OrdensServicoController extends Auth_Controller
     public function __construct()
     {
         parent::__construct();
+        $this->exigirPermissao('ordemServico');
         $this->load->model('OrdemservicoModel');
         $this->load->model('ChecklistModel');
     }
@@ -13,10 +14,10 @@ class OrdensServicoController extends Auth_Controller
     public function index()
     {
         $data['titulo'] = 'Ordens de Serviço - EletroTech';
-        $role = $this->session->userdata('role');
-        $eletricistaId = (int) $this->session->userdata('eletricista_id');
 
-        if ($role === 'eletricista' && $eletricistaId > 0) {
+        // Eletricista só enxerga as próprias OS.
+        if (!$this->ehAdmin && $this->eletricistaId) {
+            $eletricistaId = $this->eletricistaId;
             $total = $this->OrdemservicoModel->contar_por_eletricista($eletricistaId);
             $data  = array_merge($data, $this->paginar($total, site_url('ordemServico')));
 
@@ -46,8 +47,8 @@ class OrdensServicoController extends Auth_Controller
 
     public function cadastrar()
     {
-        if ($this->session->userdata('role') !== 'admin') {
-            $this->session->set_flashdata('erro', 'Apenas o usuário administrador pode registrar novas ordens de serviço.');
+        if (!$this->ehAdmin && $this->eletricistaId) {
+            $this->session->set_flashdata('erro', 'Eletricistas não podem registrar novas ordens de serviço.');
             redirect('ordemServico');
             return;
         }
@@ -140,14 +141,11 @@ class OrdensServicoController extends Auth_Controller
 
     public function fechar()
     {
-        $role = $this->session->userdata('role');
-        $eletricistaId = (int) $this->session->userdata('eletricista_id');
-
-        if ($role === 'eletricista') {
+        if (!$this->ehAdmin && $this->eletricistaId) {
             $idOs = (int) $this->input->post('id_os', TRUE);
             $ordem = $this->OrdemservicoModel->get_by_id($idOs);
 
-            if (empty($ordem) || (int) $ordem['eletricista_os'] !== $eletricistaId) {
+            if (empty($ordem) || (int) $ordem['eletricista_os'] !== $this->eletricistaId) {
                 $this->session->set_flashdata('erro', 'Você só pode fechar ordens atribuídas ao seu perfil.');
                 redirect('ordemServico');
                 return;
@@ -229,13 +227,10 @@ class OrdensServicoController extends Auth_Controller
             return;
         }
 
-        $role = $this->session->userdata('role');
-        $eletricistaId = (int) $this->session->userdata('eletricista_id');
-
-        if ($role === 'eletricista') {
+        if (!$this->ehAdmin && $this->eletricistaId) {
             $ordem = $this->OrdemservicoModel->get_by_id((int) $idOs);
 
-            if (empty($ordem) || (int) $ordem['eletricista_os'] !== $eletricistaId) {
+            if (empty($ordem) || (int) $ordem['eletricista_os'] !== $this->eletricistaId) {
                 echo '<p class="text-center text-danger">Você não tem acesso a esta ordem.</p>';
                 return;
             }
@@ -259,18 +254,16 @@ class OrdensServicoController extends Auth_Controller
 
         $idOs = (int) $this->input->post('id_os', TRUE);
         $comentario = trim((string) $this->input->post('comentario', TRUE));
-        $role = $this->session->userdata('role');
-        $eletricistaId = (int) $this->session->userdata('eletricista_id');
 
         if ($idOs <= 0) {
             return $this->output->set_status_header(400)
                 ->set_output(json_encode(['sucesso' => false, 'mensagem' => 'OS inválida.']));
         }
 
-        if ($role === 'eletricista') {
+        if (!$this->ehAdmin && $this->eletricistaId) {
             $ordem = $this->OrdemservicoModel->get_by_id($idOs);
 
-            if (empty($ordem) || (int) $ordem['eletricista_os'] !== $eletricistaId) {
+            if (empty($ordem) || (int) $ordem['eletricista_os'] !== $this->eletricistaId) {
                 return $this->output->set_status_header(403)
                     ->set_output(json_encode(['sucesso' => false, 'mensagem' => 'Você não tem acesso a esta ordem.']));
             }

@@ -1,18 +1,19 @@
 <?php
 
-/** @var string $ativo */ ?>
+/** @var string $ativo */
+
+$ehAdmin    = (bool) $this->session->userdata('is_admin');
+$permissoes = (array) $this->session->userdata('permissoes');
+
+$pode = function ($chave) use ($ehAdmin, $permissoes) {
+    return $ehAdmin || in_array($chave, $permissoes, true);
+};
+?>
 <nav class="navbar navbar-expand-lg navbar-custom">
     <div class="container-fluid px-4">
-        <?php $role = $this->session->userdata('role'); ?>
-        <?php if($role !== 'eletricista'): ?>
         <a class="navbar-brand d-flex align-items-center" href="<?= site_url('home') ?>">
             <img src="<?= base_url('assets/logo-eletrotech.png') ?>" alt="Logo Eletrotech">
         </a>
-    <?php else: ?>
-        <a class="navbar-brand d-flex align-items-center" href="<?= site_url('auth/dashboardEletricista') ?>">
-            <img src="<?= base_url('assets/logo-eletrotech.png') ?>" alt="Logo Eletrotech">
-        </a>
-    <?php endif; ?>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
             data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
             aria-expanded="false" aria-label="Toggle navigation">
@@ -21,35 +22,44 @@
 
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
-                <?php $role = $this->session->userdata('role'); ?>
-                <?php if ($role !== 'eletricista'): ?>
+                <?php if ($pode('menu')): ?>
                     <li class="nav-item">
                         <a class="nav-link <?= $ativo === 'menu' ? 'active' : '' ?>" href="<?= site_url('menu') ?>">Dashboard</a>
                     </li>
+                <?php endif; ?>
+                <?php if ($ehAdmin): ?>
                     <li class="nav-item">
                         <a class="nav-link <?= $ativo === 'usuarios' ? 'active' : '' ?>" href="<?= site_url('usuarios') ?>">Usuários</a>
                     </li>
+                <?php endif; ?>
+                <?php if ($pode('eletricistas')): ?>
                     <li class="nav-item">
                         <a class="nav-link <?= $ativo === 'eletricistas' ? 'active' : '' ?>" href="<?= site_url('eletricistas') ?>">Eletricistas</a>
                     </li>
+                <?php endif; ?>
+                <?php if ($pode('produtos')): ?>
                     <li class="nav-item">
                         <a class="nav-link <?= $ativo === 'produtos' ? 'active' : '' ?>" href="<?= site_url('produtos') ?>">Produtos</a>
                     </li>
+                <?php endif; ?>
+                <?php if ($pode('metas')): ?>
                     <li class="nav-item">
                         <a class="nav-link <?= $ativo === 'metas' ? 'active' : '' ?>" href="<?= site_url('metas') ?>">Metas</a>
                     </li>
+                <?php endif; ?>
+                <?php if ($pode('ordemServico')): ?>
                     <li class="nav-item">
                         <a class="nav-link <?= $ativo === 'ordemServico' ? 'active' : '' ?>" href="<?= site_url('ordemServico') ?>">Ordens de Serviço</a>
                     </li>
+                <?php endif; ?>
+                <?php if ($pode('checklist')): ?>
                     <li class="nav-item">
                         <a class="nav-link <?= $ativo === 'checklist' ? 'active' : '' ?>" href="<?= site_url('checklist') ?>">Checklist</a>
                     </li>
+                <?php endif; ?>
+                <?php if ($pode('baixas')): ?>
                     <li class="nav-item">
                         <a class="nav-link <?= $ativo === 'baixas' ? 'active' : '' ?>" href="<?= site_url('baixas') ?>">Baixas</a>
-                    </li>
-                <?php else: ?>
-                    <li class="nav-item">
-                        <a class="nav-link <?= $ativo === 'ordemServico' ? 'active' : '' ?>" href="<?= site_url('ordemServico') ?>">Minhas Ordens</a>
                     </li>
                 <?php endif; ?>
                 <li class="nav-item ms-3">

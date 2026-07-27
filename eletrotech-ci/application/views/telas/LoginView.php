@@ -81,25 +81,17 @@
     <h1>Login</h1>
 
     <form action="<?= site_url('auth/entrar') ?>" method="POST" class="login-inputs">
-      <label for="login-nome">Nome de Usuário Admin</label>
-      <input type="text" id="login-nome" name="nome" placeholder="Usuário admin ou nome do eletricista" required />
+      <label for="login-nome">Nome de Usuário</label>
+      <input type="text" id="login-nome" name="nome" placeholder="Digite seu nome de usuário" required />
 
       <label for="login-senha">Senha</label>
       <div class="ml-input-wrapper">
-        <input type="password" id="login-senha" name="senha" class="ml-input-field" placeholder="Senha do admin ou CPF do eletricista" required />
+        <input type="password" id="login-senha" name="senha" class="ml-input-field" placeholder="Digite sua senha" required />
         <i class="fa-regular fa-eye ml-input-icon"></i>
       </div>
 
       <div class="container-button">
         <button type="submit" class="ml-button">Fazer login</button>
-      </div>
-
-      <div style="margin-top: 15px; justify-content: center; display: flex;">
-        <a id="naoTemConta" href="<?= site_url('auth/cadastro') ?>">Não tem conta? Cadastre-se</a>
-      </div>
-
-      <div style="margin-top: 15px; justify-content: center; display: flex;">
-        <a id="naoTemConta" href="<?= site_url('auth/loginEletri') ?>">Sou eletricista</a>
       </div>
 
     </form>

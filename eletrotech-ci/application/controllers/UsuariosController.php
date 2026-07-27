@@ -3,14 +3,69 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 class UsuariosController extends Auth_Controller
 {
+    public function __construct()
+    {
+        parent::__construct();
+        $this->exigirAdmin();
+        $this->load->model('EletricistasModel');
+    }
+
     public function index()
     {
         $total = $this->usuarios->contarUsuarios();
         $dados = $this->paginar($total, site_url('usuarios'));
 
-        $dados['usuarios'] = $this->usuarios->listarUsuarios($dados['por_pagina'], $dados['offset']);
+        $usuarios = $this->usuarios->listarUsuarios($dados['por_pagina'], $dados['offset']);
+
+        foreach ($usuarios as $usuario) {
+            $usuario->permissoes = $this->usuarios->permissoesDoUsuario($usuario->id);
+        }
+
+        $dados['usuarios']              = $usuarios;
+        $dados['eletricistas']          = $this->EletricistasModel->listar_para_vinculo();
+        $dados['permissoesDisponiveis'] = permissoes_disponiveis();
 
         $this->load->view('telas/UsuariosView', $dados);
+    }
+
+    public function criar()
+    {
+        if ($this->input->method() !== 'post') {
+            redirect('usuarios');
+        }
+
+        $nome          = trim((string) $this->input->post('usuario'));
+        $senha         = (string) $this->input->post('senha');
+        $isAdmin       = $this->input->post('is_admin') ? 1 : 0;
+        $eletricistaId = (int) $this->input->post('eletricista_id') ?: null;
+        $permissoes    = (array) $this->input->post('permissoes');
+
+        if ($nome === '' || strlen($senha) < 8) {
+            $this->session->set_flashdata('erro', 'Informe um nome de usuário e uma senha de no mínimo 8 caracteres.');
+            redirect('usuarios');
+        }
+
+        if ($this->usuarios->usuarioExiste($nome)) {
+            $this->session->set_flashdata('erro', "Já existe um usuário com o nome '{$nome}'. Escolha outro.");
+            redirect('usuarios');
+        }
+
+        if ($eletricistaId && $this->usuarios->eletricistaJaVinculado($eletricistaId)) {
+            $this->session->set_flashdata('erro', 'Este eletricista já está vinculado a outro usuário.');
+            redirect('usuarios');
+        }
+
+        $novoId = $this->usuarios->criarUsuario($nome, $senha, $isAdmin, $eletricistaId);
+
+        if (!$novoId) {
+            $this->session->set_flashdata('erro', 'Erro ao criar o usuário.');
+            redirect('usuarios');
+        }
+
+        $this->usuarios->definirPermissoes($novoId, $isAdmin ? array() : $permissoes);
+
+        $this->session->set_flashdata('sucesso', 'Usuário criado com sucesso!');
+        redirect('usuarios');
     }
 
     public function editar()
@@ -19,25 +74,48 @@ class UsuariosController extends Auth_Controller
             redirect('usuarios');
         }
 
-        $id          = (int) $this->input->post('id');
-        $nomeUsuario = trim((string) $this->input->post('usuario'));
+        $id            = (int) $this->input->post('id');
+        $nome          = trim((string) $this->input->post('usuario'));
+        $isAdmin       = $this->input->post('is_admin') ? 1 : 0;
+        $eletricistaId = (int) $this->input->post('eletricista_id') ?: null;
+        $permissoes    = (array) $this->input->post('permissoes');
+        $novaSenha     = (string) $this->input->post('senha');
 
-        if (!$id || $nomeUsuario === '') {
-            $this->session->set_flashdata('erro', 'O nome de utilizador não pode estar vazio.');
+        if (!$id || $nome === '') {
+            $this->session->set_flashdata('erro', 'O nome de usuário não pode estar vazio.');
             redirect('usuarios');
         }
 
-        if ($this->usuarios->usuarioExiste($nomeUsuario, $id)) {
-            $this->session->set_flashdata('erro', "Erro: Já existe um utilizador com o nome '{$nomeUsuario}'. Escolha outro.");
+        if ($this->usuarios->usuarioExiste($nome, $id)) {
+            $this->session->set_flashdata('erro', "Já existe um usuário com o nome '{$nome}'. Escolha outro.");
             redirect('usuarios');
         }
 
-        if ($this->usuarios->atualizarUsuario($id, $nomeUsuario)) {
-            $this->session->set_flashdata('sucesso', 'Utilizador atualizado com sucesso!');
-        } else {
-            $this->session->set_flashdata('erro', 'Erro ao atualizar o utilizador.');
+        // Não deixar o sistema ficar sem nenhum administrador.
+        if (!$isAdmin && $this->usuarios->ehUltimoAdmin($id)) {
+            $this->session->set_flashdata('erro', 'Não é possível remover o acesso de administrador do último admin.');
+            redirect('usuarios');
         }
 
+        if ($eletricistaId && $this->usuarios->eletricistaJaVinculado($eletricistaId, $id)) {
+            $this->session->set_flashdata('erro', 'Este eletricista já está vinculado a outro usuário.');
+            redirect('usuarios');
+        }
+
+        if ($novaSenha !== '' && strlen($novaSenha) < 8) {
+            $this->session->set_flashdata('erro', 'A nova senha deve ter no mínimo 8 caracteres.');
+            redirect('usuarios');
+        }
+
+        $this->usuarios->atualizarDados($id, $nome, $isAdmin, $eletricistaId);
+
+        if ($novaSenha !== '') {
+            $this->usuarios->redefinirSenha($id, $novaSenha);
+        }
+
+        $this->usuarios->definirPermissoes($id, $isAdmin ? array() : $permissoes);
+
+        $this->session->set_flashdata('sucesso', 'Usuário atualizado com sucesso!');
         redirect('usuarios');
     }
 
@@ -46,6 +124,16 @@ class UsuariosController extends Auth_Controller
         $id = (int) $id;
 
         if (!$id) {
+            redirect('usuarios');
+        }
+
+        if ($id === (int) $this->session->userdata('user_id')) {
+            $this->session->set_flashdata('erro', 'Você não pode excluir a própria conta.');
+            redirect('usuarios');
+        }
+
+        if ($this->usuarios->ehUltimoAdmin($id)) {
+            $this->session->set_flashdata('erro', 'Não é possível excluir o último administrador.');
             redirect('usuarios');
         }
 

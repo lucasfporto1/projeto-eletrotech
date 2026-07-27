@@ -6,6 +6,7 @@ class BaixasController extends Auth_Controller
     public function __construct()
     {
         parent::__construct();
+        $this->exigirPermissao('baixas');
         $this->load->model('BaixasModel');
     }
 

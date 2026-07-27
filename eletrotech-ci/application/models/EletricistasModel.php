@@ -49,18 +49,20 @@ class EletricistasModel extends CI_Model
         return $this->db->get_where($this->table, ['id' => $id])->row_array();
     }
 
+    // Eletricistas ativos, para o dropdown de vínculo na tela de Usuários.
+    public function listar_para_vinculo()
+    {
+        return $this->db
+            ->select('id, nome, cpf')
+            ->where('data_demissao', null)
+            ->order_by('nome', 'ASC')
+            ->get($this->table)
+            ->result_array();
+    }
+
     public function get_by_cpf($cpf)
     {
         return $this->db->get_where($this->table, ['cpf' => $cpf])->row_array();
-    }
-
-    public function get_by_name_and_cpf($nome, $cpf)
-    {
-        return $this->db
-            ->where('LOWER(nome)', strtolower(trim($nome)))
-            ->where('cpf', trim($cpf))
-            ->get($this->table)
-            ->row_array();
     }
 
     public function get_os_by_eletricista($idEletricista)

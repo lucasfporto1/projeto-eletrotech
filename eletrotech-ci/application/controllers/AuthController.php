@@ -7,19 +7,12 @@ class AuthController extends MY_Controller
     {
         parent::__construct();
         $this->load->model('UsuarioModel', 'usuarios');
-        $this->load->model('EletricistasModel', 'eletricistas');
         $this->load->library('form_validation');
     }
 
     public function index()
     {
         if ($this->session->userdata('user_id')) {
-            $role = $this->session->userdata('role');
-            if ($role === 'eletricista') {
-                $this->load->view('telas/DashboardEletricistaView');
-                return;
-            }
-
             redirect('home');
             return;
         }
@@ -49,107 +42,46 @@ class AuthController extends MY_Controller
         $nomeUsuario = $this->input->post('nome');
         $senha       = $this->input->post('senha');
 
-        $usuario = $this->usuarios->buscarUsuarioPorNome($nomeUsuario);
+        // Aceita nome de usuário ou CPF do eletricista vinculado.
+        $usuario = $this->usuarios->buscarPorLogin($nomeUsuario);
 
-        if ($usuario && password_verify($senha, $usuario->senha)) {
-            $this->session->set_userdata(array(
-                'user_id' => $usuario->id,
-                'usuario' => $nomeUsuario,
-                'role' => 'admin',
-            ));
-            redirect('home');
-        }
-
-        $eletricista = $this->eletricistas->get_by_name_and_cpf($nomeUsuario, $senha);
-
-        if ($eletricista && empty($eletricista['data_demissao'])) {
-            $this->load->model('OrdemservicoModel', 'ordensServico');
-            $totalAbertas  = $this->ordensServico->totalAbertasPorEletricista($eletricista['id']);
-            $totalFechadas = $this->ordensServico->totalFechadasPorEletricista($eletricista['id']);
-
-            $data = array(
-                'titulo'         => 'Dashboard Eletricista - EletroTech',
-                'ativo'          => 'ordemServico',
-                'ordensServico'  => $this->ordensServico->get_all_by_eletricista($eletricista['id']),
-                'totalAbertas'   => $totalAbertas,
-                'totalFechadas'  => $totalFechadas,
-                'totalGeral'     => $totalAbertas + $totalFechadas,
-                'ultimasOS'      => $this->ordensServico->ultimasOSs(),
-            );
-
-
-            $this->session->set_userdata(array(
-                'user_id' => $eletricista['id'],
-                'usuario' => $eletricista['nome'],
-                'role' => 'eletricista',
-                'eletricista_id' => (int) $eletricista['id'],
-            ));
-            $this->load->view('telas/DashboardEletricistaView', $data);
-            return;
-        }
-
-        $this->session->set_flashdata('erro', 'Credenciais inválidas.');
-        redirect('auth');
-    }
-
-    public function cadastro()
-    {
-        $this->load->view('telas/CadastroView');
-    }
-
-    public function registrar()
-    {
-        if ($this->input->method() !== 'post') {
+        if (!$usuario || !password_verify($senha, $usuario->senha)) {
+            $this->session->set_flashdata('erro', 'Credenciais inválidas.');
             redirect('auth');
         }
 
-        $this->form_validation->set_rules('nome', 'Nome de Usuário', 'trim|required');
-        $this->form_validation->set_rules('senha', 'Senha', 'required|min_length[8]|callback_senha_forte');
-
-        $this->form_validation->set_message('required', 'Por favor, preencha todos os campos.');
-        $this->form_validation->set_message('min_length', 'A senha deve ter no mínimo {param} caracteres.');
-
-        if ($this->form_validation->run() === false) {
-            $this->session->set_flashdata('erro', validation_errors());
-            redirect('auth/cadastro');
-        }
-
-        $nomeUsuario = $this->input->post('nome');
-
-        if ($this->usuarios->usuarioExiste($nomeUsuario)) {
-            $this->session->set_flashdata('erro', 'Este nome de utilizador já está em uso. Escolha outro.');
-            redirect('auth/cadastro');
-        }
-
-        if ($this->usuarios->criarUsuario($nomeUsuario, $this->input->post('senha'))) {
-            $this->session->set_flashdata('sucesso', 'Conta criada com sucesso! Faça login.');
+        // Eletricista desligado não acessa, mesmo que a conta ainda exista.
+        if ($usuario->eletricista_id !== null && !empty($usuario->data_demissao)) {
+            $this->session->set_flashdata('erro', 'Acesso desativado. Fale com o administrador.');
             redirect('auth');
         }
 
-        $this->session->set_flashdata('erro', 'Erro ao registar na base de dados.');
-        redirect('auth/cadastro');
+        $ehAdmin    = ((int) $usuario->is_admin === 1);
+        $permissoes = $ehAdmin
+            ? array_keys(permissoes_disponiveis())
+            : $this->usuarios->permissoesDoUsuario($usuario->id);
+        $rota = rota_inicial($ehAdmin, $permissoes);
+
+        if ($rota === null) {
+            $this->session->set_flashdata('erro', 'Seu usuário ainda não tem nenhum acesso liberado. Fale com o administrador.');
+            redirect('auth');
+        }
+
+        $this->session->set_userdata(array(
+            'user_id'        => $usuario->id,
+            'usuario'        => $usuario->usuario,
+            'is_admin'       => $ehAdmin,
+            'eletricista_id' => $usuario->eletricista_id !== null ? (int) $usuario->eletricista_id : null,
+            'permissoes'     => $permissoes,
+        ));
+
+        redirect($rota);
     }
 
     public function sair()
     {
         $this->session->sess_destroy();
         redirect('auth');
-    }
-
-
-    public function senha_forte($senha)
-    {
-        if (!preg_match('/[A-Z]/', $senha)) {
-            $this->form_validation->set_message('senha_forte', 'A senha deve conter ao menos uma letra maiúscula.');
-            return false;
-        }
-
-        if (!preg_match('/[^a-zA-Z0-9]/', $senha)) {
-            $this->form_validation->set_message('senha_forte', 'A senha deve conter ao menos um caractere especial.');
-            return false;
-        }
-
-        return true;
     }
 
     private function estaBloqueado($acao, $limiteTentativas = 5, $bloqueioSegundos = 60)
@@ -175,36 +107,5 @@ class AuthController extends MY_Controller
         }
 
         return false;
-    }
-
-    public function loginEletri()
-    {
-        $this->load->view('telas/LoginEletricistaView');
-    }
-    
-    public function dashboardEletricista()
-    {
-        $eletricistaId = $this->session->userdata('eletricista_id');
-
-        if (!$eletricistaId) {
-            redirect('auth');
-            return;
-        }
-
-        $this->load->model('OrdemservicoModel', 'ordensServico');
-        $totalAbertas  = $this->ordensServico->totalAbertasPorEletricista($eletricistaId);
-        $totalFechadas = $this->ordensServico->totalFechadasPorEletricista($eletricistaId);
-
-        $data = array(
-            'titulo'         => 'Dashboard Eletricista - EletroTech',
-            'ativo'          => 'ordemServico',
-            'ordensServico'  => $this->ordensServico->get_all_by_eletricista($eletricistaId),
-            'totalAbertas'   => $totalAbertas,
-            'totalFechadas'  => $totalFechadas,
-            'totalGeral'     => $totalAbertas + $totalFechadas,
-            'ultimasOS'      => $this->ordensServico->ultimasOSs(),
-        );
-
-        $this->load->view('telas/DashboardEletricistaView', $data);
     }
 }

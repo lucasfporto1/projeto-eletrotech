@@ -6,6 +6,7 @@ class ProdutosController extends Auth_Controller
     public function __construct()
     {
         parent::__construct();
+        $this->exigirPermissao('produtos');
         $this->load->model('ProdutosModel');
     }
 

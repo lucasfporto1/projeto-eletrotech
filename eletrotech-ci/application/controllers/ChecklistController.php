@@ -6,6 +6,7 @@ class ChecklistController extends Auth_Controller
     public function __construct()
     {
         parent::__construct();
+        $this->exigirPermissao('checklist');
         $this->load->model('ChecklistModel');
     }
 

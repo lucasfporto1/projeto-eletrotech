@@ -1,4 +1,3 @@
-<?php /** @var object[] $usuarios */ ?>
 <!DOCTYPE html>
 <html lang="pt-br">
 
@@ -97,6 +96,21 @@
             font-style: italic;
         }
 
+        .badge-perfil-admin {
+            background-color: #FBD814;
+            color: #282828;
+            font-weight: bold;
+        }
+
+        .badge-perfil-padrao {
+            background-color: #555;
+            color: #eee;
+        }
+
+        .texto-vazio {
+            color: #888;
+        }
+
         .modal-content.eletrotech-modal {
             background-color: #282828;
             color: white;
@@ -126,7 +140,7 @@
             flex-direction: column;
         }
 
-        form.eletrotech-form label {
+        form.eletrotech-form label.campo {
             color: #ccc;
             font-size: 11px;
             font-weight: bold;
@@ -134,7 +148,9 @@
             margin-bottom: 5px;
         }
 
-        form.eletrotech-form input {
+        form.eletrotech-form input[type="text"],
+        form.eletrotech-form input[type="password"],
+        form.eletrotech-form select {
             border: none;
             border-bottom: 1px solid #777;
             background: transparent;
@@ -147,8 +163,88 @@
             transition: border-bottom 0.3s;
         }
 
-        form.eletrotech-form input:focus {
+        form.eletrotech-form select option {
+            background: #282828;
+            color: white;
+        }
+
+        form.eletrotech-form input:focus,
+        form.eletrotech-form select:focus {
             border-bottom: 2px solid #FBD814;
+        }
+
+        .switch-admin {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .switch-admin input {
+            width: 18px;
+            height: 18px;
+            accent-color: #FBD814;
+        }
+
+        .switch-admin label {
+            margin: 0;
+            font-size: 13px;
+            color: #eee;
+            text-transform: none;
+            font-weight: 500;
+        }
+
+        .permissoes-bloco {
+            border: 1px solid rgba(251, 216, 20, 0.25);
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-bottom: 18px;
+        }
+
+        .permissoes-bloco .titulo {
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #FBD814;
+            margin-bottom: 10px;
+        }
+
+        .permissoes-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 14px;
+        }
+
+        .permissoes-grid .perm-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .permissoes-grid input {
+            width: 16px;
+            height: 16px;
+            accent-color: #FBD814;
+        }
+
+        .permissoes-grid label {
+            margin: 0;
+            font-size: 13px;
+            color: #eee;
+            text-transform: none;
+            font-weight: 500;
+        }
+
+        .permissoes-bloco.desativado {
+            opacity: 0.45;
+            pointer-events: none;
+        }
+
+        .permissoes-aviso {
+            font-size: 12px;
+            color: #FBD814;
+            margin-bottom: 18px;
+            display: none;
         }
 
         form.eletrotech-form .btn-submit {
@@ -216,17 +312,19 @@
     </div>
 
     <div id="acoes_id">
-        <a href="<?= site_url('auth/cadastro') ?>">
-            <button><i class="fa-solid fa-plus"></i> Novo Usuário</button>
-        </a>
+        <button type="button" data-bs-toggle="modal" data-bs-target="#modalCriarUsuario">
+            <i class="fa-solid fa-plus"></i> Novo Usuário
+        </button>
     </div>
 
     <div class="container mt-2">
         <table class="table table-dark table-hover table-bordered custom-table text-center">
             <thead>
                 <tr>
-                    <th scope="col" style="width: 30%;">Ações</th>
-                    <th scope="col" style="width: 60%;">Nome de Usuário</th>
+                    <th scope="col" style="width: 18%;">Ações</th>
+                    <th scope="col" style="width: 27%;">Nome de Usuário</th>
+                    <th scope="col" style="width: 27%;">Eletricista vinculado</th>
+                    <th scope="col" style="width: 18%;">Perfil</th>
                     <th scope="col" style="width: 10%;">ID</th>
                 </tr>
             </thead>
@@ -241,6 +339,9 @@
                                     data-bs-target="#modalEditarUsuario"
                                     data-id="<?= $usuario->id ?>"
                                     data-nome="<?= htmlspecialchars($usuario->usuario) ?>"
+                                    data-is-admin="<?= (int) $usuario->is_admin ?>"
+                                    data-eletricista-id="<?= $usuario->eletricista_id !== null ? (int) $usuario->eletricista_id : '' ?>"
+                                    data-permissoes="<?= htmlspecialchars(implode(',', $usuario->permissoes)) ?>"
                                     onclick="preencherModalEditarUsuario(this)">
                                     <i class="fa-solid fa-pen"></i>
                                 </button>
@@ -251,13 +352,26 @@
                                 </a>
                             </td>
                             <td><?= htmlspecialchars($usuario->usuario) ?></td>
+                            <td>
+                                <?php if (!empty($usuario->eletricista_nome)): ?>
+                                    <?= htmlspecialchars($usuario->eletricista_nome) ?>
+                                <?php else: ?>
+                                    <span class="texto-vazio">—</span>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <?php if ((int) $usuario->is_admin === 1): ?>
+                                    <span class="badge badge-perfil-admin">Administrador</span>
+                                <?php else: ?>
+                                    <span class="badge badge-perfil-padrao">Padrão</span>
+                                <?php endif; ?>
+                            </td>
                             <td><?= htmlspecialchars($usuario->id) ?></td>
-                            
                         </tr>
                     <?php endforeach; ?>
                 <?php else: ?>
                     <tr>
-                        <td colspan="3" class="empty-state">Nenhum usuário cadastrado no momento.</td>
+                        <td colspan="5" class="empty-state">Nenhum usuário cadastrado no momento.</td>
                     </tr>
                 <?php endif; ?>
             </tbody>
@@ -266,22 +380,102 @@
         <?php $this->load->view('components/Pagination'); ?>
     </div>
 
+    <!-- Modal: criar usuário -->
+    <div class="modal fade" id="modalCriarUsuario" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content eletrotech-modal">
+                <div class="modal-header">
+                    <h5 class="modal-title">Novo Usuário</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form action="<?= site_url('usuarios/criar') ?>" method="POST" class="eletrotech-form">
+                        <label class="campo" for="criar_usuario">Nome de Usuário</label>
+                        <input type="text" name="usuario" id="criar_usuario" required>
+
+                        <label class="campo" for="criar_senha">Senha (mín. 8 caracteres)</label>
+                        <input type="password" name="senha" id="criar_senha" minlength="8" required>
+
+                        <label class="campo" for="criar_eletricista">Vincular a eletricista (opcional)</label>
+                        <select name="eletricista_id" id="criar_eletricista">
+                            <option value="">— Nenhum (usuário de escritório) —</option>
+                            <?php foreach ($eletricistas as $e): ?>
+                                <option value="<?= (int) $e['id'] ?>"><?= htmlspecialchars($e['nome']) ?> (<?= htmlspecialchars($e['cpf']) ?>)</option>
+                            <?php endforeach; ?>
+                        </select>
+
+                        <div class="switch-admin">
+                            <input type="checkbox" name="is_admin" id="criar_is_admin" value="1" onchange="togglePermissoes('criar')">
+                            <label for="criar_is_admin">Administrador (acesso total, gerencia usuários)</label>
+                        </div>
+
+                        <div class="permissoes-aviso" id="criar_aviso">Administradores têm acesso a tudo — as permissões abaixo não se aplicam.</div>
+
+                        <div class="permissoes-bloco" id="criar_permissoes_bloco">
+                            <div class="titulo">Módulos liberados</div>
+                            <div class="permissoes-grid">
+                                <?php foreach ($permissoesDisponiveis as $chave => $rotulo): ?>
+                                    <div class="perm-item">
+                                        <input type="checkbox" name="permissoes[]" value="<?= $chave ?>" id="criar_perm_<?= $chave ?>">
+                                        <label for="criar_perm_<?= $chave ?>"><?= htmlspecialchars($rotulo) ?></label>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-submit">Criar Usuário</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: editar usuário -->
     <div class="modal fade" id="modalEditarUsuario" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content eletrotech-modal">
                 <div class="modal-header">
-                    <h5 class="modal-title">Editar Utilizador</h5>
+                    <h5 class="modal-title">Editar Usuário</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
                     <form action="<?= site_url('usuarios/editar') ?>" method="POST" class="eletrotech-form">
-
                         <input type="hidden" name="id" id="edit_usuario_id">
 
-                        <label for="edit_nome_usuario">Nome de Utilizador</label>
+                        <label class="campo" for="edit_nome_usuario">Nome de Usuário</label>
                         <input type="text" name="usuario" id="edit_nome_usuario" required>
 
-                        <button type="submit" class="btn-submit mt-4">Gravar Alterações</button>
+                        <label class="campo" for="edit_senha">Nova senha (deixe em branco para manter)</label>
+                        <input type="password" name="senha" id="edit_senha" minlength="8" autocomplete="new-password">
+
+                        <label class="campo" for="edit_eletricista">Vincular a eletricista (opcional)</label>
+                        <select name="eletricista_id" id="edit_eletricista">
+                            <option value="">— Nenhum (usuário de escritório) —</option>
+                            <?php foreach ($eletricistas as $e): ?>
+                                <option value="<?= (int) $e['id'] ?>"><?= htmlspecialchars($e['nome']) ?> (<?= htmlspecialchars($e['cpf']) ?>)</option>
+                            <?php endforeach; ?>
+                        </select>
+
+                        <div class="switch-admin">
+                            <input type="checkbox" name="is_admin" id="edit_is_admin" value="1" onchange="togglePermissoes('edit')">
+                            <label for="edit_is_admin">Administrador (acesso total, gerencia usuários)</label>
+                        </div>
+
+                        <div class="permissoes-aviso" id="edit_aviso">Administradores têm acesso a tudo — as permissões abaixo não se aplicam.</div>
+
+                        <div class="permissoes-bloco" id="edit_permissoes_bloco">
+                            <div class="titulo">Módulos liberados</div>
+                            <div class="permissoes-grid">
+                                <?php foreach ($permissoesDisponiveis as $chave => $rotulo): ?>
+                                    <div class="perm-item">
+                                        <input type="checkbox" name="permissoes[]" value="<?= $chave ?>" id="edit_perm_<?= $chave ?>">
+                                        <label for="edit_perm_<?= $chave ?>"><?= htmlspecialchars($rotulo) ?></label>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-submit">Gravar Alterações</button>
                     </form>
                 </div>
             </div>
@@ -292,12 +486,31 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        const togglePermissoes = (prefixo) => {
+            const admin = document.getElementById(prefixo + '_is_admin').checked;
+            document.getElementById(prefixo + '_permissoes_bloco').classList.toggle('desativado', admin);
+            document.getElementById(prefixo + '_aviso').style.display = admin ? 'block' : 'none';
+        };
+
         const preencherModalEditarUsuario = (botao) => {
-            const id = botao.getAttribute('data-id');
-            const nome = botao.getAttribute('data-nome');
+            const id       = botao.getAttribute('data-id');
+            const nome     = botao.getAttribute('data-nome');
+            const isAdmin  = botao.getAttribute('data-is-admin') === '1';
+            const eletrId  = botao.getAttribute('data-eletricista-id') || '';
+            const permCsv  = botao.getAttribute('data-permissoes') || '';
+            const permitidas = permCsv ? permCsv.split(',') : [];
 
             document.getElementById('edit_usuario_id').value = id;
             document.getElementById('edit_nome_usuario').value = nome;
+            document.getElementById('edit_senha').value = '';
+            document.getElementById('edit_eletricista').value = eletrId;
+            document.getElementById('edit_is_admin').checked = isAdmin;
+
+            document
+                .querySelectorAll('#edit_permissoes_bloco input[type="checkbox"]')
+                .forEach((cb) => { cb.checked = permitidas.includes(cb.value); });
+
+            togglePermissoes('edit');
         };
     </script>
 </body>

@@ -6,12 +6,7 @@ class EletricistasController extends Auth_Controller
     public function __construct()
     {
         parent::__construct();
-
-        if ($this->session->userdata('role') !== 'admin') {
-            redirect('ordemServico');
-            return;
-        }
-
+        $this->exigirPermissao('eletricistas');
         $this->load->model('EletricistasModel');
     }
 

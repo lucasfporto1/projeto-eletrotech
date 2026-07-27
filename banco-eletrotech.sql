@@ -304,9 +304,13 @@ CREATE TABLE `tabela_usuarios` (
   `id` int NOT NULL AUTO_INCREMENT,
   `usuario` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   `senha` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `is_admin` tinyint(1) NOT NULL DEFAULT '0',
+  `eletricista_id` int DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `usuario` (`usuario`)
-) ENGINE=InnoDB AUTO_INCREMENT=33 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  UNIQUE KEY `usuario` (`usuario`),
+  KEY `fk_usuario_eletricista` (`eletricista_id`),
+  CONSTRAINT `fk_usuario_eletricista` FOREIGN KEY (`eletricista_id`) REFERENCES `tabela_eletricistas` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=53 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -315,8 +319,32 @@ CREATE TABLE `tabela_usuarios` (
 
 LOCK TABLES `tabela_usuarios` WRITE;
 /*!40000 ALTER TABLE `tabela_usuarios` DISABLE KEYS */;
-INSERT INTO `tabela_usuarios` VALUES (26,'Lucas','$2y$10$1DnK3WE2RZ9gLKOP6HGF1uHR.A8jSc2FYFZ9ysUL95W/f5WlxfMvq');
+INSERT INTO `tabela_usuarios` VALUES (26,'Lucas','$2y$10$1DnK3WE2RZ9gLKOP6HGF1uHR.A8jSc2FYFZ9ysUL95W/f5WlxfMvq',1,NULL),(49,'Eloi','$2y$10$C4cTLI3DOG.Gt43cKJZkr.n.HSra9UF0joaRt7mUuBaVXl4y0z8ly',1,NULL);
 /*!40000 ALTER TABLE `tabela_usuarios` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tabela_usuario_permissao`
+--
+
+DROP TABLE IF EXISTS `tabela_usuario_permissao`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tabela_usuario_permissao` (
+  `usuario_id` int NOT NULL,
+  `permissao` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`usuario_id`,`permissao`),
+  CONSTRAINT `fk_permissao_usuario` FOREIGN KEY (`usuario_id`) REFERENCES `tabela_usuarios` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tabela_usuario_permissao`
+--
+
+LOCK TABLES `tabela_usuario_permissao` WRITE;
+/*!40000 ALTER TABLE `tabela_usuario_permissao` DISABLE KEYS */;
+/*!40000 ALTER TABLE `tabela_usuario_permissao` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
