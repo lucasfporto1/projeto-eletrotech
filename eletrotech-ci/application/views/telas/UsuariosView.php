@@ -321,10 +321,9 @@
         <table class="table table-dark table-hover table-bordered custom-table text-center">
             <thead>
                 <tr>
-                    <th scope="col" style="width: 18%;">Ações</th>
-                    <th scope="col" style="width: 27%;">Nome de Usuário</th>
-                    <th scope="col" style="width: 27%;">Eletricista vinculado</th>
-                    <th scope="col" style="width: 18%;">Perfil</th>
+                    <th scope="col" style="width: 20%;">Ações</th>
+                    <th scope="col" style="width: 45%;">Nome de Usuário</th>
+                    <th scope="col" style="width: 25%;">Perfil</th>
                     <th scope="col" style="width: 10%;">ID</th>
                 </tr>
             </thead>
@@ -351,17 +350,21 @@
                                     <i class="fa-solid fa-trash"></i>
                                 </a>
                             </td>
-                            <td><?= htmlspecialchars($usuario->usuario) ?></td>
                             <td>
                                 <?php if (!empty($usuario->eletricista_nome)): ?>
                                     <?= htmlspecialchars($usuario->eletricista_nome) ?>
+                                    <div class="texto-vazio" style="font-size: 12px;">
+                                        login: <?= htmlspecialchars($usuario->usuario) ?>
+                                    </div>
                                 <?php else: ?>
-                                    <span class="texto-vazio">—</span>
+                                    <?= htmlspecialchars($usuario->usuario) ?>
                                 <?php endif; ?>
                             </td>
                             <td>
                                 <?php if ((int) $usuario->is_admin === 1): ?>
                                     <span class="badge badge-perfil-admin">Administrador</span>
+                                <?php elseif ($usuario->eletricista_id !== null): ?>
+                                    <span class="badge badge-perfil-padrao">Eletricista</span>
                                 <?php else: ?>
                                     <span class="badge badge-perfil-padrao">Padrão</span>
                                 <?php endif; ?>
@@ -371,7 +374,7 @@
                     <?php endforeach; ?>
                 <?php else: ?>
                     <tr>
-                        <td colspan="5" class="empty-state">Nenhum usuário cadastrado no momento.</td>
+                        <td colspan="4" class="empty-state">Nenhum usuário cadastrado no momento.</td>
                     </tr>
                 <?php endif; ?>
             </tbody>
@@ -396,20 +399,16 @@
                         <label class="campo" for="criar_senha">Senha (mín. 8 caracteres)</label>
                         <input type="password" name="senha" id="criar_senha" minlength="8" required>
 
-                        <label class="campo" for="criar_eletricista">Vincular a eletricista (opcional)</label>
-                        <select name="eletricista_id" id="criar_eletricista">
-                            <option value="">— Nenhum (usuário de escritório) —</option>
-                            <?php foreach ($eletricistas as $e): ?>
-                                <option value="<?= (int) $e['id'] ?>"><?= htmlspecialchars($e['nome']) ?> (<?= htmlspecialchars($e['cpf']) ?>)</option>
-                            <?php endforeach; ?>
-                        </select>
+                        <div class="permissoes-aviso" style="display:block;">
+                            Contas de eletricista são criadas na tela de Eletricistas.
+                        </div>
 
                         <div class="switch-admin">
                             <input type="checkbox" name="is_admin" id="criar_is_admin" value="1" onchange="togglePermissoes('criar')">
-                            <label for="criar_is_admin">Administrador (acesso total, gerencia usuários)</label>
+                            <label for="criar_is_admin">Administrador (acesso total)</label>
                         </div>
 
-                        <div class="permissoes-aviso" id="criar_aviso">Administradores têm acesso a tudo — as permissões abaixo não se aplicam.</div>
+                        <div class="permissoes-aviso" id="criar_aviso">Administrador já tem acesso a tudo.</div>
 
                         <div class="permissoes-bloco" id="criar_permissoes_bloco">
                             <div class="titulo">Módulos liberados</div>
@@ -448,20 +447,16 @@
                         <label class="campo" for="edit_senha">Nova senha (deixe em branco para manter)</label>
                         <input type="password" name="senha" id="edit_senha" minlength="8" autocomplete="new-password">
 
-                        <label class="campo" for="edit_eletricista">Vincular a eletricista (opcional)</label>
-                        <select name="eletricista_id" id="edit_eletricista">
-                            <option value="">— Nenhum (usuário de escritório) —</option>
-                            <?php foreach ($eletricistas as $e): ?>
-                                <option value="<?= (int) $e['id'] ?>"><?= htmlspecialchars($e['nome']) ?> (<?= htmlspecialchars($e['cpf']) ?>)</option>
-                            <?php endforeach; ?>
-                        </select>
+                        <div class="permissoes-aviso" id="edit_aviso_eletricista" style="display:none;">
+                            Conta de eletricista — o login é o CPF e não pode virar administrador.
+                        </div>
 
                         <div class="switch-admin">
                             <input type="checkbox" name="is_admin" id="edit_is_admin" value="1" onchange="togglePermissoes('edit')">
-                            <label for="edit_is_admin">Administrador (acesso total, gerencia usuários)</label>
+                            <label for="edit_is_admin">Administrador (acesso total)</label>
                         </div>
 
-                        <div class="permissoes-aviso" id="edit_aviso">Administradores têm acesso a tudo — as permissões abaixo não se aplicam.</div>
+                        <div class="permissoes-aviso" id="edit_aviso">Administrador tem acesso a tudo.</div>
 
                         <div class="permissoes-bloco" id="edit_permissoes_bloco">
                             <div class="titulo">Módulos liberados</div>
@@ -486,29 +481,75 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // O que estava marcado antes de virar admin, para devolver se desmarcar.
+        const permissoesAnteriores = {
+            criar: null,
+            edit: null
+        };
+
+        const checksDoBloco = (prefixo) =>
+            document.querySelectorAll('#' + prefixo + '_permissoes_bloco input[type="checkbox"]');
+
         const togglePermissoes = (prefixo) => {
             const admin = document.getElementById(prefixo + '_is_admin').checked;
+            const checks = checksDoBloco(prefixo);
+
+            if (admin) {
+                permissoesAnteriores[prefixo] = Array.from(checks)
+                    .filter((cb) => cb.checked)
+                    .map((cb) => cb.value);
+
+                // Admin tem tudo — os checks refletem isso, mesmo bloqueados.
+                checks.forEach((cb) => {
+                    cb.checked = true;
+                });
+            } else if (permissoesAnteriores[prefixo] !== null) {
+                const anteriores = permissoesAnteriores[prefixo];
+
+                // Nada guardado significa que a conta já era admin: manter tudo
+                // marcado, porque sem nenhum acesso o usuário não consegue entrar.
+                if (anteriores.length > 0) {
+                    checks.forEach((cb) => {
+                        cb.checked = anteriores.includes(cb.value);
+                    });
+                }
+
+                permissoesAnteriores[prefixo] = null;
+            }
+
             document.getElementById(prefixo + '_permissoes_bloco').classList.toggle('desativado', admin);
             document.getElementById(prefixo + '_aviso').style.display = admin ? 'block' : 'none';
         };
 
         const preencherModalEditarUsuario = (botao) => {
-            const id       = botao.getAttribute('data-id');
-            const nome     = botao.getAttribute('data-nome');
-            const isAdmin  = botao.getAttribute('data-is-admin') === '1';
-            const eletrId  = botao.getAttribute('data-eletricista-id') || '';
-            const permCsv  = botao.getAttribute('data-permissoes') || '';
+            const id = botao.getAttribute('data-id');
+            const nome = botao.getAttribute('data-nome');
+            const isAdmin = botao.getAttribute('data-is-admin') === '1';
+            const eletrId = botao.getAttribute('data-eletricista-id') || '';
+            const permCsv = botao.getAttribute('data-permissoes') || '';
             const permitidas = permCsv ? permCsv.split(',') : [];
+
+            const ehEletricista = eletrId !== '';
+
+            // Estado limpo a cada abertura: não carregar o que ficou do usuário anterior.
+            permissoesAnteriores.edit = null;
 
             document.getElementById('edit_usuario_id').value = id;
             document.getElementById('edit_nome_usuario').value = nome;
             document.getElementById('edit_senha').value = '';
-            document.getElementById('edit_eletricista').value = eletrId;
             document.getElementById('edit_is_admin').checked = isAdmin;
+
+            // Conta de eletricista não pode virar admin nem trocar de login — o
+            // controller também recusa, isto aqui só evita o caminho até o erro.
+            document.getElementById('edit_is_admin').disabled = ehEletricista;
+            document.getElementById('edit_nome_usuario').readOnly = ehEletricista;
+            document.getElementById('edit_aviso_eletricista').style.display = ehEletricista ? 'block' : 'none';
 
             document
                 .querySelectorAll('#edit_permissoes_bloco input[type="checkbox"]')
-                .forEach((cb) => { cb.checked = permitidas.includes(cb.value); });
+                .forEach((cb) => {
+                    cb.checked = permitidas.includes(cb.value);
+                });
 
             togglePermissoes('edit');
         };

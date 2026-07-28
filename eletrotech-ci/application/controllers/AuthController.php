@@ -70,6 +70,8 @@ class AuthController extends MY_Controller
         $this->session->set_userdata(array(
             'user_id'        => $usuario->id,
             'usuario'        => $usuario->usuario,
+            // O eletricista loga com CPF, mas nas telas aparece pelo nome.
+            'nome_exibicao'  => $usuario->eletricista_nome ?? $usuario->usuario,
             'is_admin'       => $ehAdmin,
             'eletricista_id' => $usuario->eletricista_id !== null ? (int) $usuario->eletricista_id : null,
             'permissoes'     => $permissoes,

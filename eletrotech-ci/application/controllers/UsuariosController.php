@@ -7,7 +7,6 @@ class UsuariosController extends Auth_Controller
     {
         parent::__construct();
         $this->exigirAdmin();
-        $this->load->model('EletricistasModel');
     }
 
     public function index()
@@ -22,7 +21,6 @@ class UsuariosController extends Auth_Controller
         }
 
         $dados['usuarios']              = $usuarios;
-        $dados['eletricistas']          = $this->EletricistasModel->listar_para_vinculo();
         $dados['permissoesDisponiveis'] = permissoes_disponiveis();
 
         $this->load->view('telas/UsuariosView', $dados);
@@ -34,11 +32,10 @@ class UsuariosController extends Auth_Controller
             redirect('usuarios');
         }
 
-        $nome          = trim((string) $this->input->post('usuario'));
-        $senha         = (string) $this->input->post('senha');
-        $isAdmin       = $this->input->post('is_admin') ? 1 : 0;
-        $eletricistaId = (int) $this->input->post('eletricista_id') ?: null;
-        $permissoes    = (array) $this->input->post('permissoes');
+        $nome       = trim((string) $this->input->post('usuario'));
+        $senha      = (string) $this->input->post('senha');
+        $isAdmin    = $this->input->post('is_admin') ? 1 : 0;
+        $permissoes = (array) $this->input->post('permissoes');
 
         if ($nome === '' || strlen($senha) < 8) {
             $this->session->set_flashdata('erro', 'Informe um nome de usuário e uma senha de no mínimo 8 caracteres.');
@@ -50,12 +47,14 @@ class UsuariosController extends Auth_Controller
             redirect('usuarios');
         }
 
-        if ($eletricistaId && $this->usuarios->eletricistaJaVinculado($eletricistaId)) {
-            $this->session->set_flashdata('erro', 'Este eletricista já está vinculado a outro usuário.');
+        if (!$isAdmin && empty($permissoes)) {
+            $this->session->set_flashdata('erro', 'Marque ao menos um acesso — sem nenhum, o usuário não consegue entrar no sistema.');
             redirect('usuarios');
         }
 
-        $novoId = $this->usuarios->criarUsuario($nome, $senha, $isAdmin, $eletricistaId);
+        // Contas de eletricista nascem no cadastro do eletricista, com o CPF
+        // como login. Aqui só se criam usuários de escritório.
+        $novoId = $this->usuarios->criarUsuario($nome, $senha, $isAdmin, null);
 
         if (!$novoId) {
             $this->session->set_flashdata('erro', 'Erro ao criar o usuário.');
@@ -74,16 +73,28 @@ class UsuariosController extends Auth_Controller
             redirect('usuarios');
         }
 
-        $id            = (int) $this->input->post('id');
-        $nome          = trim((string) $this->input->post('usuario'));
-        $isAdmin       = $this->input->post('is_admin') ? 1 : 0;
-        $eletricistaId = (int) $this->input->post('eletricista_id') ?: null;
-        $permissoes    = (array) $this->input->post('permissoes');
-        $novaSenha     = (string) $this->input->post('senha');
+        $id         = (int) $this->input->post('id');
+        $nome       = trim((string) $this->input->post('usuario'));
+        $isAdmin    = $this->input->post('is_admin') ? 1 : 0;
+        $permissoes = (array) $this->input->post('permissoes');
+        $novaSenha  = (string) $this->input->post('senha');
 
         if (!$id || $nome === '') {
             $this->session->set_flashdata('erro', 'O nome de usuário não pode estar vazio.');
             redirect('usuarios');
+        }
+
+        $usuarioAtual = $this->usuarios->buscarUsuarioPorId($id);
+
+        if (!$usuarioAtual) {
+            $this->session->set_flashdata('erro', 'Usuário não encontrado.');
+            redirect('usuarios');
+        }
+
+        // Conta de eletricista tem o CPF como login e ele não muda por aqui:
+        // trocar isso quebraria o acesso dele.
+        if ($usuarioAtual->eletricista_id !== null) {
+            $nome = $usuarioAtual->usuario;
         }
 
         if ($this->usuarios->usuarioExiste($nome, $id)) {
@@ -97,8 +108,14 @@ class UsuariosController extends Auth_Controller
             redirect('usuarios');
         }
 
-        if ($eletricistaId && $this->usuarios->eletricistaJaVinculado($eletricistaId, $id)) {
-            $this->session->set_flashdata('erro', 'Este eletricista já está vinculado a outro usuário.');
+        // Conta de eletricista não vira admin: ela é escopada às próprias OS,
+        if ($isAdmin && $usuarioAtual->eletricista_id !== null) {
+            $this->session->set_flashdata('erro', 'Contas de eletricista não podem ser promovidas a administrador.');
+            redirect('usuarios');
+        }
+
+        if (!$isAdmin && empty($permissoes)) {
+            $this->session->set_flashdata('erro', 'Marque ao menos um acesso — sem nenhum, o usuário não consegue entrar no sistema.');
             redirect('usuarios');
         }
 
@@ -107,7 +124,9 @@ class UsuariosController extends Auth_Controller
             redirect('usuarios');
         }
 
-        $this->usuarios->atualizarDados($id, $nome, $isAdmin, $eletricistaId);
+        // O vínculo com eletricista é definido no cadastro do eletricista;
+        // aqui ele é apenas preservado.
+        $this->usuarios->atualizarDados($id, $nome, $isAdmin, $usuarioAtual->eletricista_id);
 
         if ($novaSenha !== '') {
             $this->usuarios->redefinirSenha($id, $novaSenha);

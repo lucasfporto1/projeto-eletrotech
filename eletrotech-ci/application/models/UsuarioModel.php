@@ -26,9 +26,11 @@ class UsuarioModel extends CI_Model
     public function buscarUsuarioPorId($id)
     {
         return $this->db
-            ->select('id, usuario, is_admin, eletricista_id')
-            ->where('id', (int) $id)
-            ->get('tabela_usuarios')
+            ->select('u.id, u.usuario, u.is_admin, u.eletricista_id, e.nome AS eletricista_nome')
+            ->from('tabela_usuarios u')
+            ->join('tabela_eletricistas e', 'e.id = u.eletricista_id', 'left')
+            ->where('u.id', (int) $id)
+            ->get()
             ->row();
     }
 
@@ -45,7 +47,7 @@ class UsuarioModel extends CI_Model
     public function buscarPorLogin($identificador)
     {
         return $this->db
-            ->select('u.id, u.usuario, u.senha, u.is_admin, u.eletricista_id, e.data_demissao')
+            ->select('u.id, u.usuario, u.senha, u.is_admin, u.eletricista_id, e.data_demissao, e.nome AS eletricista_nome')
             ->from('tabela_usuarios u')
             ->join('tabela_eletricistas e', 'e.id = u.eletricista_id', 'left')
             ->group_start()
@@ -53,6 +55,16 @@ class UsuarioModel extends CI_Model
                 ->or_where('e.cpf', $identificador)
             ->group_end()
             ->get()
+            ->row();
+    }
+
+    // Conta de acesso de um eletricista (NULL se ele estiver sem conta).
+    public function buscarPorEletricista($eletricistaId)
+    {
+        return $this->db
+            ->select('id, usuario, is_admin, eletricista_id')
+            ->where('eletricista_id', (int) $eletricistaId)
+            ->get('tabela_usuarios')
             ->row();
     }
 

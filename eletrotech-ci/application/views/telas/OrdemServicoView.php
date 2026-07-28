@@ -351,7 +351,7 @@
                     <?php endforeach; ?>
                 <?php else: ?>
                     <tr>
-                        <td colspan="5" class="empty-state">Nenhuma Ordem de Serviço registrada no momento.</td>
+                        <td colspan="6" class="empty-state">Nenhuma Ordem de Serviço registrada no momento.</td>
                     </tr>
                 <?php endif; ?>
             </tbody>
@@ -747,6 +747,13 @@
                 botao.classList.add('active');
 
                 const linhas = document.querySelectorAll('table.custom-table tbody tr[data-status]');
+
+                // Tabela sem nenhuma OS: a mensagem do PHP já está na tela.
+                // Criar outra aqui deixaria as duas empilhadas.
+                if (linhas.length === 0) {
+                    return;
+                }
+
                 let algumaVisivel = false;
 
                 linhas.forEach(function(linha) {

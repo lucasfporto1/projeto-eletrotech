@@ -17,7 +17,7 @@ class MenuController extends Auth_Controller
 
         $dados = array(
             'totais'             => $this->dashboard->contarTotais(),
-            'usuario'            => $this->session->userdata('usuario'),
+            'usuario'            => $this->session->userdata('nome_exibicao') ?: $this->session->userdata('usuario'),
             'mesFiltro'          => $mesFiltro ?? '',
             'graficoEletricista' => $this->dashboard->getOsPorEletricista(),
             'graficoMes'         => $this->dashboard->getOsPorMes($mesFiltro),

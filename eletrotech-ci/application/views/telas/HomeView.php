@@ -107,8 +107,10 @@
         <img src="<?= base_url('assets/logo-eletrotech.png') ?>" alt="Logo EletroTech">
         <h1>Bem-vindo, <?= htmlspecialchars($usuario ?? 'Usuário') ?>!</h1>
         <p>Sistema de gestão da EletroTech Soluções Elétricas.</p>
-        <a href="<?= site_url('menu') ?>">
-            <button class="btn-dashboard"><i class="fa-solid fa-gauge-high"></i> Acessar Dashboard</button>
+        <a href="<?= site_url($destino ?? 'menu') ?>">
+            <button class="btn-dashboard">
+                <i class="fa-solid fa-gauge-high"></i> Acessar <?= htmlspecialchars($rotuloDestino ?? 'Dashboard') ?>
+            </button>
         </a>
     </div>
 

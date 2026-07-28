@@ -107,6 +107,9 @@ class Auth_Controller extends MY_Controller
         $this->session->set_userdata(array(
             'is_admin'   => $this->ehAdmin,
             'permissoes' => $this->permissoes,
+            // Para leitura humana: o eletricista loga com CPF, mas em tela
+            // aparece pelo nome. Relido aqui para refletir renomeações.
+            'nome_exibicao' => $usuario->eletricista_nome ?? $usuario->usuario,
         ));
     }
 

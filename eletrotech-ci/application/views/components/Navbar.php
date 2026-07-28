@@ -59,7 +59,7 @@ $pode = function ($chave) use ($ehAdmin, $permissoes) {
                 <?php endif; ?>
                 <?php if ($pode('baixas')): ?>
                     <li class="nav-item">
-                        <a class="nav-link <?= $ativo === 'baixas' ? 'active' : '' ?>" href="<?= site_url('baixas') ?>">Baixas</a>
+                        <a class="nav-link <?= $ativo === 'baixas' ? 'active' : '' ?>" href="<?= site_url('baixas') ?>">Movimentação</a>
                     </li>
                 <?php endif; ?>
                 <li class="nav-item ms-3">

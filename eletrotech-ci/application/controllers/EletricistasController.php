@@ -27,6 +27,7 @@ class EletricistasController extends Auth_Controller
         $this->form_validation->set_rules('cpf', 'CPF', 'required|exact_length[11]|numeric');
         $this->form_validation->set_rules('nome', 'Nome', 'required|min_length[3]');
         $this->form_validation->set_rules('data_contratacao', 'Data de Contratação', 'required');
+        $this->form_validation->set_rules('senha', 'Senha de acesso', 'required|min_length[8]');
 
         if ($this->form_validation->run() === FALSE) {
             $this->session->set_flashdata('erro', validation_errors());
@@ -34,10 +35,18 @@ class EletricistasController extends Auth_Controller
             return;
         }
 
-        $cpf = $this->input->post('cpf', TRUE);
+        $cpf   = $this->input->post('cpf', TRUE);
+        $senha = (string) $this->input->post('senha');
 
         if ($this->EletricistasModel->get_by_cpf($cpf)) {
             $this->session->set_flashdata('erro', 'Já existe um eletricista cadastrado com este CPF.');
+            redirect('eletricistas');
+            return;
+        }
+
+
+        if ($this->usuarios->usuarioExiste($cpf)) {
+            $this->session->set_flashdata('erro', 'Já existe um usuário do sistema usando este CPF como login.');
             redirect('eletricistas');
             return;
         }
@@ -49,19 +58,39 @@ class EletricistasController extends Auth_Controller
             'data_demissao' => null,
         ];
 
-        if ($this->EletricistasModel->insert($data)) {
-            $this->session->set_flashdata('sucesso', 'Eletricista cadastrado com sucesso!');
-        } else {
-            $this->session->set_flashdata('erro', 'Erro ao cadastrar eletricista.');
+        $this->db->trans_start();
+
+        $this->EletricistasModel->insert($data);
+        $idEletricista = (int) $this->db->insert_id();
+
+        $idUsuario = $idEletricista > 0
+            ? $this->usuarios->criarUsuario($cpf, $senha, 0, $idEletricista)
+            : false;
+
+        if ($idUsuario) {
+            $this->usuarios->definirPermissoes($idUsuario, permissoes_padrao_eletricista());
         }
 
+        $this->db->trans_complete();
+
+        if (!$idUsuario || $this->db->trans_status() === FALSE) {
+            $this->session->set_flashdata('erro', 'Erro ao cadastrar eletricista.');
+            redirect('eletricistas');
+            return;
+        }
+
+        $this->session->set_flashdata(
+            'sucesso',
+            'Eletricista cadastrado! O login dele é o CPF.'
+        );
         redirect('eletricistas');
     }
 
     public function editar()
     {
-        $id   = $this->input->post('id', TRUE);
-        $nome = $this->input->post('nome', TRUE);
+        $id        = $this->input->post('id', TRUE);
+        $nome      = $this->input->post('nome', TRUE);
+        $novaSenha = (string) $this->input->post('senha');
 
         $this->form_validation->set_rules('id', 'ID', 'required|numeric');
         $this->form_validation->set_rules('nome', 'Nome', 'required|min_length[3]');
@@ -72,10 +101,36 @@ class EletricistasController extends Auth_Controller
             return;
         }
 
-        if ($this->EletricistasModel->update($id, ['nome' => $nome])) {
-            $this->session->set_flashdata('sucesso', 'Dados atualizados com sucesso!');
-        } else {
+        if ($novaSenha !== '' && strlen($novaSenha) < 8) {
+            $this->session->set_flashdata('erro', 'A nova senha deve ter no mínimo 8 caracteres.');
+            redirect('eletricistas');
+            return;
+        }
+
+        $conta = $novaSenha !== '' ? $this->usuarios->buscarPorEletricista($id) : null;
+
+        if ($novaSenha !== '' && !$conta) {
+            $this->session->set_flashdata('erro', 'Este eletricista não tem conta de acesso, então não há senha para redefinir.');
+            redirect('eletricistas');
+            return;
+        }
+
+        $this->db->trans_start();
+
+        $this->EletricistasModel->update($id, ['nome' => $nome]);
+
+        if ($conta) {
+            $this->usuarios->redefinirSenha($conta->id, $novaSenha);
+        }
+
+        $this->db->trans_complete();
+
+        if ($this->db->trans_status() === FALSE) {
             $this->session->set_flashdata('erro', 'Erro ao atualizar eletricista.');
+        } elseif ($conta) {
+            $this->session->set_flashdata('sucesso', 'Dados atualizados e senha de acesso redefinida!');
+        } else {
+            $this->session->set_flashdata('sucesso', 'Dados atualizados com sucesso!');
         }
 
         redirect('eletricistas');

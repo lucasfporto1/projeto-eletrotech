@@ -328,7 +328,7 @@ $totalSaida   = $totais['total_saida'];
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="9" class="empty-state">Nenhuma movimentação encontrada para os filtros selecionados.</td>
+                                <td colspan="8" class="empty-state">Nenhuma movimentação encontrada para os filtros selecionados.</td>
                             </tr>
                         <?php endif; ?>
                     </tbody>

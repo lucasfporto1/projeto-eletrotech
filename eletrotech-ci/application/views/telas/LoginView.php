@@ -81,8 +81,8 @@
     <h1>Login</h1>
 
     <form action="<?= site_url('auth/entrar') ?>" method="POST" class="login-inputs">
-      <label for="login-nome">Nome de Usuário</label>
-      <input type="text" id="login-nome" name="nome" placeholder="Digite seu nome de usuário" required />
+      <label for="login-nome">Nome de Usuário ou CPF</label>
+      <input type="text" id="login-nome" name="nome" placeholder="Insira seu nome de usuário ou CPF" required />
 
       <label for="login-senha">Senha</label>
       <div class="ml-input-wrapper">

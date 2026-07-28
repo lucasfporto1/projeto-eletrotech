@@ -324,6 +324,12 @@
                     <label for="data_contratacao" class="required">Data de Contratação</label>
                     <input type="date" name="data_contratacao" id="data_contratacao" required />
 
+                    <label for="senha_eletricista" class="required">Senha de acesso</label>
+                    <input type="password" name="senha" id="senha_eletricista" placeholder="Mínimo 8 caracteres" minlength="8" autocomplete="new-password" required />
+                    <small style="display:block; margin-top:5px; color:#9a9a9a;">
+                        O eletricista entra com o <strong>CPF</strong> e esta senha.
+                    </small>
+
                     <button type="submit" class="btn-submit mt-3">Salvar Eletricista</button>
 
                     <?= form_close() ?>
@@ -347,6 +353,12 @@
 
                     <label for="edit_nome">Nome Completo</label>
                     <input type="text" name="nome" id="edit_nome" required>
+
+                    <label for="edit_senha_eletricista">Nova senha de acesso</label>
+                    <input type="password" name="senha" id="edit_senha_eletricista" placeholder="Deixe em branco para manter a atual" minlength="8" autocomplete="new-password">
+                    <small style="display:block; margin-top:5px; color:#9a9a9a;">
+                        Mínimo 8 caracteres.
+                    </small>
 
                     <button type="submit" class="btn-submit mt-4">Gravar Alterações</button>
 
@@ -379,6 +391,8 @@
 
             document.getElementById('edit_id').value = id;
             document.getElementById('edit_nome').value = nome;
+            // Em branco a cada abertura: senha só é trocada se for digitada.
+            document.getElementById('edit_senha_eletricista').value = '';
         };
 
         const abrirHistoricoOs = (idEletricista) => {
