@@ -19,11 +19,10 @@ if (!function_exists('permissoes_disponiveis')) {
 
 if (!function_exists('permissoes_padrao_eletricista')) {
     // Acessos que toda conta de eletricista recebe ao ser criada junto com o
-    // cadastro. 'menu' fica de fora: aquele dashboard é gerencial e mostra os
-    // números de todos os eletricistas.
+    // cadastro. O dashboard pessoal também é liberado para esse perfil.
     function permissoes_padrao_eletricista()
     {
-        return array('ordemServico');
+        return array('menu', 'ordemServico');
     }
 }
 

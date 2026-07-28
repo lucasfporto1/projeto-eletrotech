@@ -5,7 +5,9 @@ class HomeController extends Auth_Controller
 {
     public function index()
     {
-        $destino = primeira_tela_liberada($this->ehAdmin, $this->permissoes);
+        $destino = $this->ehAdmin || !$this->eletricistaId
+            ? primeira_tela_liberada($this->ehAdmin, $this->permissoes)
+            : 'menu';
 
         if ($destino === null) {
             $this->session->set_flashdata('erro', 'Seu usuário não tem nenhum acesso liberado. Fale com o administrador.');
@@ -18,7 +20,7 @@ class HomeController extends Auth_Controller
         $this->load->view('telas/HomeView', array(
             'usuario'       => $this->session->userdata('nome_exibicao') ?: $this->session->userdata('usuario'),
             'destino'       => $destino,
-            'rotuloDestino' => $rotulos[$destino] ?? 'Sistema',
+            'rotuloDestino' => $rotulos[$destino] ?? 'Dashboard',
         ));
     }
 }
