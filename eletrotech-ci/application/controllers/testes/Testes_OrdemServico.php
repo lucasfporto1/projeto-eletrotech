@@ -217,11 +217,13 @@ class Testes_OrdemServico extends CI_Controller {
             $id_outro_eletricista = $this->db->insert_id();
 
             $this->db->insert('tabela_ordens_servico', ['eletricista_os' => $id_eletricista, 'status' => 'aberta']);
+            $id_os = $this->db->insert_id();
+
             $this->db->insert('tabela_ordens_servico', ['eletricista_os' => $id_outro_eletricista, 'status' => 'fechada']);
 
             $ultimas = $this->OrdemServicoModel->ultimasOSs($id_eletricista, 5);
             $this->unit->run(count($ultimas), 1, 'Dashboard: Deve retornar apenas as OSs do eletricista filtrado');
-            $this->unit->run((int) ($ultimas[0]['id'] ?? 0), 1, 'Dashboard: Deve trazer a OS correta para o eletricista filtrado');
+            $this->unit->run((int) ($ultimas[0]['id'] ?? 0), (int) $id_os, 'Dashboard: Deve trazer a OS correta para o eletricista filtrado');
         } finally {
             $this->db->trans_rollback();
         }
