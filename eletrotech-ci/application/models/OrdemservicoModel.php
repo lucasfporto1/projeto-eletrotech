@@ -294,15 +294,19 @@ class OrdemServicoModel extends CI_Model
             ->count_all_results();
     }
 
-    public function ultimasOSs($limite = 3)
+    public function ultimasOSs($idEletricista = null, $limite = 3)
     {
-        $query = $this->db->select('os.id, os.data_os, os.data_fechamento, os.status, e.nome as nome_eletricista')
+        $this->db->select('os.id, os.data_os, os.data_fechamento, os.status, e.nome as nome_eletricista')
             ->from('tabela_ordens_servico os')
             ->join('tabela_eletricistas e', 'os.eletricista_os = e.id', 'inner')
-            ->order_by('os.id', 'DESC')
-            ->limit((int) $limite)
-            ->get();
-    
+            ->order_by('os.id', 'DESC');
+
+        if ($idEletricista !== null && $idEletricista !== '') {
+            $this->db->where('os.eletricista_os', (int) $idEletricista);
+        }
+
+        $query = $this->db->limit((int) $limite)->get();
+
         if ($query === false) {
             return [];
         }

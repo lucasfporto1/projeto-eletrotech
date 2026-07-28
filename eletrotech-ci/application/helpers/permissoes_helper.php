@@ -19,7 +19,7 @@ if (!function_exists('permissoes_disponiveis')) {
 if (!function_exists('permissoes_padrao_eletricista')) {
     function permissoes_padrao_eletricista()
     {
-        return array('ordemServico');
+        return array('menu', 'ordemServico');
     }
 }
 
