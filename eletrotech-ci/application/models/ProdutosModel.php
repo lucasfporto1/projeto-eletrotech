@@ -37,13 +37,23 @@ class ProdutosModel extends CI_Model
         return $this->db->get_where($this->table, ['id' => $id])->row_array();
     }
 
+    /**
+     * Cadastra o produto e, se já nascer com estoque, lança a entrada no ledger.
+     *
+     * Retorna o ID do produto criado (ou FALSE em caso de falha). Não use
+     * $this->db->insert_id() depois de chamar este método: quando há estoque
+     * inicial a última inserção é a da movimentação, não a do produto.
+     */
     public function insert($data)
     {
-        $ok = $this->db->insert($this->table, $data);
+        $this->db->trans_start();
 
-        if ($ok && (int) ($data['qtd_estoque'] ?? 0) > 0) {
+        $this->db->insert($this->table, $data);
+        $idProduto = (int) $this->db->insert_id();
+
+        if ($idProduto > 0 && (int) ($data['qtd_estoque'] ?? 0) > 0) {
             $this->registrarMovimentacao(
-                $this->db->insert_id(),
+                $idProduto,
                 'entrada',
                 (int) $data['qtd_estoque'],
                 $data['vlr_unitario'] ?? 0,
@@ -51,7 +61,13 @@ class ProdutosModel extends CI_Model
             );
         }
 
-        return $ok;
+        $this->db->trans_complete();
+
+        if ($idProduto <= 0 || $this->db->trans_status() === FALSE) {
+            return false;
+        }
+
+        return $idProduto;
     }
 
     public function update($id, $data)
@@ -69,9 +85,11 @@ class ProdutosModel extends CI_Model
         }
 
         $qtdAtual = (int) $produto['qtd_estoque'];
-        $ok = $this->db->update($this->table, ['qtd_estoque' => 0], ['id' => $id]);
 
-        if ($ok && $qtdAtual > 0) {
+        $this->db->trans_start();
+        $this->db->update($this->table, ['qtd_estoque' => 0], ['id' => $id]);
+
+        if ($qtdAtual > 0) {
             $this->registrarMovimentacao(
                 $id,
                 'saida',
@@ -81,27 +99,44 @@ class ProdutosModel extends CI_Model
             );
         }
 
-        return $ok;
+        $this->db->trans_complete();
+
+        return $this->db->trans_status() !== FALSE;
     }
 
     public function aumentarQtdEstoque($id, $quantidade)
     {
-        $this->db->set('qtd_estoque', 'qtd_estoque + ' . (int)$quantidade, FALSE);
-        $this->db->where('id', $id);
-        $ok = $this->db->update($this->table);
+        $quantidade = (int) $quantidade;
 
-        if ($ok) {
-            $produto = $this->get_by_id($id);
-            $this->registrarMovimentacao(
-                $id,
-                'entrada',
-                (int) $quantidade,
-                $produto['vlr_unitario'] ?? 0,
-                'Reposição de estoque'
-            );
+        if ($quantidade <= 0) {
+            return false;
         }
 
-        return $ok;
+        // Sem o produto não há como lançar a movimentação: a FK fk_mov_produto
+        // rejeitaria o insert e derrubaria a requisição.
+        $produto = $this->get_by_id($id);
+
+        if (!$produto) {
+            return false;
+        }
+
+        $this->db->trans_start();
+
+        $this->db->set('qtd_estoque', 'qtd_estoque + ' . $quantidade, FALSE);
+        $this->db->where('id', $id);
+        $this->db->update($this->table);
+
+        $this->registrarMovimentacao(
+            $id,
+            'entrada',
+            $quantidade,
+            $produto['vlr_unitario'] ?? 0,
+            'Reposição de estoque'
+        );
+
+        $this->db->trans_complete();
+
+        return $this->db->trans_status() !== FALSE;
     }
 
     /**
