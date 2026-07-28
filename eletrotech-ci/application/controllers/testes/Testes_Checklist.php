@@ -22,10 +22,16 @@ class Testes_Checklist extends CI_Controller {
         echo "</div>";
     }
 
+    /**
+     * ATENÇÃO: tabela_checklist.tipo é um ENUM('inicio','fim'). Qualquer outro
+     * valor é gravado como string vazia (o banco roda sem STRICT_TRANS_TABLES,
+     * porque database.php usa 'stricton' => FALSE) e as buscas por tipo param
+     * de encontrar o registro. Use só 'inicio' ou 'fim' nos testes.
+     */
     private function testar_insercao_e_perguntas() {
         $this->db->trans_start();
 
-        $dados = ['titulo' => 'Checklist Instalação', 'tipo' => 'instalacao', 'selecionado' => 0];
+        $dados = ['titulo' => 'Checklist Instalação', 'tipo' => 'inicio', 'selecionado' => 0];
         $perguntas = [
             ['texto' => 'O disjuntor está desligado?', 'tipo_resposta' => 'radio'],
             ['texto' => 'Fiação isolada?', 'tipo_resposta' => 'text']
@@ -47,16 +53,18 @@ class Testes_Checklist extends CI_Controller {
         $this->db->trans_start();
 
         // Cria dois checklists do mesmo tipo
-        $id1 = $this->ChecklistModel->insert_checklist(['titulo' => 'C1', 'tipo' => 'manutencao'], ['P1']);
-        $id2 = $this->ChecklistModel->insert_checklist(['titulo' => 'C2', 'tipo' => 'manutencao'], ['P2']);
+        $id1 = $this->ChecklistModel->insert_checklist(['titulo' => 'C1', 'tipo' => 'fim'], ['P1']);
+        $id2 = $this->ChecklistModel->insert_checklist(['titulo' => 'C2', 'tipo' => 'fim'], ['P2']);
 
         // Define C2 como padrão
-        $this->ChecklistModel->select_default($id2, 'manutencao');
+        $this->ChecklistModel->select_default($id2, 'fim');
 
         // Busca o selecionado
-        $selecionado = $this->ChecklistModel->get_selected_by_type('manutencao');
-        
-        $this->unit->run($selecionado['id'], $id2, 'Seleção: O checklist selecionado deve ser o ID 2');
+        $selecionado = $this->ChecklistModel->get_selected_by_type('fim');
+
+        // Cast obrigatório: row_array() devolve tudo como string e o
+        // use_strict(TRUE) compara também o tipo.
+        $this->unit->run((int)$selecionado['id'], (int)$id2, 'Seleção: O checklist selecionado deve ser o ID 2');
         
         // Verifica se C1 foi desmarcado
         $c1 = $this->db->get_where('tabela_checklist', ['id' => $id1])->row_array();
@@ -69,7 +77,7 @@ class Testes_Checklist extends CI_Controller {
         $this->db->trans_start();
 
         // Insere checklist
-        $id = $this->ChecklistModel->insert_checklist(['titulo' => 'Para Deletar', 'tipo' => 'teste'], ['Pergunta']);
+        $id = $this->ChecklistModel->insert_checklist(['titulo' => 'Para Deletar', 'tipo' => 'inicio'], ['Pergunta']);
         
         // Testa get_all (verifica se retorna pelo menos o que criamos)
         $lista = $this->ChecklistModel->get_all();

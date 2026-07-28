@@ -20,6 +20,7 @@ class Testes_Produtos extends CI_Controller {
         $this->testar_update();
         $this->testar_zerar_estoque();
         $this->testar_aumentar_estoque();
+        $this->testar_aumentar_estoque_produto_inexistente();
 
         // Exibe o relatório
         echo "<div style='font-family: Arial; padding: 20px;'>";
@@ -29,82 +30,128 @@ class Testes_Produtos extends CI_Controller {
     }
 
     private function testar_insercao_e_movimentacao_inicial() {
-        $this->db->trans_start(); 
+        $this->db->trans_start();
+        try {
+            // Cenário: Criar um produto com estoque inicial > 0
+            $dados = array(
+                'nome_produto' => 'Produto Teste 1',
+                'vlr_unitario' => 50.00,
+                'qtd_estoque'  => 10
+            );
 
-        // Cenário: Criar um produto com estoque inicial > 0
-        $dados = array(
-            'nome_produto' => 'Produto Teste 1', // Alterado de 'descricao' para 'nome_produto'
-            'vlr_unitario' => 50.00,
-            'qtd_estoque'  => 10
-        );
-        
-        $sucesso = $this->ProdutosModel->insert($dados);
-        $id = $this->db->insert_id();
+            // insert() devolve o ID do produto. Não usar $this->db->insert_id()
+            // aqui: com estoque inicial a última inserção é a da movimentação.
+            $id = $this->ProdutosModel->insert($dados);
 
-        // ... resto da função permanece igual
+            $this->unit->run(is_int($id) && $id > 0, TRUE, 'Insert: Deve criar o produto e retornar o ID dele');
+
+            // O produto tem que existir mesmo, com os dados que mandamos
+            $produto = $this->ProdutosModel->get_by_id($id);
+            $this->unit->run($produto['nome_produto'] ?? '', 'Produto Teste 1', 'Insert: O ID retornado deve apontar para o produto criado');
+            $this->unit->run((int)($produto['qtd_estoque'] ?? -1), 10, 'Insert: O estoque inicial deve ser gravado no cadastro');
+
+            // E o estoque inicial tem que virar uma entrada no ledger
+            $mov = $this->db->get_where('tabela_movimentacoes', ['id_produto' => $id])->row_array();
+            $this->unit->run($mov['tipo'] ?? '', 'entrada', 'Insert: Deve gerar uma movimentação de "entrada" para o estoque inicial');
+            $this->unit->run((int)($mov['quantidade'] ?? 0), 10, 'Insert: A movimentação inicial deve ter a quantidade cadastrada (10)');
+        } finally {
+            $this->db->trans_rollback();
+        }
     }
 
     private function testar_update() {
         $this->db->trans_start();
+        try {
+            // Insere um produto para atualizar depois
+            // nome_produto é NOT NULL no banco, então precisa vir sempre.
+            $id = $this->ProdutosModel->insert([
+                'nome_produto' => 'Produto Update',
+                'vlr_unitario' => 10.00,
+                'qtd_estoque'  => 0
+            ]);
 
-        // Insere um produto para atualizar depois
-        $this->ProdutosModel->insert(['vlr_unitario' => 10.00, 'qtd_estoque' => 0]);
-        $id = $this->db->insert_id();
+            // Atualiza o valor
+            $this->ProdutosModel->update($id, ['vlr_unitario' => 15.50]);
 
-        // Atualiza o valor
-        $this->ProdutosModel->update($id, ['vlr_unitario' => 15.50]);
+            // Busca e verifica se o valor mudou
+            $produto = $this->ProdutosModel->get_by_id($id);
 
-        // Busca e verifica se o valor mudou
-        $produto = $this->ProdutosModel->get_by_id($id);
-        
-        // Convertendo para float para evitar falsos negativos por causa do tipo de dado do banco (string decimal vs float)
-        $this->unit->run((float)$produto['vlr_unitario'], 15.50, 'Update: Deve atualizar o valor unitário corretamente');
-
-        $this->db->trans_rollback();
+            // Convertendo para float para evitar falsos negativos por causa do tipo de dado do banco (string decimal vs float)
+            $this->unit->run((float)$produto['vlr_unitario'], 15.50, 'Update: Deve atualizar o valor unitário corretamente');
+        } finally {
+            $this->db->trans_rollback();
+        }
     }
 
     private function testar_zerar_estoque() {
         $this->db->trans_start();
+        try {
+            // Cria produto com estoque 5
+            $id = $this->ProdutosModel->insert([
+                'nome_produto' => 'Produto Zerar',
+                'vlr_unitario' => 20.00,
+                'qtd_estoque'  => 5
+            ]);
 
-        // Cria produto com estoque 5
-        $this->ProdutosModel->insert(['vlr_unitario' => 20.00, 'qtd_estoque' => 5]);
-        $id = $this->db->insert_id();
+            // Zera o estoque
+            $ok = $this->ProdutosModel->zerarEstoque($id);
+            $this->unit->run($ok, TRUE, 'ZerarEstoque: Deve retornar TRUE ao zerar um produto existente');
 
-        // Zera o estoque
-        $this->ProdutosModel->zerarEstoque($id);
+            // 1. Verifica se a tabela principal zerou
+            $produto = $this->ProdutosModel->get_by_id($id);
+            $this->unit->run((int)$produto['qtd_estoque'], 0, 'ZerarEstoque: A quantidade no cadastro do produto deve ir para 0');
 
-        // 1. Verifica se a tabela principal zerou
-        $produto = $this->ProdutosModel->get_by_id($id);
-        $this->unit->run((int)$produto['qtd_estoque'], 0, 'ZerarEstoque: A quantidade no cadastro do produto deve ir para 0');
-
-        // 2. Verifica se a movimentação de SAÍDA foi gerada
-        // Order by id DESC para pegar a última movimentação (a saída) já que a entrada inicial gera um registro também.
-        $mov_saida = $this->db->order_by('id', 'DESC')->get_where('tabela_movimentacoes', ['id_produto' => $id])->row_array();
-        $this->unit->run($mov_saida['tipo'], 'saida', 'ZerarEstoque: Deve gerar uma movimentação do tipo "saida" no ledger');
-        $this->unit->run((int)$mov_saida['quantidade'], 5, 'ZerarEstoque: A quantidade da movimentação de saída deve ser igual ao estoque que foi zerado (5)');
-
-        $this->db->trans_rollback();
+            // 2. Verifica se a movimentação de SAÍDA foi gerada
+            // Order by id DESC para pegar a última movimentação (a saída) já que a entrada inicial gera um registro também.
+            $mov_saida = $this->db->order_by('id', 'DESC')->get_where('tabela_movimentacoes', ['id_produto' => $id])->row_array();
+            $this->unit->run($mov_saida['tipo'], 'saida', 'ZerarEstoque: Deve gerar uma movimentação do tipo "saida" no ledger');
+            $this->unit->run((int)$mov_saida['quantidade'], 5, 'ZerarEstoque: A quantidade da movimentação de saída deve ser igual ao estoque que foi zerado (5)');
+        } finally {
+            $this->db->trans_rollback();
+        }
     }
 
     private function testar_aumentar_estoque() {
         $this->db->trans_start();
+        try {
+            // Cria produto com estoque 2
+            $id = $this->ProdutosModel->insert([
+                'nome_produto' => 'Produto Aumentar',
+                'vlr_unitario' => 30.00,
+                'qtd_estoque'  => 2
+            ]);
 
-        // Cria produto com estoque 2
-        $this->ProdutosModel->insert(['vlr_unitario' => 30.00, 'qtd_estoque' => 2]);
-        $id = $this->db->insert_id();
+            // Aumenta o estoque em +3
+            $ok = $this->ProdutosModel->aumentarQtdEstoque($id, 3);
+            $this->unit->run($ok, TRUE, 'AumentarEstoque: Deve retornar TRUE ao repor um produto existente');
 
-        // Aumenta o estoque em +3
-        $this->ProdutosModel->aumentarQtdEstoque($id, 3);
+            // 1. Verifica se a matemática deu certo (2 + 3 = 5)
+            $produto = $this->ProdutosModel->get_by_id($id);
+            $this->unit->run((int)$produto['qtd_estoque'], 5, 'AumentarEstoque: O saldo total do produto deve ser a soma exata (2 + 3 = 5)');
 
-        // 1. Verifica se a matemática deu certo (2 + 3 = 5)
-        $produto = $this->ProdutosModel->get_by_id($id);
-        $this->unit->run((int)$produto['qtd_estoque'], 5, 'AumentarEstoque: O saldo total do produto deve ser a soma exata (2 + 3 = 5)');
+            // 2. Verifica a movimentação de ENTRADA
+            $mov_entrada = $this->db->order_by('id', 'DESC')->get_where('tabela_movimentacoes', ['id_produto' => $id])->row_array();
+            $this->unit->run($mov_entrada['tipo'], 'entrada', 'AumentarEstoque: Deve gerar uma movimentação do tipo "entrada"');
+            $this->unit->run((int)$mov_entrada['quantidade'], 3, 'AumentarEstoque: A quantidade do registro deve refletir o valor adicionado (3)');
+        } finally {
+            $this->db->trans_rollback();
+        }
+    }
 
-        // 2. Verifica a movimentação de ENTRADA
-        $mov_entrada = $this->db->order_by('id', 'DESC')->get_where('tabela_movimentacoes', ['id_produto' => $id])->row_array();
-        $this->unit->run($mov_entrada['tipo'], 'entrada', 'AumentarEstoque: Deve gerar uma movimentação do tipo "entrada"');
-        $this->unit->run((int)$mov_entrada['quantidade'], 3, 'AumentarEstoque: A quantidade do registro deve refletir o valor adicionado (3)');
+    /**
+     * Regressão: repor estoque de um produto que não existe tentava gravar a
+     * movimentação mesmo assim e estourava a FK fk_mov_produto (erro 1452).
+     */
+    private function testar_aumentar_estoque_produto_inexistente() {
+        $this->db->trans_start();
+        try {
+            $ok = $this->ProdutosModel->aumentarQtdEstoque(999999, 3);
+            $this->unit->run($ok, FALSE, 'AumentarEstoque: Deve retornar FALSE para produto inexistente, sem violar a FK');
 
-        $this->db->trans_rollback();
+            $orfas = $this->db->where('id_produto', 999999)->count_all_results('tabela_movimentacoes');
+            $this->unit->run($orfas, 0, 'AumentarEstoque: Não pode deixar movimentação órfã no ledger');
+        } finally {
+            $this->db->trans_rollback();
+        }
     }
 }

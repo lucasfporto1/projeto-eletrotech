@@ -67,8 +67,15 @@ class Testes_Dashboard extends CI_Controller {
         $this->db->trans_rollback();
     }
 
+    /**
+     * getOsPorStatus() agrega a tabela inteira, então comparar com número
+     * absoluto só funcionaria num banco vazio. Medimos a variação (delta)
+     * causada pelas OS que este teste cria.
+     */
     private function testar_os_por_status() {
         $this->db->trans_start();
+
+        $antes = $this->DashboardModel->getOsPorStatus();
 
         // Cria um eletricista válido para satisfazer a FK obrigatória de tabela_ordens_servico
         $idEletricista = $this->criarEletricistaTeste('Eletricista Teste Status');
@@ -86,17 +93,36 @@ class Testes_Dashboard extends CI_Controller {
             'eletricista_os' => $idEletricista
         ]);
 
-        $resultado = $this->DashboardModel->getOsPorStatus();
+        $depois = $this->DashboardModel->getOsPorStatus();
 
-        $this->unit->run($resultado['aberta'], 2, 'Status: Deve contar exatamente 2 OS abertas');
-        $this->unit->run($resultado['fechada'], 1, 'Status: Deve contar exatamente 1 OS fechada');
+        $this->unit->run($depois['aberta'] - $antes['aberta'], 2, 'Status: Deve contar exatamente 2 OS abertas a mais');
+        $this->unit->run($depois['fechada'] - $antes['fechada'], 1, 'Status: Deve contar exatamente 1 OS fechada a mais');
 
         $this->db->trans_rollback();
     }
 
+    /**
+     * Helper: extrai a linha de um mês específico do retorno de
+     * getMovimentacaoPorMes(), já com os totais convertidos para float.
+     */
+    private function totaisDoMes(array $movs, $mes) {
+        foreach ($movs as $m) {
+            if ($m['mes'] === $mes) {
+                return ['entrada' => (float) $m['entrada'], 'saida' => (float) $m['saida']];
+            }
+        }
+        return ['entrada' => 0.0, 'saida' => 0.0];
+    }
+
+    /**
+     * Assim como getOsPorStatus(), getMovimentacaoPorMes() soma tudo o que já
+     * existe no banco. Comparamos o delta, não o valor absoluto.
+     */
     private function testar_movimentacao_por_mes() {
         $this->db->trans_start();
         $mes_atual = date('Y-m');
+
+        $antes = $this->totaisDoMes($this->DashboardModel->getMovimentacaoPorMes(), $mes_atual);
 
         // Cria um produto válido para satisfazer a FK obrigatória de tabela_movimentacoes
         $this->db->insert('tabela_produtos', ['nome_produto' => 'Produto Teste Movimentação']);
@@ -115,16 +141,14 @@ class Testes_Dashboard extends CI_Controller {
 
         $movs = $this->DashboardModel->getMovimentacaoPorMes();
 
-        // Encontra o mês atual no resultado
-        $encontrou = false;
-        foreach ($movs as $m) {
-            if ($m['mes'] == $mes_atual) {
-                $this->unit->run((float)$m['entrada'], 50.0, 'Movimentação: Soma de entradas calculada corretamente');
-                $this->unit->run((float)$m['saida'], 20.0, 'Movimentação: Soma de saídas calculada corretamente');
-                $encontrou = true;
-            }
-        }
-        $this->unit->run($encontrou, TRUE, 'Movimentação: Mês atual encontrado no relatório');
+        // O mês atual tem que aparecer no relatório
+        $meses = array_column($movs, 'mes');
+        $this->unit->run(in_array($mes_atual, $meses, TRUE), TRUE, 'Movimentação: Mês atual encontrado no relatório');
+
+        $depois = $this->totaisDoMes($movs, $mes_atual);
+
+        $this->unit->run($depois['entrada'] - $antes['entrada'], 50.0, 'Movimentação: Soma de entradas calculada corretamente');
+        $this->unit->run($depois['saida'] - $antes['saida'], 20.0, 'Movimentação: Soma de saídas calculada corretamente');
 
         $this->db->trans_rollback();
     }
@@ -132,7 +156,10 @@ class Testes_Dashboard extends CI_Controller {
     private function testar_os_por_eletricista() {
         $this->db->trans_start();
 
-        $id = $this->criarEletricistaTeste('Eletricista A');
+        // Nome único: o agrupamento é por nome e um homônimo já cadastrado
+        // no banco somaria as OS dele às nossas.
+        $nome = 'Eletricista A ' . uniqid();
+        $id = $this->criarEletricistaTeste($nome);
 
         $this->db->insert('tabela_ordens_servico', ['eletricista_os' => $id]);
         $this->db->insert('tabela_ordens_servico', ['eletricista_os' => $id]);
@@ -142,7 +169,7 @@ class Testes_Dashboard extends CI_Controller {
         // Busca o nosso eletricista no array retornado
         $encontrado = false;
         foreach ($resultado as $r) {
-            if ($r['eletricista'] == 'Eletricista A') {
+            if ($r['eletricista'] === $nome) {
                 $this->unit->run((int)$r['total'], 2, 'OS por Eletricista: O total de OS para o eletricista deve ser 2');
                 $encontrado = true;
             }

@@ -59,7 +59,9 @@ class Testes_Baixas extends CI_Controller {
         // Insere Saída (5 * 4 = 20)
         $this->db->insert('tabela_movimentacoes', ['id_produto' => $idProd, 'tipo' => 'saida', 'quantidade' => 5, 'valor_unitario' => 4, 'data_mov' => date('Y-m-d')]);
 
-        $totais = $this->BaixasModel->totais([]);
+        // Filtra pelo produto do teste: sem filtro, totais() soma a tabela
+        // inteira e o resultado depende dos dados que já existem no banco.
+        $totais = $this->BaixasModel->totais(['id_produto' => $idProd]);
 
         $this->unit->run((float)$totais['total_entrada'], 100.0, 'Totais: Soma de entradas deve ser 100.0');
         $this->unit->run((float)$totais['total_saida'], 20.0, 'Totais: Soma de saídas deve ser 20.0');
