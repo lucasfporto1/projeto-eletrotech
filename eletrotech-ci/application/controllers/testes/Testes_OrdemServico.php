@@ -12,8 +12,10 @@ class Testes_OrdemServico extends CI_Controller {
     public function index() {
         $this->unit->use_strict(TRUE);
 
-        $this->testar_registrar_os_com_sucesso();
-        $this->testar_registrar_os_estoque_insuficiente();
+        $this->testar_solicitar_os();
+        $this->testar_abrir_os_com_sucesso();
+        $this->testar_abrir_os_estoque_insuficiente();
+        $this->testar_abrir_os_fora_do_status_solicitada();
         $this->testar_fechar_os();
         $this->testar_add_comentario();
         $this->testar_contadores_dashboard();
@@ -33,13 +35,45 @@ class Testes_OrdemServico extends CI_Controller {
         return $prefixo . rand(100000000, 999999999);
     }
 
-    private function testar_registrar_os_com_sucesso() {
+    /**
+     * Passo 1 do fluxo: a solicitação apenas cria a OS com status "solicitada".
+     * Nenhum material é consumido nem estoque é baixado nessa etapa.
+     */
+    private function testar_solicitar_os() {
+        $this->db->trans_start();
+        try {
+            $this->db->insert('tabela_eletricistas', [
+                'nome' => 'Eletricista Solicitacao',
+                'cpf'  => $this->gerar_cpf_teste('001')
+            ]);
+            $eletricistaId = $this->db->insert_id();
+
+            $idOs = $this->OrdemServicoModel->solicitar_os($eletricistaId, date('Y-m-d'));
+
+            $this->unit->run($idOs > 0, TRUE, 'Solicitar OS: Deve criar a OS e retornar um ID válido');
+
+            $os = $this->OrdemServicoModel->get_by_id($idOs);
+            $this->unit->run($os['status'], 'solicitada', 'Solicitar OS: A OS deve nascer com status "solicitada"');
+
+            // Nenhum material deve estar vinculado antes da abertura
+            $materiais = $this->db->where('id_os', $idOs)->count_all_results('tabela_os_materiais');
+            $this->unit->run($materiais, 0, 'Solicitar OS: Não deve vincular materiais na solicitação');
+        } finally {
+            $this->db->trans_rollback();
+        }
+    }
+
+    /**
+     * Passo 2 do fluxo: é a abertura pelo eletricista que consome materiais,
+     * baixa o estoque e muda o status para "aberta".
+     */
+    private function testar_abrir_os_com_sucesso() {
         $this->db->trans_start();
         try {
             // 1. PREPARAÇÃO: Criamos dados falsos apenas para o teste
             $this->db->insert('tabela_eletricistas', [
                 'nome' => 'Eletricista Teste OS',
-                'cpf'  => $this->gerar_cpf_teste('001')
+                'cpf'  => $this->gerar_cpf_teste('002')
             ]);
             $eletricistaId = $this->db->insert_id();
 
@@ -50,44 +84,95 @@ class Testes_OrdemServico extends CI_Controller {
             ]);
             $produtoId = $this->db->insert_id();
 
-            // 2. AÇÃO: Executamos o método registrar_os consumindo 5 unidades do produto
+            $idOs = $this->OrdemServicoModel->solicitar_os($eletricistaId, date('Y-m-d'));
+
+            // 2. AÇÃO: O eletricista abre a OS consumindo 5 unidades do produto
             $produtos_usados = [['id' => $produtoId, 'qtd' => 5]];
-            $idOs = $this->OrdemServicoModel->registrar_os($eletricistaId, date('Y-m-d'), $produtos_usados);
+            $aberta = $this->OrdemServicoModel->abrir_os($idOs, $produtos_usados);
 
             // 3. VERIFICAÇÕES
-            $this->unit->run($idOs > 0, TRUE, 'Registrar OS: Deve criar a OS e retornar um ID válido');
+            $this->unit->run($aberta, TRUE, 'Abrir OS: Deve retornar TRUE ao abrir uma OS solicitada');
+
+            $os = $this->OrdemServicoModel->get_by_id($idOs);
+            $this->unit->run($os['status'], 'aberta', 'Abrir OS: O status deve mudar de "solicitada" para "aberta"');
 
             // Verifica se baixou o estoque (50 - 5 = 45)
             $produto_atualizado = $this->db->where('id', $produtoId)->get('tabela_produtos')->row_array();
-            $this->unit->run((int)$produto_atualizado['qtd_estoque'], 45, 'Registrar OS: Deve deduzir o estoque do produto corretamente');
+            $this->unit->run((int)$produto_atualizado['qtd_estoque'], 45, 'Abrir OS: Deve deduzir o estoque do produto corretamente');
 
             // Verifica se registrou a movimentação financeira/estoque (tabela_movimentacoes)
             $movimentacao = $this->db->where('id_os', $idOs)->get('tabela_movimentacoes')->row_array();
-            $this->unit->run($movimentacao['tipo'] ?? '', 'saida', 'Registrar OS: Deve gerar uma movimentação de "saída" vinculada à OS');
+            $this->unit->run($movimentacao['tipo'] ?? '', 'saida', 'Abrir OS: Deve gerar uma movimentação de "saída" vinculada à OS');
         } finally {
             $this->db->trans_rollback();
         }
     }
 
-    private function testar_registrar_os_estoque_insuficiente() {
+    private function testar_abrir_os_estoque_insuficiente() {
         $this->db->trans_start();
         try {
             // Cria Eletricista e um Produto com apenas 2 no estoque
             $this->db->insert('tabela_eletricistas', [
                 'nome' => 'Eletricista Teste 2',
-                'cpf'  => $this->gerar_cpf_teste('002')
+                'cpf'  => $this->gerar_cpf_teste('003')
             ]);
             $eletricistaId = $this->db->insert_id();
 
             $this->db->insert('tabela_produtos', ['nome_produto' => 'Fita Isolante', 'qtd_estoque' => 2]);
             $produtoId = $this->db->insert_id();
 
+            $idOs = $this->OrdemServicoModel->solicitar_os($eletricistaId, date('Y-m-d'));
+
             // Tenta usar 5 unidades (mais do que tem no estoque)
             $produtos_usados = [['id' => $produtoId, 'qtd' => 5]];
-            $resultado = $this->OrdemServicoModel->registrar_os($eletricistaId, date('Y-m-d'), $produtos_usados);
+            $resultado = $this->OrdemServicoModel->abrir_os($idOs, $produtos_usados);
 
             // Como o estoque é insuficiente, o método deve retornar FALSE e abortar tudo
-            $this->unit->run($resultado, FALSE, 'Estoque Insuficiente: Deve retornar FALSE e impedir a criação da OS');
+            $this->unit->run($resultado, FALSE, 'Estoque Insuficiente: Deve retornar FALSE e impedir a abertura da OS');
+
+            // A OS precisa continuar solicitada — nada pode ter sido gravado pela metade
+            $os = $this->OrdemServicoModel->get_by_id($idOs);
+            $this->unit->run($os['status'], 'solicitada', 'Estoque Insuficiente: A OS deve permanecer com status "solicitada"');
+        } finally {
+            $this->db->trans_rollback();
+        }
+    }
+
+    /**
+     * Uma OS já aberta (ou fechada) não pode ser reaberta — isso baixaria
+     * o estoque duas vezes para a mesma ordem.
+     */
+    private function testar_abrir_os_fora_do_status_solicitada() {
+        $this->db->trans_start();
+        try {
+            $this->db->insert('tabela_eletricistas', [
+                'nome' => 'Eletricista Reabertura',
+                'cpf'  => $this->gerar_cpf_teste('008')
+            ]);
+            $eletricistaId = $this->db->insert_id();
+
+            $this->db->insert('tabela_produtos', [
+                'nome_produto' => 'Disjuntor Teste',
+                'qtd_estoque'  => 30,
+                'vlr_unitario' => 25.00
+            ]);
+            $produtoId = $this->db->insert_id();
+
+            // OS criada já como "aberta", simulando uma ordem em andamento
+            $this->db->insert('tabela_ordens_servico', [
+                'eletricista_os' => $eletricistaId,
+                'status'         => 'aberta',
+                'data_os'        => date('Y-m-d')
+            ]);
+            $idOs = $this->db->insert_id();
+
+            $resultado = $this->OrdemServicoModel->abrir_os($idOs, [['id' => $produtoId, 'qtd' => 3]]);
+
+            $this->unit->run($resultado, FALSE, 'Reabertura: Deve retornar FALSE ao abrir uma OS que não está "solicitada"');
+
+            // O estoque não pode ter sido tocado
+            $produto = $this->db->where('id', $produtoId)->get('tabela_produtos')->row_array();
+            $this->unit->run((int) $produto['qtd_estoque'], 30, 'Reabertura: O estoque deve permanecer intacto');
         } finally {
             $this->db->trans_rollback();
         }
@@ -183,19 +268,22 @@ class Testes_OrdemServico extends CI_Controller {
             ]);
             $id_eletricista = $this->db->insert_id();
 
-            // Adiciona 2 OS abertas e 1 fechada para o João
+            // Adiciona 1 OS solicitada, 2 abertas e 1 fechada para o João
+            $this->db->insert('tabela_ordens_servico', ['eletricista_os' => $id_eletricista, 'status' => 'solicitada']);
             $this->db->insert('tabela_ordens_servico', ['eletricista_os' => $id_eletricista, 'status' => 'aberta']);
             $this->db->insert('tabela_ordens_servico', ['eletricista_os' => $id_eletricista, 'status' => 'aberta']);
             $this->db->insert('tabela_ordens_servico', ['eletricista_os' => $id_eletricista, 'status' => 'fechada']);
 
             // Testa as funções matemáticas da model
+            $totalSolicitadas = $this->OrdemServicoModel->totalSolicitadasPorEletricista($id_eletricista);
             $totalAbertas  = $this->OrdemServicoModel->totalAbertasPorEletricista($id_eletricista);
             $totalFechadas = $this->OrdemServicoModel->totalFechadasPorEletricista($id_eletricista);
             $totalGeral    = $this->OrdemServicoModel->totalPorEletricista($id_eletricista);
 
+            $this->unit->run($totalSolicitadas, 1, 'Dashboard: Deve contar corretamente as OS solicitadas do eletricista (1)');
             $this->unit->run($totalAbertas, 2, 'Dashboard: Deve contar corretamente as OS abertas do eletricista (2)');
             $this->unit->run($totalFechadas, 1, 'Dashboard: Deve contar corretamente as OS fechadas do eletricista (1)');
-            $this->unit->run($totalGeral, 3, 'Dashboard: O total de OS do eletricista deve ser a soma exata (3)');
+            $this->unit->run($totalGeral, 4, 'Dashboard: O total de OS do eletricista deve ser a soma exata (4)');
         } finally {
             $this->db->trans_rollback();
         }

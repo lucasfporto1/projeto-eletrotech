@@ -15,7 +15,7 @@ class OrdensServicoController extends Auth_Controller
     {
         $data['titulo'] = 'Ordens de Serviço - EletroTech';
 
-        // Eletricista só enxerga as próprias OS.
+        // Eletricista só enxerga as próprias OS, mas abre e fecha as dela.
         if (!$this->ehAdmin && $this->eletricistaId) {
             $eletricistaId = $this->eletricistaId;
             $total = $this->OrdemservicoModel->contar_por_eletricista($eletricistaId);
@@ -23,10 +23,10 @@ class OrdensServicoController extends Auth_Controller
 
             $data['ordensServico'] = $this->OrdemservicoModel->get_all_by_eletricista($eletricistaId, $data['por_pagina'], $data['offset']);
             $data['eletricistasAtivos'] = [];
-            $data['produtosDisponiveis'] = [];
+            $data['produtosDisponiveis'] = $this->OrdemservicoModel->get_produtos_disponiveis();
             $data['checklistInicio'] = $this->ChecklistModel->get_selected_by_type('inicio');
             $data['checklistFim'] = $this->ChecklistModel->get_selected_by_type('fim');
-            $data['perfilEletricista'] = true;
+            $data['podeSolicitar'] = false;
 
             $this->load->view('telas/OrdemServicoView', $data);
             return;
@@ -40,20 +40,79 @@ class OrdensServicoController extends Auth_Controller
         $data['produtosDisponiveis'] = $this->OrdemservicoModel->get_produtos_disponiveis();
         $data['checklistInicio'] = $this->ChecklistModel->get_selected_by_type('inicio');
         $data['checklistFim'] = $this->ChecklistModel->get_selected_by_type('fim');
-        $data['perfilEletricista'] = false;
+        $data['podeSolicitar'] = $this->ehAdmin;
 
         $this->load->view('telas/OrdemServicoView', $data);
     }
 
-    public function cadastrar()
+    /**
+     * Passo 1 do fluxo: o admin solicita o serviço e atribui um eletricista.
+     * A OS nasce como "solicitada" — sem materiais e sem baixa de estoque.
+     */
+    public function solicitar()
     {
-        if (!$this->ehAdmin && $this->eletricistaId) {
-            $this->session->set_flashdata('erro', 'Eletricistas não podem registrar novas ordens de serviço.');
+        $this->exigirAdmin();
+
+        $this->form_validation->set_rules('eletricista_os', 'Eletricista', 'required|numeric');
+
+        if ($this->form_validation->run() === FALSE) {
+            $this->session->set_flashdata('erro', validation_errors());
             redirect('ordemServico');
             return;
         }
 
-        $this->form_validation->set_rules('eletricista_os', 'Eletricista', 'required|numeric');
+        $eletricistaId = $this->input->post('eletricista_os', TRUE);
+        $dataOs = (string) $this->input->post('data_os', TRUE);
+
+        if ($dataOs !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $dataOs)) {
+            $this->session->set_flashdata('erro', 'A data da operação deve ter o formato YYYY-MM-DD ou ficar em branco.');
+            redirect('ordemServico');
+            return;
+        }
+
+        $idOs = $this->OrdemservicoModel->solicitar_os($eletricistaId, $dataOs ?: null);
+
+        if ($idOs) {
+            $this->session->set_flashdata(
+                'sucesso',
+                'OS #' . str_pad($idOs, 5, '0', STR_PAD_LEFT) . ' solicitada! O eletricista já pode abri-la.'
+            );
+        } else {
+            $this->session->set_flashdata('erro', 'Erro ao solicitar a OS. Tente novamente.');
+        }
+
+        redirect('ordemServico');
+    }
+
+    /**
+     * Passo 2 do fluxo: o eletricista responsável (ou o admin) abre a OS
+     * solicitada, informando os materiais e respondendo o checklist de início.
+     * É aqui que o estoque é baixado.
+     */
+    public function abrir()
+    {
+        $idOs = (int) $this->input->post('id_os', TRUE);
+        $ordem = $this->OrdemservicoModel->get_by_id($idOs);
+
+        if (empty($ordem)) {
+            $this->session->set_flashdata('erro', 'Ordem de serviço não encontrada.');
+            redirect('ordemServico');
+            return;
+        }
+
+        if (!$this->ehAdmin && $this->eletricistaId && (int) $ordem['eletricista_os'] !== $this->eletricistaId) {
+            $this->session->set_flashdata('erro', 'Você só pode abrir ordens atribuídas ao seu perfil.');
+            redirect('ordemServico');
+            return;
+        }
+
+        if ($ordem['status'] !== 'solicitada') {
+            $this->session->set_flashdata('erro', 'Somente ordens com status "solicitada" podem ser abertas.');
+            redirect('ordemServico');
+            return;
+        }
+
+        $this->form_validation->set_rules('id_os', 'OS', 'required|numeric');
         $this->form_validation->set_rules('id_produto[]', 'Produto', 'required');
         $this->form_validation->set_rules('qtd_utilizada[]', 'Quantidade', 'required|integer|greater_than[0]');
 
@@ -71,17 +130,9 @@ class OrdensServicoController extends Auth_Controller
             return;
         }
 
-        $eletricistaId = $this->input->post('eletricista_os', TRUE);
-        $dataOs = $this->input->post('data_os', TRUE);
         $idsProdutos = $this->input->post('id_produto', TRUE) ?? [];
         $quantidades = $this->input->post('qtd_utilizada', TRUE) ?? [];
         $respostas = $this->input->post('checklist_resposta', TRUE) ?: [];
-
-        if ($dataOs !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $dataOs)) {
-            $this->session->set_flashdata('erro', 'A data da operação deve ter o formato YYYY-MM-DD ou ficar em branco.');
-            redirect('ordemServico');
-            return;
-        }
 
         $produtoIds = array_map('intval', $idsProdutos);
         if (count($produtoIds) !== count(array_unique($produtoIds))) {
@@ -119,10 +170,8 @@ class OrdensServicoController extends Auth_Controller
             ];
         }
 
-        $idOs = $this->OrdemservicoModel->registrar_os($eletricistaId, $dataOs ?: null, $produtos, $checklistRespostas);
-
-        if ($idOs) {
-            $mensagem = 'OS #' . str_pad($idOs, 5, '0', STR_PAD_LEFT) . ' registrada e estoque atualizado!';
+        if ($this->OrdemservicoModel->abrir_os($idOs, $produtos, $checklistRespostas)) {
+            $mensagem = 'OS #' . str_pad($idOs, 5, '0', STR_PAD_LEFT) . ' aberta e estoque atualizado!';
 
             $foto = $this->uploadFoto('foto_abertura');
             if ($foto['status'] === 'ok') {
@@ -133,7 +182,7 @@ class OrdensServicoController extends Auth_Controller
 
             $this->session->set_flashdata('sucesso', $mensagem);
         } else {
-            $this->session->set_flashdata('erro', 'Erro ao registrar OS. Verifique se há estoque suficiente para os materiais selecionados e tente novamente.');
+            $this->session->set_flashdata('erro', 'Erro ao abrir a OS. Verifique se há estoque suficiente para os materiais selecionados e tente novamente.');
         }
 
         redirect('ordemServico');

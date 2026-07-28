@@ -86,7 +86,7 @@ Página inicial do administrador, com indicadores e gráficos de acompanhamento:
   do valor das metas cadastradas.
 - **OS por eletricista** — quantidade de ordens por técnico.
 - **OS por mês** — evolução mensal, com filtro por mês.
-- **OS por status** — proporção entre ordens abertas e fechadas.
+- **OS por status** — proporção entre ordens solicitadas, abertas e fechadas.
 - **Movimentação financeira por mês** — valor de entradas e saídas de estoque por mês.
 
 ## 5. CRUD de Usuários (exclusivo de administrador)
@@ -165,47 +165,62 @@ vinculado nem o mês de referência — apenas o valor.
 ## 9. Ordens de Serviço (OS)
 
 Uma OS representa uma operação elétrica realizada por um eletricista. Cada ordem envolve
-um ou mais materiais, cujas quantidades são debitadas do estoque no momento do registro.
+um ou mais materiais, cujas quantidades são debitadas do estoque no momento da **abertura**
+(feita pelo eletricista), e não no momento da solicitação.
 
-### 9.1. Abertura da OS
-Ao registrar uma OS informa-se: **eletricista responsável** (deve estar ativo), **data
-da operação** (opcional; se informada, no formato AAAA-MM-DD) e a **lista de materiais**
-com as quantidades utilizadas.
+### 9.1. Ciclo de vida (status) da OS
+A OS passa por três status, em ordem:
+- **Solicitada** — estado inicial. O **administrador** solicita o serviço e atribui um
+  eletricista responsável. Ainda não há materiais nem baixa de estoque.
+- **Aberta** — o **eletricista responsável** abriu a OS, informou os materiais e respondeu
+  o checklist de início. É neste momento que o estoque é debitado.
+- **Fechada** — após concluída, com data de fechamento preenchida.
+
+### 9.2. Solicitação da OS (administrador)
+Ao solicitar uma OS informa-se: **eletricista responsável** (deve estar ativo) e a **data
+da operação** (opcional; se informada, no formato AAAA-MM-DD). A OS nasce com status
+**Solicitada** e fica aguardando a abertura pelo eletricista.
+
+Apenas o **administrador** pode solicitar novas ordens de serviço.
+
+### 9.3. Abertura da OS (eletricista)
+Partindo de uma OS **Solicitada**, o eletricista responsável (ou o administrador) informa
+a **lista de materiais** com as quantidades utilizadas e responde o checklist de início.
 
 Regras de abertura:
+- Só é possível abrir uma OS que esteja com status **Solicitada** — uma OS já aberta ou
+  fechada não pode ser reaberta (isso baixaria o estoque duas vezes).
+- O eletricista só pode abrir **ordens atribuídas a ele**.
 - O mesmo produto **não** pode ser adicionado mais de uma vez na mesma OS.
 - A quantidade de cada material deve ser maior que zero.
 - O **estoque é debitado automaticamente** de forma atômica (transação): se não houver
-  estoque suficiente para algum material, a OS não é registrada e nada é alterado.
+  estoque suficiente para algum material, a OS **continua Solicitada** e nada é alterado.
 - Cada saída de material gera uma **movimentação de saída** vinculada à OS.
 - É obrigatório existir um **checklist de início selecionado** (ver seção 10). Todas as
   perguntas devem ser respondidas; qualquer resposta **"Não"** **impede a abertura** da OS.
 - Opcionalmente pode-se anexar uma **foto de abertura**, registrada no histórico da OS.
 
-### 9.2. Ciclo de vida (status) da OS
-Toda OS tem um status:
-- **Aberta** — estado inicial, ao ser registrada.
-- **Fechada** — após concluída, com data de fechamento preenchida.
+### 9.4. Fechamento da OS
+Só é possível fechar uma OS que esteja **Aberta**. É obrigatório existir um **checklist de
+fim selecionado**. Todas as perguntas devem ser respondidas (Sim/Não). Para cada resposta
+**"Não"** é obrigatório **informar o motivo**. Ao fechar, a data de fechamento é registrada.
+Opcionalmente pode-se anexar uma **foto de fechamento**.
 
-### 9.3. Fechamento da OS
-Para fechar uma OS é obrigatório existir um **checklist de fim selecionado**. Todas as
-perguntas devem ser respondidas (Sim/Não). Para cada resposta **"Não"** é obrigatório
-**informar o motivo**. Ao fechar, a data de fechamento é registrada. Opcionalmente pode-se
-anexar uma **foto de fechamento**.
-
-### 9.4. Restrições do perfil eletricista
+### 9.5. Restrições do perfil eletricista
 Quando o usuário é um eletricista (conta vinculada):
 - Só **visualiza as próprias OS** (não vê as dos outros).
-- **Não pode registrar** novas ordens de serviço.
-- Só pode **fechar OS atribuídas a ele**.
+- **Não pode solicitar** novas ordens de serviço — isso é exclusivo do administrador.
+- Pode **abrir e fechar** as OS atribuídas a ele.
 - Só acessa detalhes/comentários das próprias ordens.
 
-### 9.5. Imutabilidade e histórico
+O administrador continua podendo fazer tudo: solicitar, abrir e fechar qualquer OS.
+
+### 9.6. Imutabilidade e histórico
 As ordens de serviço **não podem ser editadas nem excluídas** após o registro — elas
 representam o histórico de operações. A listagem mostra todas as operações registradas,
 com detalhamento dos materiais utilizados, respostas de checklist e comentários.
 
-### 9.6. Comentários e fotos
+### 9.7. Comentários e fotos
 Cada OS possui um histórico de **comentários** e **fotos**:
 - É possível adicionar um comentário em texto, uma foto, ou ambos.
 - Formatos de imagem aceitos: JPG, JPEG, PNG, GIF, WEBP (até 8 MB). O sistema gera uma
@@ -274,7 +289,7 @@ Além das tabelas base, o sistema utiliza:
   `qtd_estoque` (nunca negativo).
 - **tabela_metas** — `id`, `eletricista_meta` (FK), `mes_meta`, `vlr_meta` DECIMAL(10,2).
 - **tabela_ordens_servico** — `id`, `eletricista_os` (FK), `data_os`,
-  `status` ('aberta'|'fechada'), `data_fechamento` (NULL enquanto aberta).
+  `status` ('solicitada'|'aberta'|'fechada'), `data_fechamento` (NULL até o fechamento).
 - **tabela_os_materiais** — `id`, `id_os` (FK), `id_produto` (FK), `qtd_utilizada`.
 - **tabela_movimentacoes** — `id`, `id_produto` (FK), `tipo` ('entrada'|'saida'),
   `quantidade`, `valor_unitario`, `data_mov`, `origem`, `id_os` (FK opcional → OS).

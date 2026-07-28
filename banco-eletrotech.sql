@@ -170,7 +170,7 @@ CREATE TABLE `tabela_ordens_servico` (
   `id` int NOT NULL AUTO_INCREMENT,
   `eletricista_os` int NOT NULL,
   `data_os` date NOT NULL,
-  `status` enum('aberta','fechada') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'aberta',
+  `status` enum('solicitada','aberta','fechada') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'solicitada',
   `data_fechamento` date DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `eletricista_os` (`eletricista_os`),

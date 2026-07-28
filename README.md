@@ -111,7 +111,8 @@ Como o sistema é majoritariamente baseado em páginas web MVC, os contratos sã
 | GET | /produtos/ZerarEstoque/{id} | Zera estoque de um produto | `id` via rota | Sucesso com movimentação de saída |
 | POST | /produtos/aumentarQtdEstoque/{id} | Repor estoque | `id`, `qtd_estoque` | Estoque atualizado e movimento de entrada |
 | GET | /metas | Lista metas | Sem payload | Lista de metas por período |
-| POST | /ordemServico/cadastrar | Registra OS | `eletricista_id`, `produtos`, `checklist` | OS criada ou rejeitada |
+| POST | /ordemServico/solicitar | Solicita OS (só admin) | `eletricista_os`, `data_os` | OS criada como "solicitada" |
+| POST | /ordemServico/abrir | Abre OS (eletricista responsável) | `id_os`, `produtos`, `checklist_inicio` | OS aberta com baixa de estoque ou rejeitada |
 | POST | /ordemServico/fechar | Fecha OS | `id_os`, `checklist_fim`, `motivos` | OS fechada com histórico |
 | GET | /baixas | Lista movimentações | Filtros opcionais | Relatório de entradas/saídas |
 | GET | /chat/{...} | Assistente de IA | Payload via request | Resposta contextual do chatbot |

@@ -126,7 +126,7 @@ class DashboardModel extends CI_Model
 
         $query = $this->db->group_by('status')->get();
 
-        $resultado = array('aberta' => 0, 'fechada' => 0);
+        $resultado = array('solicitada' => 0, 'aberta' => 0, 'fechada' => 0);
 
         if ($query === false) {
             return $resultado;

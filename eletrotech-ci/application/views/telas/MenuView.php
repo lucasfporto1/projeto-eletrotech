@@ -229,7 +229,7 @@
 
             <div class="col-lg-6">
                 <div class="chart-panel">
-                    <h3>OS abertas x fechadas</h3>
+                    <h3>OS por status</h3>
                     <canvas id="graficoOsStatus"></canvas>
                 </div>
             </div>
@@ -352,11 +352,11 @@
         new Chart(document.getElementById('graficoOsStatus'), {
             type: 'doughnut',
             data: {
-                labels: ['Abertas', 'Fechadas'],
+                labels: ['Solicitadas', 'Abertas', 'Fechadas'],
                 datasets: [{
                     label: 'Ordens de Serviço',
-                    data: [Number(osStatus.aberta || 0), Number(osStatus.fechada || 0)],
-                    backgroundColor: ['#f8a81e', '#4ade80'],
+                    data: [Number(osStatus.solicitada || 0), Number(osStatus.aberta || 0), Number(osStatus.fechada || 0)],
+                    backgroundColor: ['#FBD814', '#f8a81e', '#4ade80'],
                     borderColor: '#282828',
                     borderWidth: 2
                 }]

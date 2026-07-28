@@ -7,9 +7,24 @@
     <div style="font-size: 18px; font-weight: 600;">
         <?= htmlspecialchars($ordem['nome_eletricista'] ?? '—') ?>
     </div>
+    <div class="mt-2">
+        <?php $status = $ordem['status'] ?? ''; ?>
+        <?php if ($status === 'solicitada'): ?>
+            <span class="badge bg-warning text-dark">Solicitada</span>
+        <?php elseif ($status === 'aberta'): ?>
+            <span class="badge bg-success">Aberta</span>
+        <?php else: ?>
+            <span class="badge bg-secondary">Fechada</span>
+        <?php endif; ?>
+    </div>
 </div>
 
-<?php if (!empty($materiais)): ?>
+<?php if (($ordem['status'] ?? '') === 'solicitada'): ?>
+    <p class="text-center" style="color:#a0a0a0;">
+        Esta OS ainda não foi aberta. Os materiais e o checklist de início são
+        registrados pelo eletricista no momento da abertura.
+    </p>
+<?php elseif (!empty($materiais)): ?>
     <h5 class="text-center mb-3">Materiais Utilizados</h5>
     <table class="table table-dark table-sm table-bordered text-center mb-4">
         <thead>

@@ -283,10 +283,10 @@
         <?php endif; ?>
     </div>
 
-    <?php if (empty($perfilEletricista)): ?>
+    <?php if (!empty($podeSolicitar)): ?>
         <div id="acoes_id">
             <button data-bs-toggle="modal" data-bs-target="#modalNovaOS">
-                <i class="fa-solid fa-plus"></i> Registrar Nova OS
+                <i class="fa-solid fa-plus"></i> Solicitar Nova OS
             </button>
         </div>
     <?php endif; ?>
@@ -295,6 +295,9 @@
         <div id="filtro-status-os" class="mb-3 d-flex justify-content-center gap-2" style="gap:10px;">
             <button type="button" class="btn-filtro-os active" data-filtro="todas">
                 <i class="fa-solid fa-list"></i> Todas
+            </button>
+            <button type="button" class="btn-filtro-os" data-filtro="solicitada">
+                <i class="fa-solid fa-hourglass-half"></i> Solicitadas
             </button>
             <button type="button" class="btn-filtro-os" data-filtro="aberta">
                 <i class="fa-solid fa-lock-open"></i> Abertas
@@ -326,7 +329,11 @@
                                     onclick="carregarDetalhesOS(<?= $os['id'] ?>)">
                                     <i class="fa-solid fa-eye"></i>
                                 </button>
-                                <?php if ($os['status'] === 'aberta'): ?>
+                                <?php if ($os['status'] === 'solicitada'): ?>
+                                    <button class="btn btn-sm btn-outline-warning" type="button" onclick="abrirModalAbertura(<?= $os['id'] ?>)">
+                                        <i class="fa-solid fa-lock-open"></i> Abrir OS
+                                    </button>
+                                <?php elseif ($os['status'] === 'aberta'): ?>
                                     <button class="btn btn-sm btn-outline-success" type="button" onclick="abrirModalFechamento(<?= $os['id'] ?>)">
                                         <i class="fa-solid fa-check"></i> Fechar OS
                                     </button>
@@ -340,7 +347,9 @@
                             <td><?= !empty($os['data_os']) ? date('d/m/Y', strtotime($os['data_os'])) : '-' ?></td>
                             <td><?= !empty($os['data_fechamento']) ? date('d/m/Y', strtotime($os['data_fechamento'])) : '-' ?></td>
                             <td>
-                                <?php if ($os['status'] === 'aberta'): ?>
+                                <?php if ($os['status'] === 'solicitada'): ?>
+                                    <span class="badge bg-warning text-dark">Solicitada</span>
+                                <?php elseif ($os['status'] === 'aberta'): ?>
                                     <span class="badge bg-success">Aberta</span>
                                 <?php else: ?>
                                     <span class="badge bg-secondary">Fechada</span>
@@ -360,35 +369,62 @@
         <?php $this->load->view('components/Pagination'); ?>
     </div>
 
-    <div class="modal fade" id="modalNovaOS" tabindex="-1" aria-hidden="true">
+    <?php if (!empty($podeSolicitar)): ?>
+        <div class="modal fade" id="modalNovaOS" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content eletrotech-modal">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Solicitar Ordem de Serviço</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <p class="mb-3" style="color:#FBD814; font-size:12px; font-weight:bold;">* campos obrigatórios</p>
+                        <?= form_open('ordemServico/solicitar', ['class' => 'eletrotech-form', 'id' => 'formSolicitarOS']) ?>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="eletricista_os" class="required">Eletricista Responsável</label>
+                                <select name="eletricista_os" id="eletricista_os" required>
+                                    <option value="" disabled selected hidden>Selecione (Apenas Ativos)</option>
+                                    <?php foreach ($eletricistasAtivos as $eletricista): ?>
+                                        <option value="<?= $eletricista['id'] ?>"><?= htmlspecialchars($eletricista['nome']) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="data_os">Data da Operação</label>
+                                <input type="date" name="data_os" id="data_os" max="<?= date('Y-m-d') ?>">
+                                <small class="form-text text-muted">Opcional: deixe em branco se a OS ainda não tiver data de início.</small>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-warning mt-3 mb-0" style="font-size:13px;">
+                            <i class="fa-solid fa-circle-info"></i> A OS nasce como <strong>Solicitada</strong>.
+                            Os materiais e o checklist de início são informados pelo eletricista na abertura —
+                            é nesse momento que o estoque é baixado.
+                        </div>
+
+                        <button type="submit" class="btn-submit">Solicitar OS</button>
+
+                        <?= form_close() ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
+
+    <div class="modal fade" id="modalAbrirOS" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content eletrotech-modal">
                 <div class="modal-header">
-                    <h5 class="modal-title">Registrar Ordem de Serviço</h5>
+                    <h5 class="modal-title">Abrir Ordem de Serviço</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
                     <p class="mb-3" style="color:#FBD814; font-size:12px; font-weight:bold;">* campos obrigatórios</p>
-                    <?= form_open('ordemServico/cadastrar', ['class' => 'eletrotech-form', 'id' => 'formOS', 'enctype' => 'multipart/form-data']) ?>
+                    <?= form_open('ordemServico/abrir', ['class' => 'eletrotech-form', 'id' => 'formAbrirOS', 'enctype' => 'multipart/form-data']) ?>
+                    <input type="hidden" name="id_os" id="id_os_abertura" value="">
 
-                    <div class="row">
-                        <div class="col-md-6">
-                            <label for="eletricista_os">Eletricista Responsável</label>
-                            <select name="eletricista_os" id="eletricista_os" required>
-                                <option value="" disabled selected hidden>Selecione (Apenas Ativos)</option>
-                                <?php foreach ($eletricistasAtivos as $eletricista): ?>
-                                    <option value="<?= $eletricista['id'] ?>"><?= htmlspecialchars($eletricista['nome']) ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="data_os">Data da Operação</label>
-                            <input type="date" name="data_os" id="data_os" max="<?= date('Y-m-d') ?>" required>
-                            <small class="form-text text-muted">Opcional: deixe em branco se a OS ainda não tiver data de início.</small>
-                        </div>
-                    </div>
-
-                    <hr style="border-color: rgba(251, 216, 20, 0.3); margin: 20px 0;">
                     <h6 style="color: #FBD814; text-transform: uppercase; font-size: 14px; font-weight: bold; margin-bottom: 15px;">Materiais Utilizados na Operação</h6>
 
                     <div id="lista-materiais">
@@ -447,7 +483,7 @@
                         <div class="js-foto-preview mt-2"></div>
                     </div>
 
-                    <button type="submit" class="btn-submit" <?= empty($checklistInicio['perguntas']) ? 'disabled' : '' ?>>Registrar OS e Baixar Estoque</button>
+                    <button type="submit" class="btn-submit" <?= empty($checklistInicio['perguntas']) ? 'disabled' : '' ?>>Abrir OS e Baixar Estoque</button>
 
                     <?= form_close() ?>
                 </div>
@@ -632,7 +668,7 @@
             }
         });
 
-        document.getElementById('formOS').addEventListener('submit', function(e) {
+        document.getElementById('formAbrirOS').addEventListener('submit', function(e) {
             const linhas = document.querySelectorAll('#lista-materiais .linha-produto');
             let valido = validarDuplicatas();
             linhas.forEach(function(linha) {
@@ -681,6 +717,11 @@
                     btn.disabled = false;
                 });
         });
+
+        function abrirModalAbertura(idOs) {
+            document.getElementById('id_os_abertura').value = idOs;
+            new bootstrap.Modal(document.getElementById('modalAbrirOS')).show();
+        }
 
         function abrirModalFechamento(idOs) {
             const inputId = document.getElementById('id_os_fechamento');

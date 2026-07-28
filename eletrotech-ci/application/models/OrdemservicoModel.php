@@ -169,16 +169,49 @@ class OrdemServicoModel extends CI_Model
         ]);
     }
 
-    public function registrar_os($eletricistaId, $dataOs, array $produtos, array $respostas = [])
+    /**
+     * Primeiro passo do ciclo de vida: o admin solicita o serviço e atribui o
+     * eletricista. Nenhum material é reservado aqui — a baixa de estoque só
+     * acontece quando o eletricista abre a OS (ver abrir_os).
+     *
+     * @return int|false ID da OS criada, ou false em caso de falha.
+     */
+    public function solicitar_os($eletricistaId, $dataOs)
     {
-        $this->db->trans_start();
-
-        $this->db->insert($this->table, [
-            'eletricista_os' => $eletricistaId,
+        $ok = $this->db->insert($this->table, [
+            'eletricista_os' => (int) $eletricistaId,
             'data_os' => $dataOs,
-            'status' => 'aberta',
+            'status' => 'solicitada',
         ]);
-        $idOs = $this->db->insert_id();
+
+        if (!$ok) {
+            return false;
+        }
+
+        return $this->db->insert_id();
+    }
+
+    /**
+     * Segundo passo: o eletricista abre a OS solicitada, informando os materiais
+     * que vai utilizar e respondendo o checklist de início. É aqui que o estoque
+     * é baixado e as movimentações de saída são geradas.
+     *
+     * @return bool
+     */
+    public function abrir_os($idOs, array $produtos, array $respostas = [])
+    {
+        $ordem = $this->db->where('id', (int) $idOs)
+            ->where('status', 'solicitada')
+            ->get($this->table)
+            ->row_array();
+
+        if (empty($ordem)) {
+            return false;
+        }
+
+        $idOs = (int) $idOs;
+
+        $this->db->trans_start();
 
         $insufficientStock = false;
         foreach ($produtos as $item) {
@@ -210,35 +243,36 @@ class OrdemServicoModel extends CI_Model
                 'tipo' => 'saida',
                 'quantidade' => $qtd,
                 'valor_unitario' => $produto['vlr_unitario'],
-                'data_mov' => $dataOs,
+                'data_mov' => $ordem['data_os'],
                 'origem' => 'OS #' . str_pad($idOs, 5, '0', STR_PAD_LEFT),
                 'id_os' => $idOs,
             ]);
         }
 
+        // trans_rollback() já desfaz e fecha este nível da transação; chamar
+        // trans_complete() na sequência decrementaria a profundidade duas vezes
+        // e acabaria commitando quando esta operação roda dentro de outra
+        // transação (como nas suítes de teste).
         if ($insufficientStock) {
             $this->db->trans_rollback();
-            $this->db->trans_complete();
             return false;
         }
 
-        if ($this->db->trans_status() !== FALSE && !empty($respostas)) {
-            foreach ($respostas as $perguntaId => $resposta) {
-                $this->db->insert($this->tableRespostas, [
-                    'id_os' => $idOs,
-                    'id_pergunta' => (int) $perguntaId,
-                    'resposta' => $resposta,
-                ]);
-            }
+        foreach ($respostas as $perguntaId => $resposta) {
+            $this->db->insert($this->tableRespostas, [
+                'id_os' => $idOs,
+                'id_pergunta' => (int) $perguntaId,
+                'resposta' => $resposta,
+            ]);
         }
+
+        $this->db->where('id', $idOs)->update($this->table, [
+            'status' => 'aberta',
+        ]);
 
         $this->db->trans_complete();
 
-        if ($this->db->trans_status() === FALSE) {
-            return false;
-        }
-
-        return $idOs;
+        return $this->db->trans_status() !== FALSE;
     }
 
     public function fechar_os($idOs, array $respostas)
@@ -270,6 +304,14 @@ class OrdemServicoModel extends CI_Model
         return $this->db->trans_status() !== FALSE;
     }
 
+
+    public function totalSolicitadasPorEletricista($idEletricista)
+    {
+        return $this->db->from($this->table)
+            ->where('status', 'solicitada')
+            ->where('eletricista_os', (int) $idEletricista)
+            ->count_all_results();
+    }
 
     public function totalAbertasPorEletricista($idEletricista)
     {
