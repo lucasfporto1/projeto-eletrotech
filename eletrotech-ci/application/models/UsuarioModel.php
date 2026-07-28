@@ -58,7 +58,6 @@ class UsuarioModel extends CI_Model
             ->row();
     }
 
-    // Conta de acesso de um eletricista (NULL se ele estiver sem conta).
     public function buscarPorEletricista($eletricistaId)
     {
         return $this->db

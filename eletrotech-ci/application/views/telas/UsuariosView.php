@@ -481,7 +481,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // O que estava marcado antes de virar admin, para devolver se desmarcar.
         const permissoesAnteriores = {
             criar: null,
             edit: null
@@ -499,15 +498,12 @@
                     .filter((cb) => cb.checked)
                     .map((cb) => cb.value);
 
-                // Admin tem tudo — os checks refletem isso, mesmo bloqueados.
                 checks.forEach((cb) => {
                     cb.checked = true;
                 });
             } else if (permissoesAnteriores[prefixo] !== null) {
                 const anteriores = permissoesAnteriores[prefixo];
 
-                // Nada guardado significa que a conta já era admin: manter tudo
-                // marcado, porque sem nenhum acesso o usuário não consegue entrar.
                 if (anteriores.length > 0) {
                     checks.forEach((cb) => {
                         cb.checked = anteriores.includes(cb.value);
@@ -531,7 +527,6 @@
 
             const ehEletricista = eletrId !== '';
 
-            // Estado limpo a cada abertura: não carregar o que ficou do usuário anterior.
             permissoesAnteriores.edit = null;
 
             document.getElementById('edit_usuario_id').value = id;
@@ -539,8 +534,6 @@
             document.getElementById('edit_senha').value = '';
             document.getElementById('edit_is_admin').checked = isAdmin;
 
-            // Conta de eletricista não pode virar admin nem trocar de login — o
-            // controller também recusa, isto aqui só evita o caminho até o erro.
             document.getElementById('edit_is_admin').disabled = ehEletricista;
             document.getElementById('edit_nome_usuario').readOnly = ehEletricista;
             document.getElementById('edit_aviso_eletricista').style.display = ehEletricista ? 'block' : 'none';

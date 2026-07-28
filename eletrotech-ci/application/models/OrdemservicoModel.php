@@ -16,9 +16,11 @@ class OrdemServicoModel extends CI_Model
     public function get_by_id($idOs)
     {
         return $this->db
-            ->select('id, eletricista_os, status, data_os, data_fechamento')
-            ->where('id', (int) $idOs)
-            ->get($this->table)
+            ->select('os.id, os.eletricista_os, os.status, os.data_os, os.data_fechamento, e.nome AS nome_eletricista')
+            ->from($this->table . ' os')
+            ->join('tabela_eletricistas e', 'e.id = os.eletricista_os', 'left')
+            ->where('os.id', (int) $idOs)
+            ->get()
             ->row_array();
     }
 

@@ -52,8 +52,6 @@ class UsuariosController extends Auth_Controller
             redirect('usuarios');
         }
 
-        // Contas de eletricista nascem no cadastro do eletricista, com o CPF
-        // como login. Aqui só se criam usuários de escritório.
         $novoId = $this->usuarios->criarUsuario($nome, $senha, $isAdmin, null);
 
         if (!$novoId) {
@@ -91,8 +89,6 @@ class UsuariosController extends Auth_Controller
             redirect('usuarios');
         }
 
-        // Conta de eletricista tem o CPF como login e ele não muda por aqui:
-        // trocar isso quebraria o acesso dele.
         if ($usuarioAtual->eletricista_id !== null) {
             $nome = $usuarioAtual->usuario;
         }
@@ -108,7 +104,6 @@ class UsuariosController extends Auth_Controller
             redirect('usuarios');
         }
 
-        // Conta de eletricista não vira admin: ela é escopada às próprias OS,
         if ($isAdmin && $usuarioAtual->eletricista_id !== null) {
             $this->session->set_flashdata('erro', 'Contas de eletricista não podem ser promovidas a administrador.');
             redirect('usuarios');
@@ -124,8 +119,6 @@ class UsuariosController extends Auth_Controller
             redirect('usuarios');
         }
 
-        // O vínculo com eletricista é definido no cadastro do eletricista;
-        // aqui ele é apenas preservado.
         $this->usuarios->atualizarDados($id, $nome, $isAdmin, $usuarioAtual->eletricista_id);
 
         if ($novaSenha !== '') {

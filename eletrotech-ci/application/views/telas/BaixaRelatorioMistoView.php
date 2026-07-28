@@ -1,4 +1,5 @@
 <?php
+
 /** @var array $movimentacoes */
 /** @var int $total_registros */
 /** @var float $total_entrada */
@@ -135,6 +136,11 @@
         }
 
         @media print {
+            @page {
+                size: A4 landscape;
+                margin: 12mm;
+            }
+
             nav.navbar,
             .acoes,
             #chat-widget {
@@ -163,6 +169,14 @@
 
             table.table.custom-table thead th {
                 color: #000 !important;
+            }
+
+            table.table.custom-table tr {
+                page-break-inside: avoid;
+            }
+
+            table.table.custom-table thead {
+                display: table-header-group;
             }
         }
     </style>
@@ -210,7 +224,7 @@
                                 <?php if ($m['tipo'] === 'entrada'): ?>
                                     <span class="badge-entrada"> Entrada</span>
                                 <?php else: ?>
-                                    <span class="badge-saida" ></i> Saída</span>
+                                    <span class="badge-saida"></i> Saída</span>
                                 <?php endif; ?>
                             </td>
                             <td><?= (int) $m['quantidade'] ?></td>

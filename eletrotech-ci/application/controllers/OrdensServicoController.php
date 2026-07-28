@@ -227,13 +227,16 @@ class OrdensServicoController extends Auth_Controller
             return;
         }
 
-        if (!$this->ehAdmin && $this->eletricistaId) {
-            $ordem = $this->OrdemservicoModel->get_by_id((int) $idOs);
+        $ordem = $this->OrdemservicoModel->get_by_id((int) $idOs);
 
-            if (empty($ordem) || (int) $ordem['eletricista_os'] !== $this->eletricistaId) {
-                echo '<p class="text-center text-danger">Você não tem acesso a esta ordem.</p>';
-                return;
-            }
+        if (empty($ordem)) {
+            echo '<p class="text-center text-danger">Ordem de serviço não encontrada.</p>';
+            return;
+        }
+
+        if (!$this->ehAdmin && $this->eletricistaId && (int) $ordem['eletricista_os'] !== $this->eletricistaId) {
+            echo '<p class="text-center text-danger">Você não tem acesso a esta ordem.</p>';
+            return;
         }
 
         $materiais = $this->OrdemservicoModel->get_materiais_by_os($idOs);
@@ -242,6 +245,7 @@ class OrdensServicoController extends Auth_Controller
 
         $this->load->view('telas/Detalhes', [
             'idOs' => (int) $idOs,
+            'ordem' => $ordem,
             'materiais' => $materiais,
             'respostas' => $respostas,
             'comentarios' => $comentarios,

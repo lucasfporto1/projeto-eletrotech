@@ -748,8 +748,6 @@
 
                 const linhas = document.querySelectorAll('table.custom-table tbody tr[data-status]');
 
-                // Tabela sem nenhuma OS: a mensagem do PHP já está na tela.
-                // Criar outra aqui deixaria as duas empilhadas.
                 if (linhas.length === 0) {
                     return;
                 }

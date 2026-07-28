@@ -1,5 +1,14 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 
+<div class="text-center mb-4" style="padding-bottom: 14px; border-bottom: 1px solid rgba(251, 216, 20, 0.3);">
+    <div style="color: #a0a0a0; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">
+        Eletricista responsável
+    </div>
+    <div style="font-size: 18px; font-weight: 600;">
+        <?= htmlspecialchars($ordem['nome_eletricista'] ?? '—') ?>
+    </div>
+</div>
+
 <?php if (!empty($materiais)): ?>
     <h5 class="text-center mb-3">Materiais Utilizados</h5>
     <table class="table table-dark table-sm table-bordered text-center mb-4">

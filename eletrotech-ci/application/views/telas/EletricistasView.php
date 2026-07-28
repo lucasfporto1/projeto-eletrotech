@@ -391,7 +391,6 @@
 
             document.getElementById('edit_id').value = id;
             document.getElementById('edit_nome').value = nome;
-            // Em branco a cada abertura: senha só é trocada se for digitada.
             document.getElementById('edit_senha_eletricista').value = '';
         };
 

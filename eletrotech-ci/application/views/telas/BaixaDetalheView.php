@@ -208,6 +208,10 @@ $ehEntrada = $m['tipo'] === 'entrada';
         }
 
         @media print {
+            @page {
+                size: A4 portrait;
+                margin: 15mm;
+            }
 
             nav.navbar,
             .acoes,
@@ -246,6 +250,16 @@ $ehEntrada = $m['tipo'] === 'entrada';
 
             table.table.custom-table thead th {
                 color: #000 !important;
+            }
+
+            table.table.custom-table tr,
+            .campo,
+            .cabecalho-empresa {
+                page-break-inside: avoid;
+            }
+
+            table.table.custom-table thead {
+                display: table-header-group;
             }
         }
     </style>
@@ -388,8 +402,7 @@ $ehEntrada = $m['tipo'] === 'entrada';
                     <p class="sem-os">Nenhuma resposta de checklist registrada para esta OS.</p>
                 <?php endif; ?>
             <?php else: ?>
-                <p class="sem-os">Es
-                    ta movimentação não veio de uma ordem de serviço.</p>
+                <p class="sem-os">Esta movimentação não veio de uma ordem de serviço.</p>
             <?php endif; ?>
 
             <div class="acoes">
