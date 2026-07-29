@@ -169,7 +169,7 @@ DROP TABLE IF EXISTS `tabela_ordens_servico`;
 CREATE TABLE `tabela_ordens_servico` (
   `id` int NOT NULL AUTO_INCREMENT,
   `eletricista_os` int NOT NULL,
-  `data_os` date NOT NULL,
+  `data_os` date DEFAULT NULL,
   `status` enum('solicitada','aberta','fechada') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'solicitada',
   `data_fechamento` date DEFAULT NULL,
   PRIMARY KEY (`id`),

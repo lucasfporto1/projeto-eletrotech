@@ -416,7 +416,6 @@
             document.getElementById('edit_vlr_meta').value = valor;
         };
     </script>
-    <?php $this->load->view('components/Chatbot'); ?>
 
 </body>
 

@@ -817,7 +817,6 @@
             });
         });
     </script>
-    <?php $this->load->view('components/Chatbot'); ?>
 
 </body>
 
