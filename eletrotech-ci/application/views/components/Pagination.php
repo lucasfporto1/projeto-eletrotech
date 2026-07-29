@@ -5,7 +5,7 @@
 /** @var int    $offset      */
 /** @var int    $por_pagina   */
 
-// Variáveis preenchidas pelo controller via $this->paginar(). Os isset() são fallback.
+
 $paginacao  = isset($paginacao) ? $paginacao : '';
 $total_rows = isset($total_rows) ? (int) $total_rows : 0;
 $offset     = isset($offset) ? (int) $offset : 0;

@@ -45,6 +45,38 @@ class ChecklistModel extends CI_Model
         return $checklist;
     }
 
+
+    public function normalizar_resposta($valor)
+    {
+        $valor = mb_strtolower(trim((string) $valor), 'UTF-8');
+
+        return strtr($valor, [
+            'á' => 'a',
+            'à' => 'a',
+            'ã' => 'a',
+            'â' => 'a',
+            'ä' => 'a',
+            'é' => 'e',
+            'è' => 'e',
+            'ê' => 'e',
+            'ë' => 'e',
+            'í' => 'i',
+            'ì' => 'i',
+            'î' => 'i',
+            'ï' => 'i',
+            'ó' => 'o',
+            'ò' => 'o',
+            'õ' => 'o',
+            'ô' => 'o',
+            'ö' => 'o',
+            'ú' => 'u',
+            'ù' => 'u',
+            'û' => 'u',
+            'ü' => 'u',
+            'ç' => 'c',
+        ]);
+    }
+
     public function get_perguntas($idChecklist)
     {
         $query = $this->db
@@ -56,7 +88,15 @@ class ChecklistModel extends CI_Model
             return [];
         }
 
-        return $query->result_array();
+        $perguntas = $query->result_array();
+
+
+        foreach ($perguntas as &$pergunta) {
+            $pergunta['bloqueia_normalizado'] = $this->normalizar_resposta($pergunta['bloqueia_abertura'] ?? '');
+        }
+        unset($pergunta);
+
+        return $perguntas;
     }
 
     public function insert_checklist(array $data, array $perguntas)
@@ -71,7 +111,7 @@ class ChecklistModel extends CI_Model
 
         $ordem = 1;
         foreach ($perguntas as $pergunta) {
-            // Expecting each pergunta to be an array with keys: texto, tipo_resposta, bloqueia_abertura
+
             if (is_array($pergunta)) {
                 $texto = trim((string) ($pergunta['texto'] ?? ''));
                 $tipoResp = isset($pergunta['tipo_resposta']) && in_array($pergunta['tipo_resposta'], ['radio', 'text']) ? $pergunta['tipo_resposta'] : 'text';

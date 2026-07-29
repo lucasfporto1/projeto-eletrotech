@@ -458,11 +458,15 @@
                             <h6 style="color: #FBD814; text-transform: uppercase; font-size: 14px; font-weight: bold; margin-bottom: 12px;">Checklist de Início</h6>
                             <?php foreach ($checklistInicio['perguntas'] as $pergunta): ?>
                                 <label><?= htmlspecialchars($pergunta['texto_pergunta']) ?></label>
-                                <select name="checklist_resposta[<?= $pergunta['id'] ?>]" required>
-                                    <option value="" disabled selected hidden>Selecione sim ou não</option>
-                                    <option value="sim">Sim</option>
-                                    <option value="nao">Não</option>
-                                </select>
+                                <?php if (($pergunta['tipo_resposta'] ?? '') === 'text'): ?>
+                                    <input type="text" name="checklist_resposta[<?= $pergunta['id'] ?>]" placeholder="Digite a resposta" required>
+                                <?php else: ?>
+                                    <select name="checklist_resposta[<?= $pergunta['id'] ?>]" required>
+                                        <option value="" disabled selected hidden>Selecione sim ou não</option>
+                                        <option value="sim">Sim</option>
+                                        <option value="nao">Não</option>
+                                    </select>
+                                <?php endif; ?>
                             <?php endforeach; ?>
                             <input type="hidden" name="checklist_inicio_id" value="<?= $checklistInicio['id'] ?>">
                         </div>
@@ -523,12 +527,18 @@
                         <p class="mb-3">Responda o checklist de fim para encerrar a OS.</p>
                         <?php foreach ($checklistFim['perguntas'] as $pergunta): ?>
                             <label><?= htmlspecialchars($pergunta['texto_pergunta']) ?></label>
-                            <select name="checklist_resposta[<?= $pergunta['id'] ?>]" required class="select-checklist-fim" data-pergunta="<?= $pergunta['id'] ?>">
-                                <option value="" disabled selected hidden>Selecione sim ou não</option>
-                                <option value="sim">Sim</option>
-                                <option value="nao">Não</option>
-                            </select>
-                            <textarea name="motivo_nao[<?= $pergunta['id'] ?>]" class="motivo-nao form-control" placeholder="Explique o motivo do não" style="display:none; margin-top:10px;"></textarea>
+                            <?php if (($pergunta['tipo_resposta'] ?? '') === 'text'): ?>
+                                <input type="text" name="checklist_resposta[<?= $pergunta['id'] ?>]" placeholder="Digite a resposta" required>
+                            <?php else: ?>
+                                <select name="checklist_resposta[<?= $pergunta['id'] ?>]" required class="select-checklist-fim" data-pergunta="<?= $pergunta['id'] ?>" data-bloqueio="<?= htmlspecialchars($pergunta['bloqueia_normalizado'] ?? '') ?>">
+                                    <option value="" disabled selected hidden>Selecione sim ou não</option>
+                                    <option value="sim">Sim</option>
+                                    <option value="nao">Não</option>
+                                </select>
+                                <?php if (!empty($pergunta['bloqueia_normalizado'])): ?>
+                                    <textarea name="motivo_nao[<?= $pergunta['id'] ?>]" class="motivo-nao form-control" placeholder="Explique o motivo desta resposta" style="display:none; margin-top:10px;"></textarea>
+                                <?php endif; ?>
+                            <?php endif; ?>
                         <?php endforeach; ?>
 
                         <div class="foto-os-campo mt-4">
@@ -764,11 +774,13 @@
             }
             const select = event.target;
             const perguntaId = select.dataset.pergunta;
+            const bloqueio = select.dataset.bloqueio || '';
             const textarea = document.querySelector('textarea[name="motivo_nao[' + perguntaId + ']"]');
             if (!textarea) {
                 return;
             }
-            if (select.value === 'nao') {
+            // Só a resposta configurada como bloqueio no cadastro pede justificativa.
+            if (bloqueio !== '' && select.value === bloqueio) {
                 textarea.style.display = 'block';
                 textarea.required = true;
             } else {

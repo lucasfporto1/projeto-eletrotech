@@ -214,14 +214,18 @@ Regras de abertura:
   estoque suficiente para algum material, a OS **continua Solicitada** e nada é alterado.
 - Cada saída de material gera uma **movimentação de saída** vinculada à OS.
 - É obrigatório existir um **checklist de início selecionado** (ver seção 10). Todas as
-  perguntas devem ser respondidas; qualquer resposta **"Não"** **impede a abertura** da OS.
+  perguntas devem ser respondidas: as do tipo **Sim/Não** aceitam só "Sim" ou "Não"; as do
+  tipo **texto livre** aceitam qualquer resposta. Se a pergunta tem um **valor de bloqueio**
+  configurado e a resposta bate com ele, a abertura da OS é **impedida**.
 - Opcionalmente pode-se anexar uma **foto de abertura**, registrada no histórico da OS.
 
 ### 9.4. Fechamento da OS
 Só é possível fechar uma OS que esteja **Aberta**. É obrigatório existir um **checklist de
-fim selecionado**. Todas as perguntas devem ser respondidas (Sim/Não). Para cada resposta
-**"Não"** é obrigatório **informar o motivo**. Ao fechar, a data de fechamento é registrada.
-Opcionalmente pode-se anexar uma **foto de fechamento**.
+fim selecionado**. Todas as perguntas devem ser respondidas. Numa pergunta Sim/Não, se a
+resposta bate com o **valor de bloqueio** configurado, é obrigatório **informar o motivo**
+(o fechamento não é impedido, apenas exige justificativa). Perguntas de texto livre não
+pedem motivo, porque a própria resposta já é a justificativa. Ao fechar, a data de
+fechamento é registrada. Opcionalmente pode-se anexar uma **foto de fechamento**.
 
 ### 9.5. Restrições do perfil eletricista
 Quando o usuário é um eletricista (conta vinculada):
@@ -249,7 +253,11 @@ Cada OS possui um histórico de **comentários** e **fotos**:
 Módulo que define listas de verificação usadas na abertura e no fechamento das OS.
 
 - Cada checklist tem um **título** e um **tipo**: **início** ou **fim**.
-- Cada checklist contém uma ou mais **perguntas**.
+- Cada checklist contém uma ou mais **perguntas**. Cada pergunta tem um **tipo de resposta**:
+  **Sim/Não** (radio) ou **texto livre** (text), e um campo opcional **"Bloqueia se"**.
+- O campo **"Bloqueia se"** define qual resposta é considerada problemática (ex.: "Não").
+  Se ficar **em branco, a pergunta nunca bloqueia** — serve só como registro. A comparação
+  ignora acentos e maiúsculas, então "Não" e "nao" são equivalentes.
 - Para cada tipo (início/fim) há um checklist marcado como **padrão (selecionado)**, que
   é o efetivamente aplicado nas OS. Ao cadastrar o primeiro checklist de um tipo, ele
   vira o padrão automaticamente; o administrador pode trocar o padrão a qualquer momento.
@@ -258,9 +266,10 @@ Módulo que define listas de verificação usadas na abertura e no fechamento da
   que impeçam a remoção.
 
 **Papel na operação:**
-- **Checklist de início** — respondido na abertura da OS; qualquer "Não" bloqueia a
-  abertura.
-- **Checklist de fim** — respondido no fechamento; cada "Não" exige justificativa (motivo).
+- **Checklist de início** — respondido na abertura da OS; uma resposta que bate com o
+  "Bloqueia se" da pergunta impede a abertura.
+- **Checklist de fim** — respondido no fechamento; uma resposta Sim/Não que bate com o
+  "Bloqueia se" exige justificativa (motivo), mas não impede o fechamento.
 
 ## 11. Baixas / Movimentações de estoque
 
@@ -346,7 +355,7 @@ atomicidade — se algo falha, nada é gravado.
 - A OS segue sempre a ordem **Solicitada → Aberta → Fechada**: só o admin solicita, e só
   o eletricista responsável (ou o admin) abre e fecha. Uma OS não pode ser reaberta.
 - O **estoque só é baixado na abertura** da OS, nunca na solicitação.
-- A abertura de OS exige checklist de início 100% "Sim"; o fechamento exige checklist de
-  fim com justificativa para cada "Não".
+- A abertura de OS é impedida quando alguma resposta do checklist de início bate com o
+  valor de bloqueio da pergunta; no fechamento, essa resposta exige justificativa.
 - Gestão de **usuários e permissões** é exclusiva de administradores, e o sistema sempre
   mantém pelo menos um administrador.

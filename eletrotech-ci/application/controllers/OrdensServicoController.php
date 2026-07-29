@@ -15,7 +15,6 @@ class OrdensServicoController extends Auth_Controller
     {
         $data['titulo'] = 'Ordens de Serviço - EletroTech';
 
-        // Eletricista só enxerga as próprias OS, mas abre e fecha as dela.
         if (!$this->ehAdmin && $this->eletricistaId) {
             $eletricistaId = $this->eletricistaId;
             $total = $this->OrdemservicoModel->contar_por_eletricista($eletricistaId);
@@ -45,10 +44,7 @@ class OrdensServicoController extends Auth_Controller
         $this->load->view('telas/OrdemServicoView', $data);
     }
 
-    /**
-     * Passo 1 do fluxo: o admin solicita o serviço e atribui um eletricista.
-     * A OS nasce como "solicitada" — sem materiais e sem baixa de estoque.
-     */
+
     public function solicitar()
     {
         $this->exigirAdmin();
@@ -84,11 +80,7 @@ class OrdensServicoController extends Auth_Controller
         redirect('ordemServico');
     }
 
-    /**
-     * Passo 2 do fluxo: o eletricista responsável (ou o admin) abre a OS
-     * solicitada, informando os materiais e respondendo o checklist de início.
-     * É aqui que o estoque é baixado.
-     */
+
     public function abrir()
     {
         $idOs = (int) $this->input->post('id_os', TRUE);
@@ -143,22 +135,36 @@ class OrdensServicoController extends Auth_Controller
 
         $checklistRespostas = [];
         foreach ($checklistInicio['perguntas'] as $pergunta) {
-            $valor = strtolower(trim($respostas[$pergunta['id']] ?? ''));
+            $valor = trim($respostas[$pergunta['id']] ?? '');
             if ($valor === '') {
                 $this->session->set_flashdata('erro', 'Responda todas as perguntas do checklist de início antes de abrir a OS.');
                 redirect('ordemServico');
                 return;
             }
-            if (!in_array($valor, ['sim', 'nao'], true)) {
-                $this->session->set_flashdata('erro', 'As respostas do checklist de início devem ser apenas Sim ou Não.');
+
+
+            if (($pergunta['tipo_resposta'] ?? '') !== 'text') {
+                $valor = strtolower($valor);
+                if (!in_array($valor, ['sim', 'nao'], true)) {
+                    $this->session->set_flashdata('erro', 'As respostas do checklist de início devem ser apenas Sim ou Não.');
+                    redirect('ordemServico');
+                    return;
+                }
+            }
+
+
+            $bloqueio = $pergunta['bloqueia_normalizado'] ?? '';
+            if ($bloqueio !== '' && $this->ChecklistModel->normalizar_resposta($valor) === $bloqueio) {
+                // A flashdata é impressa sem escape na view (aceita HTML de
+                // validation_errors), então o texto da pergunta é escapado aqui.
+                $this->session->set_flashdata(
+                    'erro',
+                    'Não é possível abrir a OS: a resposta de "' . htmlspecialchars($pergunta['texto_pergunta']) . '" impede a abertura.'
+                );
                 redirect('ordemServico');
                 return;
             }
-            if ($valor === 'nao') {
-                $this->session->set_flashdata('erro', 'Não é possível abrir a OS quando uma resposta do checklist de início for não.');
-                redirect('ordemServico');
-                return;
-            }
+
             $checklistRespostas[$pergunta['id']] = $valor;
         }
 
@@ -223,25 +229,32 @@ class OrdensServicoController extends Auth_Controller
 
         $fechamentoRespostas = [];
         foreach ($checklistFim['perguntas'] as $pergunta) {
-            $valor = strtolower(trim($respostas[$pergunta['id']] ?? ''));
+            $valor = trim($respostas[$pergunta['id']] ?? '');
             if ($valor === '') {
                 $this->session->set_flashdata('erro', 'Responda todas as perguntas do checklist de fim antes de fechar a OS.');
                 redirect('ordemServico');
                 return;
             }
-            if (!in_array($valor, ['sim', 'nao'], true)) {
-                $this->session->set_flashdata('erro', 'As respostas do checklist de fim devem ser apenas Sim ou Não.');
-                redirect('ordemServico');
-                return;
-            }
 
             $motivo = null;
-            if ($valor === 'nao') {
-                $motivo = trim($motivos[$pergunta['id']] ?? '');
-                if ($motivo === '') {
-                    $this->session->set_flashdata('erro', 'Explique o motivo do não para todas as perguntas negativas antes de fechar a OS.');
+            $bloqueio = $pergunta['bloqueia_normalizado'] ?? '';
+
+
+            if (($pergunta['tipo_resposta'] ?? '') !== 'text') {
+                $valor = strtolower($valor);
+                if (!in_array($valor, ['sim', 'nao'], true)) {
+                    $this->session->set_flashdata('erro', 'As respostas do checklist de fim devem ser apenas Sim ou Não.');
                     redirect('ordemServico');
                     return;
+                }
+
+                if ($bloqueio !== '' && $valor === $bloqueio) {
+                    $motivo = trim($motivos[$pergunta['id']] ?? '');
+                    if ($motivo === '') {
+                        $this->session->set_flashdata('erro', 'Explique o motivo das respostas que exigem justificativa antes de fechar a OS.');
+                        redirect('ordemServico');
+                        return;
+                    }
                 }
             }
 
@@ -389,10 +402,7 @@ class OrdensServicoController extends Auth_Controller
         return ['status' => 'ok', 'nome' => $dados['file_name'], 'erro' => null];
     }
 
-    /**
-     * Cria uma miniatura (sufixo _thumb) ao lado da imagem original.
-     * Retorna true em sucesso; não lança erro se a GD não suportar o formato.
-     */
+
     private function gerarThumb($caminhoOrigem)
     {
         $this->load->library('image_lib');

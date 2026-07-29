@@ -432,8 +432,8 @@
                                     </select>
                                 </div>
                                 <div style="width:180px; margin-left:10px">
-                                    <label style="display:block; font-size:11px; margin-bottom:6px;">Bloqueia se</label>
-                                    <input type="text" name="bloqueia_abertura[]" placeholder="Ex: nao (radio) ou texto" />
+                                    <label style="display:block; font-size:11px; margin-bottom:6px;">Bloqueia se (opcional)</label>
+                                    <input type="text" name="bloqueia_abertura[]" placeholder="Vazio = nunca bloqueia" />
                                 </div>
                                 <button type="button" class="remove-pergunta" onclick="removerPergunta(this)" title="Remover pergunta">&times;</button>
                             </div>
@@ -483,8 +483,8 @@
                     </select>
                 </div>
                 <div style="width:180px; margin-left:10px">
-                    <label style="display:block; font-size:11px; margin-bottom:6px;">Bloqueia se</label>
-                    <input type="text" name="bloqueia_abertura[]" placeholder="Ex: nao (radio) ou texto" />
+                    <label style="display:block; font-size:11px; margin-bottom:6px;">Bloqueia se (opcional)</label>
+                    <input type="text" name="bloqueia_abertura[]" placeholder="Vazio = nunca bloqueia" />
                 </div>
                 <button type="button" class="remove-pergunta" onclick="removerPergunta(this)" title="Remover pergunta">&times;</button>
             `;
@@ -497,9 +497,9 @@
                 const bloqueioInput = row.querySelector('input[name="bloqueia_abertura[]"]');
                 if (!bloqueioInput) return;
                 if (tipo === 'radio') {
-                    bloqueioInput.placeholder = 'Digite: sim ou nao';
+                    bloqueioInput.placeholder = 'sim ou nao (vazio = nunca bloqueia)';
                 } else {
-                    bloqueioInput.placeholder = 'Texto que bloqueia (opcional)';
+                    bloqueioInput.placeholder = 'Resposta que bloqueia (vazio = nunca bloqueia)';
                 }
             }
 

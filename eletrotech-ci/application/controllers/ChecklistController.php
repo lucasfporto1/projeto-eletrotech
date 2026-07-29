@@ -126,11 +126,7 @@ class ChecklistController extends Auth_Controller
             return;
         }
 
-        echo '<div><h5 class="text-center mb-3">Perguntas do Checklist</h5><ul class="list-group">';
-        foreach ($perguntas as $p) {
-            echo '<li class="list-group-item bg-dark text-white border-secondary">' . htmlspecialchars($p['texto_pergunta']) . '</li>';
-        }
-        echo '</ul></div>';
+        $this->load->view('telas/ChecklistPerguntas', ['perguntas' => $perguntas]);
     }
 
     public function excluir($id = null)
