@@ -225,7 +225,6 @@ class OrdensServicoController extends Auth_Controller
 
         $idOs = (int) $this->input->post('id_os', TRUE);
         $respostas = $this->input->post('checklist_resposta', TRUE) ?: [];
-        $motivos = $this->input->post('motivo_nao', TRUE) ?: [];
 
         $fechamentoRespostas = [];
         foreach ($checklistFim['perguntas'] as $pergunta) {
@@ -236,10 +235,7 @@ class OrdensServicoController extends Auth_Controller
                 return;
             }
 
-            $motivo = null;
-            $bloqueio = $pergunta['bloqueia_normalizado'] ?? '';
-
-
+            // Perguntas do tipo "text" aceitam resposta livre; só as "radio" exigem Sim/Não.
             if (($pergunta['tipo_resposta'] ?? '') !== 'text') {
                 $valor = strtolower($valor);
                 if (!in_array($valor, ['sim', 'nao'], true)) {
@@ -247,20 +243,20 @@ class OrdensServicoController extends Auth_Controller
                     redirect('ordemServico');
                     return;
                 }
-
-                if ($bloqueio !== '' && $valor === $bloqueio) {
-                    $motivo = trim($motivos[$pergunta['id']] ?? '');
-                    if ($motivo === '') {
-                        $this->session->set_flashdata('erro', 'Explique o motivo das respostas que exigem justificativa antes de fechar a OS.');
-                        redirect('ordemServico');
-                        return;
-                    }
-                }
+            }
+            $bloqueio = $pergunta['bloqueia_normalizado'] ?? '';
+            if ($bloqueio !== '' && $this->ChecklistModel->normalizar_resposta($valor) === $bloqueio) {
+                $this->session->set_flashdata(
+                    'erro',
+                    'Não é possível fechar a OS: a resposta de "' . htmlspecialchars($pergunta['texto_pergunta']) . '" impede o fechamento.'
+                );
+                redirect('ordemServico');
+                return;
             }
 
             $fechamentoRespostas[$pergunta['id']] = [
                 'resposta' => $valor,
-                'motivo_nao' => $motivo,
+                'motivo_nao' => null,
             ];
         }
 

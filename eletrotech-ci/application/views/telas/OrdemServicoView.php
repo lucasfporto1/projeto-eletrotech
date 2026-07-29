@@ -536,7 +536,9 @@
                                     <option value="nao">Não</option>
                                 </select>
                                 <?php if (!empty($pergunta['bloqueia_normalizado'])): ?>
-                                    <textarea name="motivo_nao[<?= $pergunta['id'] ?>]" class="motivo-nao form-control" placeholder="Explique o motivo desta resposta" style="display:none; margin-top:10px;"></textarea>
+                                    <div class="aviso-bloqueio" data-pergunta="<?= $pergunta['id'] ?>" style="display:none; color:#ff6b6b; font-size:12px; margin-top:6px;">
+                                        <i class="fa-solid fa-triangle-exclamation"></i> Esta resposta impede o fechamento da OS.
+                                    </div>
                                 <?php endif; ?>
                             <?php endif; ?>
                         <?php endforeach; ?>
@@ -775,19 +777,13 @@
             const select = event.target;
             const perguntaId = select.dataset.pergunta;
             const bloqueio = select.dataset.bloqueio || '';
-            const textarea = document.querySelector('textarea[name="motivo_nao[' + perguntaId + ']"]');
-            if (!textarea) {
+            const aviso = document.querySelector('.aviso-bloqueio[data-pergunta="' + perguntaId + '"]');
+            if (!aviso) {
                 return;
             }
-            // Só a resposta configurada como bloqueio no cadastro pede justificativa.
-            if (bloqueio !== '' && select.value === bloqueio) {
-                textarea.style.display = 'block';
-                textarea.required = true;
-            } else {
-                textarea.style.display = 'none';
-                textarea.required = false;
-                textarea.value = '';
-            }
+            // Avisa na hora que a resposta configurada como bloqueio barra o fechamento,
+            // em vez de deixar o eletricista descobrir só depois de enviar o formulário.
+            aviso.style.display = (bloqueio !== '' && select.value === bloqueio) ? 'block' : 'none';
         });
 
         document.querySelectorAll('#filtro-status-os .btn-filtro-os').forEach(function(botao) {

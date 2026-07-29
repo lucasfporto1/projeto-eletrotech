@@ -221,11 +221,14 @@ Regras de abertura:
 
 ### 9.4. Fechamento da OS
 Só é possível fechar uma OS que esteja **Aberta**. É obrigatório existir um **checklist de
-fim selecionado**. Todas as perguntas devem ser respondidas. Numa pergunta Sim/Não, se a
-resposta bate com o **valor de bloqueio** configurado, é obrigatório **informar o motivo**
-(o fechamento não é impedido, apenas exige justificativa). Perguntas de texto livre não
-pedem motivo, porque a própria resposta já é a justificativa. Ao fechar, a data de
-fechamento é registrada. Opcionalmente pode-se anexar uma **foto de fechamento**.
+fim selecionado**. Todas as perguntas devem ser respondidas. Se a pergunta tem um **valor
+de bloqueio** configurado e a resposta bate com ele, o **fechamento é impedido** — a mesma
+regra da abertura, valendo tanto para perguntas Sim/Não quanto para texto livre. Ao fechar,
+a data de fechamento é registrada. Opcionalmente pode-se anexar uma **foto de fechamento**.
+
+> OS fechadas antes dessa regra podem ter um **motivo** registrado junto da resposta: na
+> versão anterior, a resposta de bloqueio no fechamento pedia justificativa em vez de
+> barrar a OS. Esses motivos continuam visíveis nos detalhes da OS.
 
 ### 9.5. Restrições do perfil eletricista
 Quando o usuário é um eletricista (conta vinculada):
@@ -268,8 +271,12 @@ Módulo que define listas de verificação usadas na abertura e no fechamento da
 **Papel na operação:**
 - **Checklist de início** — respondido na abertura da OS; uma resposta que bate com o
   "Bloqueia se" da pergunta impede a abertura.
-- **Checklist de fim** — respondido no fechamento; uma resposta Sim/Não que bate com o
-  "Bloqueia se" exige justificativa (motivo), mas não impede o fechamento.
+- **Checklist de fim** — respondido no fechamento; uma resposta que bate com o
+  "Bloqueia se" impede o fechamento.
+
+> Atenção ao cadastrar: uma pergunta com "Bloqueia se" **em branco nunca barra nada**,
+> nem na abertura nem no fechamento. Para que uma resposta impeça a OS, o valor precisa
+> estar preenchido (ex.: "Não").
 
 ## 11. Baixas / Movimentações de estoque
 
@@ -355,7 +362,7 @@ atomicidade — se algo falha, nada é gravado.
 - A OS segue sempre a ordem **Solicitada → Aberta → Fechada**: só o admin solicita, e só
   o eletricista responsável (ou o admin) abre e fecha. Uma OS não pode ser reaberta.
 - O **estoque só é baixado na abertura** da OS, nunca na solicitação.
-- A abertura de OS é impedida quando alguma resposta do checklist de início bate com o
-  valor de bloqueio da pergunta; no fechamento, essa resposta exige justificativa.
+- A abertura e o fechamento da OS são impedidos quando alguma resposta do checklist bate
+  com o valor de bloqueio configurado na pergunta ("Bloqueia se").
 - Gestão de **usuários e permissões** é exclusiva de administradores, e o sistema sempre
   mantém pelo menos um administrador.
