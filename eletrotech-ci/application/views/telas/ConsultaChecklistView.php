@@ -66,6 +66,33 @@
                     <option value="fim" <?= $filtroTipo === 'fim' ? 'selected' : '' ?>>Fim</option>
                 </select>
             </div>
+
+            <div>
+                <label for="filtro_eletricista" style="font-size:12px;color:#FBD814;font-weight:bold;">Filtrar por eletricista:</label>
+                <select name="eletricista" id="filtro_eletricista">
+                    <option value="" <?= empty($filtroEletricista) ? 'selected' : '' ?>>Todos</option>
+                    <?php if (!empty($eletricistas)): ?>
+                        <?php foreach ($eletricistas as $e): ?>
+                            <option value="<?= $e['id'] ?>" <?= (string)($filtroEletricista ?? '') === (string)$e['id'] ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($e['nome']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </select>
+            </div>
+
+            <div>
+                <label for="ordenar" style="font-size:12px;color:#FBD814;font-weight:bold;">Ordenar por:</label>
+                <select name="ordenar" id="ordenar">
+                    <option value="data_desc" <?= ($ordenar ?? 'data_desc') === 'data_desc' ? 'selected' : '' ?>>Bloqueio (mais recente)</option>
+                    <option value="data_asc" <?= ($ordenar ?? '') === 'data_asc' ? 'selected' : '' ?>>Bloqueio (mais antigo)</option>
+                    <option value="os_asc" <?= ($ordenar ?? '') === 'os_asc' ? 'selected' : '' ?>>OS (crescente)</option>
+                    <option value="os_desc" <?= ($ordenar ?? '') === 'os_desc' ? 'selected' : '' ?>>OS (decrescente)</option>
+                    <option value="eletricista_asc" <?= ($ordenar ?? '') === 'eletricista_asc' ? 'selected' : '' ?>>Eletricista (A-Z)</option>
+                    <option value="eletricista_desc" <?= ($ordenar ?? '') === 'eletricista_desc' ? 'selected' : '' ?>>Eletricista (Z-A)</option>
+                </select>
+            </div>
+
             <div>
                 <button type="submit" class="btn btn-outline-warning"><i class="fa-solid fa-search"></i> Buscar</button>
                 <a href="<?= site_url('consultachecklist') ?>" class="btn btn-outline-secondary" title="Limpar Filtros"><i class="fa-solid fa-times"></i></a>
@@ -90,11 +117,10 @@
                             <tr>
                                 <td>
                                     <a href="<?= site_url('consultachecklist/relatorio/' . $c['id_os'] . '/' . $c['tipo']) ?>" target="_blank" class="btn btn-sm btn-outline-info" title="Gerar relatório">
-                                        <i class="fa-solid fa-file-lines"></i> Relatório
+                                        <i class="fa-solid fa-file-lines"></i> 
                                     </a>
                                     <button type="button" class="btn btn-sm btn-outline-warning"
-                                        onclick="abrirModalFinalizar(<?= $c['id_os'] ?>, '<?= $c['tipo'] ?>')">
-                                        <i class="fa-solid fa-gavel"></i> Decidir
+                                        onclick="abrirModalFinalizar(<?= $c['id_os'] ?>, '<?= $c['tipo'] ?>')"> Decidir
                                     </button>
                                 </td>
                                 <td>#<?= str_pad($c['id_os'], 5, '0', STR_PAD_LEFT) ?></td>

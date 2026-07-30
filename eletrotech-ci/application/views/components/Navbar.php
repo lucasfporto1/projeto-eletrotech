@@ -56,10 +56,11 @@ $pode = function ($chave) use ($ehAdmin, $permissoes) {
                 <?php if ($pode('checklist')): ?>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle <?= in_array($ativo, ['checklist', 'consultachecklist'], true) ? 'active' : '' ?>"
-                            href="#" id="checklistDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        href="#" id="checklistDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             Checklist
                         </a>
-                        <ul class="dropdown-menu" aria-labelledby="checklistDropdown">
+                        <!-- Adicionada a classe dropdown-checklist aqui -->
+                        <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="checklistDropdown">
                             <li>
                                 <a class="dropdown-item <?= $ativo === 'checklist' ? 'active' : '' ?>" href="<?= site_url('checklist') ?>">
                                     Seleção Checklist
