@@ -216,6 +216,17 @@ $totalSaida   = $totais['total_saida'];
         .btn-detalhes:hover {
             color: #ffffff;
         }
+
+        .link-documento {
+            color: #FBD814;
+            text-decoration: none;
+            border-bottom: 1px dotted #FBD814;
+        }
+
+        .link-documento:hover {
+            color: #ffffff;
+            border-bottom-color: #ffffff;
+        }
     </style>
 </head>
 
@@ -224,7 +235,7 @@ $totalSaida   = $totais['total_saida'];
 
     <div class="container">
         <div class="page-header">
-            <h1>Baixas / Movimentações</h1>
+            <h1>Movimentações</h1>
             <p>Consulta de entradas e saídas de produtos. Selecione os filtros e clique em Consultar.</p>
         </div>
 
@@ -323,7 +334,15 @@ $totalSaida   = $totais['total_saida'];
                                     <td><?= (int) $m['quantidade'] ?></td>
                                     <td>R$ <?= number_format($m['valor_unitario'], 2, ',', '.') ?></td>
                                     <td>R$ <?= number_format($m['valor_total'], 2, ',', '.') ?></td>
-                                    <td><?= htmlspecialchars($m['origem']) ?></td>
+                                    <td>
+                                        <?php if (!empty($m['id_baixa']) && $this->session->userdata('is_admin')): ?>
+                                            <a href="<?= site_url('lancamentos/relatorio/' . $m['id_baixa']) ?>" class="link-documento">
+                                                <?= htmlspecialchars($m['origem']) ?>
+                                            </a>
+                                        <?php else: ?>
+                                            <?= htmlspecialchars($m['origem']) ?>
+                                        <?php endif; ?>
+                                    </td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php else: ?>

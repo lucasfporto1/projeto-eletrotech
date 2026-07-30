@@ -62,6 +62,11 @@ $pode = function ($chave) use ($ehAdmin, $permissoes) {
                         <a class="nav-link <?= $ativo === 'baixas' ? 'active' : '' ?>" href="<?= site_url('baixas') ?>">Movimentação</a>
                     </li>
                 <?php endif; ?>
+                <?php if ($ehAdmin): ?>
+                    <li class="nav-item">
+                        <a class="nav-link <?= $ativo === 'lancamentos' ? 'active' : '' ?>" href="<?= site_url('lancamentos') ?>">Baixas</a>
+                    </li>
+                <?php endif; ?>
                 <li class="nav-item ms-3">
                     <a class="nav-link text-danger fw-bold" style="background-color: transparent;" href="<?= site_url('auth/sair') ?>">Sair</a>
                 </li>

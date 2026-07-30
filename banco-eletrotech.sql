@@ -16,6 +16,71 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
+-- Table structure for table `tabela_baixa_itens`
+--
+
+DROP TABLE IF EXISTS `tabela_baixa_itens`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tabela_baixa_itens` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `id_baixa` int NOT NULL,
+  `id_produto` int NOT NULL,
+  `quantidade` int NOT NULL,
+  `valor_unitario` decimal(10,2) NOT NULL DEFAULT '0.00',
+  PRIMARY KEY (`id`),
+  KEY `fk_item_baixa` (`id_baixa`),
+  KEY `fk_item_produto` (`id_produto`),
+  CONSTRAINT `fk_item_baixa` FOREIGN KEY (`id_baixa`) REFERENCES `tabela_baixas` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_item_produto` FOREIGN KEY (`id_produto`) REFERENCES `tabela_produtos` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tabela_baixa_itens`
+--
+
+LOCK TABLES `tabela_baixa_itens` WRITE;
+/*!40000 ALTER TABLE `tabela_baixa_itens` DISABLE KEYS */;
+/*!40000 ALTER TABLE `tabela_baixa_itens` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tabela_baixas`
+--
+
+DROP TABLE IF EXISTS `tabela_baixas`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tabela_baixas` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `tipo` enum('entrada','saida') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `data_baixa` date NOT NULL,
+  `id_eletricista` int NOT NULL,
+  `observacao` text COLLATE utf8mb4_unicode_ci,
+  `status` enum('rascunho','finalizada','cancelada') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'rascunho',
+  `id_usuario` int DEFAULT NULL,
+  `data_abertura` datetime NOT NULL,
+  `data_finalizacao` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_baixa_eletricista` (`id_eletricista`),
+  KEY `fk_baixa_usuario` (`id_usuario`),
+  KEY `idx_baixa_rascunho` (`id_usuario`,`tipo`,`status`),
+  CONSTRAINT `fk_baixa_eletricista` FOREIGN KEY (`id_eletricista`) REFERENCES `tabela_eletricistas` (`id`),
+  CONSTRAINT `fk_baixa_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `tabela_usuarios` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tabela_baixas`
+--
+
+LOCK TABLES `tabela_baixas` WRITE;
+/*!40000 ALTER TABLE `tabela_baixas` DISABLE KEYS */;
+/*!40000 ALTER TABLE `tabela_baixas` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `tabela_checklist`
 --
 
@@ -141,11 +206,17 @@ CREATE TABLE `tabela_movimentacoes` (
   `data_mov` date NOT NULL,
   `origem` varchar(100) NOT NULL DEFAULT '',
   `id_os` int DEFAULT NULL,
+  `id_baixa` int DEFAULT NULL,
+  `id_usuario` int DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `fk_mov_produto` (`id_produto`),
   KEY `fk_mov_os` (`id_os`),
+  KEY `fk_mov_baixa` (`id_baixa`),
+  KEY `fk_mov_usuario` (`id_usuario`),
   CONSTRAINT `fk_mov_os` FOREIGN KEY (`id_os`) REFERENCES `tabela_ordens_servico` (`id`),
-  CONSTRAINT `fk_mov_produto` FOREIGN KEY (`id_produto`) REFERENCES `tabela_produtos` (`id`)
+  CONSTRAINT `fk_mov_produto` FOREIGN KEY (`id_produto`) REFERENCES `tabela_produtos` (`id`),
+  CONSTRAINT `fk_mov_baixa` FOREIGN KEY (`id_baixa`) REFERENCES `tabela_baixas` (`id`),
+  CONSTRAINT `fk_mov_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `tabela_usuarios` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -155,7 +226,7 @@ CREATE TABLE `tabela_movimentacoes` (
 
 LOCK TABLES `tabela_movimentacoes` WRITE;
 /*!40000 ALTER TABLE `tabela_movimentacoes` DISABLE KEYS */;
-INSERT INTO `tabela_movimentacoes` VALUES (1,3,'saida',30,6.50,'2026-05-25','OS #00001',1),(2,1,'saida',50,120.50,'0026-05-10','OS #00002',2),(3,1,'saida',1,120.50,'0026-05-10','OS #00002',2),(4,5,'saida',1,10.00,'2026-07-06','OS #00003',3),(5,5,'saida',1,10.00,'2026-07-06','OS #00003',3),(6,2,'saida',20,18.90,'2026-03-20','OS #00006',6),(8,1,'entrada',51,120.50,'0026-05-10','Estoque inicial',NULL),(9,2,'entrada',20,18.90,'0026-05-10','Estoque inicial',NULL),(10,3,'entrada',100,6.50,'0026-05-10','Estoque inicial',NULL),(11,4,'entrada',50,10.90,'0026-05-10','Estoque inicial',NULL),(12,5,'entrada',2,10.00,'0026-05-10','Estoque inicial',NULL),(13,6,'entrada',3,9.90,'0026-05-10','Estoque inicial',NULL),(18,6,'entrada',5,9.90,'2026-07-20','Reposição de estoque',NULL),(19,7,'entrada',10000,100.00,'2026-07-20','Reposição de estoque',NULL),(20,7,'saida',20,100.00,'2026-07-20','OS #00008',8),(22,7,'entrada',20,100.00,'2026-07-21','Reposição de estoque',NULL),(24,6,'saida',1,9.90,'0025-03-15','OS #00010',10),(25,4,'entrada',40,10.90,'2026-07-21','Reposição de estoque',NULL),(26,4,'saida',40,10.90,'2026-07-21','Baixa manual de estoque',NULL),(27,4,'entrada',50,10.90,'2026-07-21','Reposição de estoque',NULL),(28,4,'saida',50,10.90,'2026-07-21','Baixa manual de estoque',NULL);
+INSERT INTO `tabela_movimentacoes` VALUES (1,3,'saida',30,6.50,'2026-05-25','OS #00001',1,NULL,NULL),(2,1,'saida',50,120.50,'0026-05-10','OS #00002',2,NULL,NULL),(3,1,'saida',1,120.50,'0026-05-10','OS #00002',2,NULL,NULL),(4,5,'saida',1,10.00,'2026-07-06','OS #00003',3,NULL,NULL),(5,5,'saida',1,10.00,'2026-07-06','OS #00003',3,NULL,NULL),(6,2,'saida',20,18.90,'2026-03-20','OS #00006',6,NULL,NULL),(8,1,'entrada',51,120.50,'0026-05-10','Estoque inicial',NULL,NULL,NULL),(9,2,'entrada',20,18.90,'0026-05-10','Estoque inicial',NULL,NULL,NULL),(10,3,'entrada',100,6.50,'0026-05-10','Estoque inicial',NULL,NULL,NULL),(11,4,'entrada',50,10.90,'0026-05-10','Estoque inicial',NULL,NULL,NULL),(12,5,'entrada',2,10.00,'0026-05-10','Estoque inicial',NULL,NULL,NULL),(13,6,'entrada',3,9.90,'0026-05-10','Estoque inicial',NULL,NULL,NULL),(18,6,'entrada',5,9.90,'2026-07-20','Reposição de estoque',NULL,NULL,NULL),(19,7,'entrada',10000,100.00,'2026-07-20','Reposição de estoque',NULL,NULL,NULL),(20,7,'saida',20,100.00,'2026-07-20','OS #00008',8,NULL,NULL),(22,7,'entrada',20,100.00,'2026-07-21','Reposição de estoque',NULL,NULL,NULL),(24,6,'saida',1,9.90,'0025-03-15','OS #00010',10,NULL,NULL),(25,4,'entrada',40,10.90,'2026-07-21','Reposição de estoque',NULL,NULL,NULL),(26,4,'saida',40,10.90,'2026-07-21','Baixa manual de estoque',NULL,NULL,NULL),(27,4,'entrada',50,10.90,'2026-07-21','Reposição de estoque',NULL,NULL,NULL),(28,4,'saida',50,10.90,'2026-07-21','Baixa manual de estoque',NULL,NULL,NULL);
 /*!40000 ALTER TABLE `tabela_movimentacoes` ENABLE KEYS */;
 UNLOCK TABLES;
 

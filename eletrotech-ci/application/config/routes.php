@@ -72,4 +72,6 @@ $route['ordemServico'] = 'OrdensServicoController';
 $route['ordemServico/(.+)'] = 'OrdensServicoController/$1';
 $route['baixas'] = 'BaixasController';
 $route['baixas/(.+)'] = 'BaixasController/$1';
+$route['lancamentos'] = 'LancamentosController';
+$route['lancamentos/(.+)'] = 'LancamentosController/$1';
 $route['chat/(.+)'] = 'ChatController/$1';

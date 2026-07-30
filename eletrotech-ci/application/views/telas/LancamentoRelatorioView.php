@@ -1,11 +1,10 @@
 <?php
 
-/** @var array $movimentacao */
-/** @var array $materiais */
-/** @var array $respostas */
+/** @var array $baixa */
+/** @var array $movimentacoes */
 
-$m = $movimentacao;
-$ehEntrada = $m['tipo'] === 'entrada';
+$ehEntrada = $baixa['tipo'] === 'entrada';
+$total     = array_sum(array_column($movimentacoes, 'valor_total'));
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -15,7 +14,7 @@ $ehEntrada = $m['tipo'] === 'entrada';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-    <title>Detalhes da Baixa - EletroTech</title>
+    <title>Relatório da Baixa - EletroTech</title>
     <style>
         body {
             background-color: #3c3b3b;
@@ -65,6 +64,7 @@ $ehEntrada = $m['tipo'] === 'entrada';
             border-radius: 12px;
             padding: 30px 35px;
             margin: 2.5rem auto 3rem auto;
+            max-width: 900px;
         }
 
         .cabecalho-empresa {
@@ -112,6 +112,10 @@ $ehEntrada = $m['tipo'] === 'entrada';
             font-size: 15px;
         }
 
+        .campo.largo {
+            grid-column: 1 / -1;
+        }
+
         .campo .rotulo {
             color: #a0a0a0;
             white-space: nowrap;
@@ -141,6 +145,10 @@ $ehEntrada = $m['tipo'] === 'entrada';
         table.table.custom-table thead th {
             color: #FBD814;
             font-size: 0.95rem;
+        }
+
+        table.table.custom-table tfoot td {
+            font-weight: 700;
         }
 
         .badge-entrada {
@@ -200,13 +208,6 @@ $ehEntrada = $m['tipo'] === 'entrada';
             color: #ffffff;
         }
 
-        .sem-os {
-            text-align: center;
-            color: #a0a0a0;
-            font-style: italic;
-            padding: 1.5rem;
-        }
-
         @media print {
             @page {
                 size: A4 portrait;
@@ -229,6 +230,7 @@ $ehEntrada = $m['tipo'] === 'entrada';
                 background-color: #ffffff;
                 margin: 0;
                 padding: 0;
+                max-width: none;
             }
 
             .campo .rotulo {
@@ -266,7 +268,7 @@ $ehEntrada = $m['tipo'] === 'entrada';
 </head>
 
 <body>
-    <?php $this->load->view('components/Navbar', array('ativo' => 'baixas')); ?>
+    <?php $this->load->view('components/Navbar', array('ativo' => 'lancamentos')); ?>
 
     <div class="container">
         <div class="folha">
@@ -274,18 +276,18 @@ $ehEntrada = $m['tipo'] === 'entrada';
                 <img src="<?= base_url('assets/logo-eletrotech.png') ?>" alt="Logo EletroTech">
                 <div class="dados">
                     <strong>EletroTech - Serviços Elétricos</strong><br>
-                    Relatório de Movimentação de Estoque
+                    Relatório de Baixa de Estoque
                 </div>
             </div>
 
             <div class="titulo-relatorio">
-                DADOS DA BAIXA - (#<?= str_pad($m['id'], 5, '0', STR_PAD_LEFT) ?>)
+                BAIXA DE <?= $ehEntrada ? 'ENTRADA' : 'SAÍDA' ?> - (#<?= str_pad($baixa['id'], 5, '0', STR_PAD_LEFT) ?>)
             </div>
 
             <div class="campos">
                 <div class="campo">
-                    <span class="rotulo">Data da Movimentação:</span>
-                    <span class="dado"><?= date('d/m/Y', strtotime($m['data_mov'])) ?></span>
+                    <span class="rotulo">Data da Baixa:</span>
+                    <span class="dado"><?= date('d/m/Y', strtotime($baixa['data_baixa'])) ?></span>
                 </div>
                 <div class="campo">
                     <span class="rotulo">Tipo de Movimento:</span>
@@ -298,135 +300,82 @@ $ehEntrada = $m['tipo'] === 'entrada';
                     </span>
                 </div>
                 <div class="campo">
-                    <span class="rotulo">Produto:</span>
-                    <span class="dado"><?= htmlspecialchars($m['nome_produto']) ?></span>
+                    <span class="rotulo">Solicitante:</span>
+                    <span class="dado"><?= htmlspecialchars($baixa['nome_eletricista']) ?></span>
                 </div>
                 <div class="campo">
-                    <span class="rotulo">Quantidade:</span>
-                    <span class="dado"><?= (int) $m['quantidade'] ?> un.</span>
+                    <span class="rotulo">Situação:</span>
+                    <span class="dado"><?= ucfirst(htmlspecialchars($baixa['status'])) ?></span>
                 </div>
                 <div class="campo">
-                    <span class="rotulo">Valor Unitário (na época):</span>
-                    <span class="dado">R$ <?= number_format($m['valor_unitario'], 2, ',', '.') ?></span>
+                    <span class="rotulo">Aberta em:</span>
+                    <span class="dado"><?= date('d/m/Y H:i', strtotime($baixa['data_abertura'])) ?></span>
                 </div>
                 <div class="campo">
-                    <span class="rotulo">Valor Total:</span>
-                    <span class="dado">R$ <?= number_format($m['valor_total'], 2, ',', '.') ?></span>
+                    <span class="rotulo">Finalizada em:</span>
+                    <span class="dado">
+                        <?= !empty($baixa['data_finalizacao']) ? date('d/m/Y H:i', strtotime($baixa['data_finalizacao'])) : '-' ?>
+                    </span>
                 </div>
                 <div class="campo">
-                    <span class="rotulo">Origem:</span>
-                    <span class="dado"><?= htmlspecialchars($m['origem']) ?></span>
+                    <span class="rotulo">Responsável:</span>
+                    <span class="dado"><?= !empty($baixa['nome_usuario']) ? htmlspecialchars($baixa['nome_usuario']) : '-' ?></span>
                 </div>
                 <div class="campo">
-                    <span class="rotulo">Estoque atual do produto:</span>
-                    <span class="dado"><?= (int) $m['qtd_estoque'] ?> un.</span>
+                    <span class="rotulo">Total de Itens:</span>
+                    <span class="dado"><?= count($movimentacoes) ?></span>
                 </div>
-                <?php if (!empty($m['nome_usuario'])): ?>
-                    <div class="campo">
-                        <span class="rotulo">Lançado por:</span>
-                        <span class="dado"><?= htmlspecialchars($m['nome_usuario']) ?></span>
-                    </div>
-                <?php endif; ?>
-                <?php if (!empty($m['id_baixa'])): ?>
-                    <div class="campo">
-                        <span class="rotulo">Documento de origem:</span>
-                        <span class="dado">
-                            <a href="<?= site_url('lancamentos/relatorio/' . $m['id_baixa']) ?>" style="color:#FBD814;">
-                                Baixa #<?= str_pad($m['id_baixa'], 5, '0', STR_PAD_LEFT) ?>
-                            </a>
-                        </span>
-                    </div>
-                <?php endif; ?>
+                <div class="campo largo">
+                    <span class="rotulo">Observação:</span>
+                    <span class="dado">
+                        <?= $baixa['observacao'] !== '' && $baixa['observacao'] !== null
+                            ? htmlspecialchars($baixa['observacao'])
+                            : '-' ?>
+                    </span>
+                </div>
             </div>
 
-            <?php if (!empty($m['id_os'])): ?>
-                <div class="secao">Ordem de Serviço de Origem</div>
+            <div class="secao">Materiais Baixados</div>
 
-                <div class="campos">
-                    <div class="campo">
-                        <span class="rotulo">Nº da OS:</span>
-                        <span class="dado">#<?= str_pad($m['id_os'], 5, '0', STR_PAD_LEFT) ?></span>
-                    </div>
-                    <div class="campo">
-                        <span class="rotulo">Eletricista:</span>
-                        <span class="dado"><?= htmlspecialchars($m['nome_eletricista']) ?></span>
-                    </div>
-                    <div class="campo">
-                        <span class="rotulo">Data de Abertura:</span>
-                        <span class="dado"><?= date('d/m/Y', strtotime($m['data_os'])) ?></span>
-                    </div>
-                    <div class="campo">
-                        <span class="rotulo">Situação:</span>
-                        <span class="dado"><?= ucfirst(htmlspecialchars($m['status'])) ?></span>
-                    </div>
-                    <div class="campo">
-                        <span class="rotulo">Data de Fechamento:</span>
-                        <span class="dado">
-                            <?= !empty($m['data_fechamento']) ? date('d/m/Y', strtotime($m['data_fechamento'])) : '-' ?>
-                        </span>
-                    </div>
-                </div>
-
-                <div class="secao">Materiais Utilizados na OS</div>
-
-                <?php if (!empty($materiais)): ?>
-                    <table class="table table-dark table-bordered custom-table text-center">
-                        <thead>
-                            <tr>
-                                <th>Material</th>
-                                <th>Qtd. Utilizada</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($materiais as $item): ?>
-                                <tr>
-                                    <td><?= htmlspecialchars($item['nome_produto']) ?></td>
-                                    <td><?= (int) $item['qtd_utilizada'] ?></td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                <?php else: ?>
-                    <p class="sem-os">Nenhum material registrado para esta OS.</p>
-                <?php endif; ?>
-
-                <div class="secao">Checklist da OS</div>
-
-                <?php if (!empty($respostas)): ?>
-                    <table class="table table-dark table-bordered custom-table">
-                        <thead>
-                            <tr>
-                                <th>Pergunta</th>
-                                <th class="text-center">Resposta</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($respostas as $item): ?>
-                                <tr>
-                                    <td><?= htmlspecialchars($item['texto_pergunta']) ?></td>
-                                    <td class="text-center">
-                                        <?= htmlspecialchars(ucfirst($item['resposta'])) ?>
-                                        <?php if (!empty($item['motivo_nao'])): ?>
-                                            <div class="text-start mt-2"><strong>Motivo:</strong> <?= htmlspecialchars($item['motivo_nao']) ?></div>
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                <?php else: ?>
-                    <p class="sem-os">Nenhuma resposta de checklist registrada para esta OS.</p>
-                <?php endif; ?>
-            <?php else: ?>
-                <p class="sem-os">Esta movimentação não veio de uma ordem de serviço.</p>
-            <?php endif; ?>
+            <table class="table table-dark table-bordered custom-table text-center">
+                <thead>
+                    <tr>
+                        <th>Material</th>
+                        <th>Quantidade</th>
+                        <th>Valor Unitário</th>
+                        <th>Valor Total</th>
+                        <th>Estoque Atual</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($movimentacoes as $m): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($m['nome_produto']) ?></td>
+                            <td><?= (int) $m['quantidade'] ?></td>
+                            <td>R$ <?= number_format($m['valor_unitario'], 2, ',', '.') ?></td>
+                            <td>R$ <?= number_format($m['valor_total'], 2, ',', '.') ?></td>
+                            <td><?= (int) $m['qtd_estoque'] ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3" class="text-end">Total da baixa</td>
+                        <td>R$ <?= number_format($total, 2, ',', '.') ?></td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
 
             <div class="acoes">
                 <button type="button" class="btn-imprimir" onclick="window.print()">
                     <i class="fa-solid fa-print"></i> Imprimir
                 </button>
+                <a href="<?= site_url('lancamentos') ?>" class="btn-voltar">
+                    <i class="fa-solid fa-plus"></i> Nova baixa
+                </a>
                 <a href="<?= site_url('baixas') ?>" class="btn-voltar">
-                    <i class="fa-solid fa-arrow-left"></i> Voltar
+                    <i class="fa-solid fa-list"></i> Movimentações
                 </a>
             </div>
         </div>
