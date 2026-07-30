@@ -170,7 +170,7 @@ CREATE TABLE `tabela_ordens_servico` (
   `id` int NOT NULL AUTO_INCREMENT,
   `eletricista_os` int NOT NULL,
   `data_os` date DEFAULT NULL,
-  `status` enum('solicitada','aberta','fechada') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'solicitada',
+  `status` enum('solicitada','aberta','bloqueada','fechada') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'solicitada',
   `data_fechamento` date DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `eletricista_os` (`eletricista_os`),
@@ -337,6 +337,21 @@ CREATE TABLE `tabela_usuario_permissao` (
   CONSTRAINT `fk_permissao_usuario` FOREIGN KEY (`usuario_id`) REFERENCES `tabela_usuarios` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+CREATE TABLE IF NOT EXISTS tabela_os_checklist_status (
+  id INT NOT NULL AUTO_INCREMENT,
+  id_os INT NOT NULL,
+  tipo ENUM('inicio','fim') NOT NULL,
+  bloqueado TINYINT(1) NOT NULL DEFAULT 1,
+  observacao TEXT NULL,
+  data_bloqueio DATETIME NULL,
+  data_finalizacao DATETIME NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_os_tipo (id_os, tipo),
+  CONSTRAINT fk_os_checklist_status_os
+    FOREIGN KEY (id_os) REFERENCES tabela_ordens_servico(id)
+    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `tabela_usuario_permissao`
