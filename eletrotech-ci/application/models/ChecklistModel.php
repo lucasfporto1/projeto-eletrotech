@@ -191,17 +191,42 @@ class ChecklistModel extends CI_Model
         ]);
     }
 
-    public function get_bloqueados($filtroTipo = null)
+    public function get_bloqueados($filtroTipo = null, $filtroEletricista = null, $ordenar = 'data_desc')
     {
-        $this->db->select('s.id AS id_status, s.id_os, s.tipo, s.data_bloqueio, os.data_os, os.status AS status_os, e.nome AS nome_eletricista')
+        $this->db->select('s.id AS id_status, s.id_os, s.tipo, s.data_bloqueio, os.data_os, os.status AS status_os, e.id AS id_eletricista, e.nome AS nome_eletricista')
             ->from('tabela_os_checklist_status s')
             ->join('tabela_ordens_servico os', 'os.id = s.id_os', 'inner')
             ->join('tabela_eletricistas e', 'e.id = os.eletricista_os', 'left')
-            ->where('s.bloqueado', 1)
-            ->order_by('s.data_bloqueio', 'DESC');
+            ->where('s.bloqueado', 1);
 
         if (!empty($filtroTipo) && in_array($filtroTipo, ['inicio', 'fim'], true)) {
             $this->db->where('s.tipo', $filtroTipo);
+        }
+
+        if (!empty($filtroEletricista) && is_numeric($filtroEletricista)) {
+            $this->db->where('e.id', (int) $filtroEletricista);
+        }
+
+        switch ($ordenar) {
+            case 'data_asc':
+                $this->db->order_by('s.data_bloqueio', 'ASC');
+                break;
+            case 'os_asc':
+                $this->db->order_by('s.id_os', 'ASC');
+                break;
+            case 'os_desc':
+                $this->db->order_by('s.id_os', 'DESC');
+                break;
+            case 'eletricista_asc':
+                $this->db->order_by('e.nome', 'ASC');
+                break;
+            case 'eletricista_desc':
+                $this->db->order_by('e.nome', 'DESC');
+                break;
+            case 'data_desc':
+            default:
+                $this->db->order_by('s.data_bloqueio', 'DESC');
+                break;
         }
 
         $query = $this->db->get();
@@ -241,5 +266,11 @@ class ChecklistModel extends CI_Model
 
         $this->db->trans_complete();
         return $this->db->trans_status() !== FALSE;
+    }
+
+    public function listarEletricistas()
+    {
+        $query = $this->db->select('id, nome')->from('tabela_eletricistas')->order_by('nome', 'ASC')->get();
+        return $query === false ? [] : $query->result_array();
     }
 }

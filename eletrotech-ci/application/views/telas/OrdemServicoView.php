@@ -297,16 +297,16 @@
                 <i class="fa-solid fa-list"></i> Todas
             </button>
             <button type="button" class="btn-filtro-os" data-filtro="solicitada">
-                <i class="fa-solid fa-hourglass-half"></i> Solicitadas
+                 Solicitadas
             </button>
             <button type="button" class="btn-filtro-os" data-filtro="aberta">
-                <i class="fa-solid fa-lock-open"></i> Abertas
+                 Abertas
             </button>
             <button type="button" class="btn-filtro-os" data-filtro="bloqueada">
-                <i class="fa-solid fa-ban"></i> Bloqueadas
+                 Bloqueadas
             </button>
             <button type="button" class="btn-filtro-os" data-filtro="fechada">
-                <i class="fa-solid fa-lock"></i> Fechadas
+                Fechadas
             </button>
         </div>
 

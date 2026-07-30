@@ -15,7 +15,16 @@ class ConsultaChecklistController extends Auth_Controller
     {
         $data['titulo'] = 'Consulta Checklist - EletroTech';
         $data['filtroTipo'] = $this->input->get('tipo', TRUE) ?: '';
-        $data['checklists'] = $this->ChecklistModel->get_bloqueados($data['filtroTipo'] ?: null);
+        $data['filtroEletricista'] = $this->input->get('eletricista', TRUE) ?: '';
+        $data['ordenar'] = $this->input->get('ordenar', TRUE) ?: 'data_desc';
+
+        $data['checklists'] = $this->ChecklistModel->get_bloqueados(
+            $data['filtroTipo'] ?: null,
+            $data['filtroEletricista'] ?: null,
+            $data['ordenar']
+        );
+
+        $data['eletricistas'] = $this->ChecklistModel->listarEletricistas();
 
         $this->load->view('telas/ConsultaChecklistView', $data);
     }
