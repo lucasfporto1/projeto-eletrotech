@@ -55,7 +55,7 @@ class ProdutosController extends Auth_Controller
 
         $this->form_validation->set_rules('id', 'ID', 'required|numeric');
         $this->form_validation->set_rules('nome_produto', 'Nome do Produto', 'required|min_length[3]');
-        $this->form_validation->set_rules('vlr_unitario', 'Valor Unitário', 'required|decimal');
+        $this->form_validation->set_rules('vlr_unitario', 'Valor Unitário', 'required');
 
         if ($this->form_validation->run() === FALSE) {
             $this->session->set_flashdata('erro', validation_errors());

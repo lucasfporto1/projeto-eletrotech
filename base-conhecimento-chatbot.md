@@ -95,17 +95,23 @@ Gerenciamento de contas de acesso em uma única tela (criar, listar, editar, exc
 
 | Operação | Regras |
 |---|---|
-| **Criar** | Nome de usuário único + senha de **no mínimo 8 caracteres** (armazenada com hash). Pode marcar como administrador, vincular a um eletricista e definir permissões. |
+| **Criar** | Nome de usuário único + senha de **no mínimo 8 caracteres** (armazenada com hash). Pode marcar como administrador e definir permissões. **Não é possível vincular um eletricista por aqui** — contas de eletricista nascem na tela de Eletricistas (ver seção 6). |
 | **Listar** | Exibe os usuários; a senha nunca é mostrada. |
-| **Editar** | Altera nome, perfil de admin, vínculo com eletricista e permissões. A senha só é alterada se uma nova for informada (mínimo 8 caracteres) e é recriptografada. |
+| **Editar** | Altera nome, perfil de admin e permissões. A senha só é alterada se uma nova for informada (mínimo 8 caracteres) e é recriptografada. O vínculo com eletricista não é editável. |
 | **Excluir** | Remove o usuário com confirmação. |
 
 **Regras de proteção:**
 - Não é permitido dois usuários com o mesmo nome.
 - Um eletricista só pode estar vinculado a **um** usuário.
+- Um usuário **sem permissão nenhuma não pode ser salvo** — sem nenhum acesso ele não
+  conseguiria entrar no sistema. (Administrador é exceção: já tem acesso a tudo, e suas
+  permissões individuais são zeradas por serem redundantes.)
+- Uma **conta de eletricista não pode ser promovida a administrador**, e seu nome de
+  usuário (o CPF) não pode ser renomeado.
 - Não é possível **remover o acesso de admin do último administrador**, nem **excluir o
   último administrador**.
 - O usuário **não pode excluir a própria conta**.
+- A exclusão falha (com aviso) se o registro estiver vinculado a outras informações.
 
 ## 6. CRUD de Eletricistas (Funcionários)
 
@@ -113,17 +119,28 @@ Módulo crítico, pois eletricistas estão vinculados a Metas e Ordens de Servi�
 
 | Campo / Regra | Descrição |
 |---|---|
-| **CPF** | Único por registro; exige 11 dígitos numéricos. |
-| **Nome** | Nome completo do eletricista. |
+| **CPF** | Único por registro; exige 11 dígitos numéricos. É também o **login** da conta. |
+| **Nome** | Nome completo do eletricista (mínimo 3 caracteres). |
 | **Data de contratação** | Início das atividades na empresa. |
 | **Data de demissão** | NULL = ativo; preenchida = demitido. |
+| **Senha de acesso** | Mínimo 8 caracteres; informada já no cadastro. |
+
+**Conta de acesso criada junto com o cadastro:**
+Cadastrar um eletricista **cria automaticamente o usuário de sistema dele**, na mesma
+transação (se qualquer parte falhar, nada é gravado):
+- O **login é o CPF** e a senha é a informada no cadastro.
+- A conta nasce como **não-administrador**, com as permissões padrão de eletricista:
+  **Dashboard** (`menu`) e **Ordens de Serviço** (`ordemServico`).
+- O cadastro é recusado se o CPF já existir como eletricista **ou** já estiver em uso
+  como login de outro usuário.
+- A **senha pode ser redefinida pela própria tela de Eletricistas**, na edição.
 
 **Regras de negócio:**
 - **Exclusão proibida:** nenhum eletricista é apagado do banco — preserva-se o histórico.
 - **Demitir / Reativar (soft delete):** demitir preenche a data de demissão; reativar
   (readmitir) limpa a data. Apenas eletricistas ativos podem receber metas e abrir OS.
-- Na edição, apenas o **nome** é alterável (CPF e datas são gerenciados por
-  cadastro/demissão/reativação).
+- Na edição, apenas o **nome** e a **senha de acesso** são alteráveis (CPF e datas são
+  gerenciados por cadastro/demissão/reativação).
 - **Histórico visível:** a tela permite consultar o histórico de OS do eletricista,
   mostrando ID, data da OS, status e data de fechamento.
 
@@ -197,14 +214,21 @@ Regras de abertura:
   estoque suficiente para algum material, a OS **continua Solicitada** e nada é alterado.
 - Cada saída de material gera uma **movimentação de saída** vinculada à OS.
 - É obrigatório existir um **checklist de início selecionado** (ver seção 10). Todas as
-  perguntas devem ser respondidas; qualquer resposta **"Não"** **impede a abertura** da OS.
+  perguntas devem ser respondidas: as do tipo **Sim/Não** aceitam só "Sim" ou "Não"; as do
+  tipo **texto livre** aceitam qualquer resposta. Se a pergunta tem um **valor de bloqueio**
+  configurado e a resposta bate com ele, a abertura da OS é **impedida**.
 - Opcionalmente pode-se anexar uma **foto de abertura**, registrada no histórico da OS.
 
 ### 9.4. Fechamento da OS
 Só é possível fechar uma OS que esteja **Aberta**. É obrigatório existir um **checklist de
-fim selecionado**. Todas as perguntas devem ser respondidas (Sim/Não). Para cada resposta
-**"Não"** é obrigatório **informar o motivo**. Ao fechar, a data de fechamento é registrada.
-Opcionalmente pode-se anexar uma **foto de fechamento**.
+fim selecionado**. Todas as perguntas devem ser respondidas. Se a pergunta tem um **valor
+de bloqueio** configurado e a resposta bate com ele, o **fechamento é impedido** — a mesma
+regra da abertura, valendo tanto para perguntas Sim/Não quanto para texto livre. Ao fechar,
+a data de fechamento é registrada. Opcionalmente pode-se anexar uma **foto de fechamento**.
+
+> OS fechadas antes dessa regra podem ter um **motivo** registrado junto da resposta: na
+> versão anterior, a resposta de bloqueio no fechamento pedia justificativa em vez de
+> barrar a OS. Esses motivos continuam visíveis nos detalhes da OS.
 
 ### 9.5. Restrições do perfil eletricista
 Quando o usuário é um eletricista (conta vinculada):
@@ -232,7 +256,11 @@ Cada OS possui um histórico de **comentários** e **fotos**:
 Módulo que define listas de verificação usadas na abertura e no fechamento das OS.
 
 - Cada checklist tem um **título** e um **tipo**: **início** ou **fim**.
-- Cada checklist contém uma ou mais **perguntas**.
+- Cada checklist contém uma ou mais **perguntas**. Cada pergunta tem um **tipo de resposta**:
+  **Sim/Não** (radio) ou **texto livre** (text), e um campo opcional **"Bloqueia se"**.
+- O campo **"Bloqueia se"** define qual resposta é considerada problemática (ex.: "Não").
+  Se ficar **em branco, a pergunta nunca bloqueia** — serve só como registro. A comparação
+  ignora acentos e maiúsculas, então "Não" e "nao" são equivalentes.
 - Para cada tipo (início/fim) há um checklist marcado como **padrão (selecionado)**, que
   é o efetivamente aplicado nas OS. Ao cadastrar o primeiro checklist de um tipo, ele
   vira o padrão automaticamente; o administrador pode trocar o padrão a qualquer momento.
@@ -241,9 +269,14 @@ Módulo que define listas de verificação usadas na abertura e no fechamento da
   que impeçam a remoção.
 
 **Papel na operação:**
-- **Checklist de início** — respondido na abertura da OS; qualquer "Não" bloqueia a
-  abertura.
-- **Checklist de fim** — respondido no fechamento; cada "Não" exige justificativa (motivo).
+- **Checklist de início** — respondido na abertura da OS; uma resposta que bate com o
+  "Bloqueia se" da pergunta impede a abertura.
+- **Checklist de fim** — respondido no fechamento; uma resposta que bate com o
+  "Bloqueia se" impede o fechamento.
+
+> Atenção ao cadastrar: uma pergunta com "Bloqueia se" **em branco nunca barra nada**,
+> nem na abertura nem no fechamento. Para que uma resposta impeça a OS, o valor precisa
+> estar preenchido (ex.: "Não").
 
 ## 11. Baixas / Movimentações de estoque
 
@@ -326,7 +359,10 @@ atomicidade — se algo falha, nada é gravado.
 - **Ordens de serviço** são imutáveis após o registro (não editam nem excluem).
 - Em **metas**, só o valor muda após o cadastro (eletricista e mês são fixos).
 - **Eletricistas demitidos** não abrem novas OS nem acessam o sistema.
-- A abertura de OS exige checklist de início 100% "Sim"; o fechamento exige checklist de
-  fim com justificativa para cada "Não".
+- A OS segue sempre a ordem **Solicitada → Aberta → Fechada**: só o admin solicita, e só
+  o eletricista responsável (ou o admin) abre e fecha. Uma OS não pode ser reaberta.
+- O **estoque só é baixado na abertura** da OS, nunca na solicitação.
+- A abertura e o fechamento da OS são impedidos quando alguma resposta do checklist bate
+  com o valor de bloqueio configurado na pergunta ("Bloqueia se").
 - Gestão de **usuários e permissões** é exclusiva de administradores, e o sistema sempre
   mantém pelo menos um administrador.

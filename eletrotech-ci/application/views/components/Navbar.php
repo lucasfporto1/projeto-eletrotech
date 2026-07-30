@@ -52,11 +52,28 @@ $pode = function ($chave) use ($ehAdmin, $permissoes) {
                         <a class="nav-link <?= $ativo === 'ordemServico' ? 'active' : '' ?>" href="<?= site_url('ordemServico') ?>">Ordens de Serviço</a>
                     </li>
                 <?php endif; ?>
+
                 <?php if ($pode('checklist')): ?>
-                    <li class="nav-item">
-                        <a class="nav-link <?= $ativo === 'checklist' ? 'active' : '' ?>" href="<?= site_url('checklist') ?>">Checklist</a>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle <?= in_array($ativo, ['checklist', 'consultachecklist'], true) ? 'active' : '' ?>"
+                            href="#" id="checklistDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Checklist
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="checklistDropdown">
+                            <li>
+                                <a class="dropdown-item <?= $ativo === 'checklist' ? 'active' : '' ?>" href="<?= site_url('checklist') ?>">
+                                    Seleção Checklist
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item <?= $ativo === 'consultachecklist' ? 'active' : '' ?>" href="<?= site_url('consultachecklist') ?>">
+                                    Consulta Checklist
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                 <?php endif; ?>
+
                 <?php if ($pode('baixas')): ?>
                     <li class="nav-item">
                         <a class="nav-link <?= $ativo === 'baixas' ? 'active' : '' ?>" href="<?= site_url('baixas') ?>">Movimentação</a>
@@ -67,6 +84,7 @@ $pode = function ($chave) use ($ehAdmin, $permissoes) {
                         <a class="nav-link <?= $ativo === 'lancamentos' ? 'active' : '' ?>" href="<?= site_url('lancamentos') ?>">Baixas</a>
                     </li>
                 <?php endif; ?>
+
                 <li class="nav-item ms-3">
                     <a class="nav-link text-danger fw-bold" style="background-color: transparent;" href="<?= site_url('auth/sair') ?>">Sair</a>
                 </li>

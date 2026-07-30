@@ -1,4 +1,5 @@
 <?php
+
 /** @var array $totais */
 /** @var string $usuario */
 /** @var string $mesFiltro */
@@ -7,6 +8,7 @@
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,17 +21,20 @@
             color: white;
             font-family: 'DM Sans', sans-serif;
         }
+
         nav.navbar.navbar-custom {
             background-color: #282828;
             padding-top: 15px;
             padding-bottom: 15px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
         }
+
         nav.navbar.navbar-custom .navbar-brand img {
             max-height: 80px;
             width: auto;
             object-fit: contain;
         }
+
         nav.navbar.navbar-custom ul.navbar-nav .nav-link {
             color: #ffffff;
             font-weight: 500;
@@ -37,28 +42,33 @@
             padding: 8px 16px;
             transition: all 0.3s ease;
         }
+
         nav.navbar.navbar-custom ul.navbar-nav .nav-link:hover,
         nav.navbar.navbar-custom ul.navbar-nav .nav-link.active {
             color: #282828;
             background-color: #FBD814;
             border-radius: 6px;
         }
+
         .dashboard-header {
             margin-top: 3rem;
             margin-bottom: 2.5rem;
             border-left: 5px solid #FBD814;
             padding-left: 15px;
         }
+
         .dashboard-header h1 {
             font-weight: 700;
             font-size: 28px;
             margin: 0;
         }
+
         .dashboard-header p {
             color: #a0a0a0;
             margin: 5px 0 0 0;
             font-size: 16px;
         }
+
         .dashboard-card {
             background-color: #1f1f1f;
             border-radius: 12px;
@@ -68,16 +78,19 @@
             transition: transform 0.3s ease, box-shadow 0.3s ease;
             height: 100%;
         }
+
         .dashboard-card:hover {
             transform: translateY(-8px);
             box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
             background-color: #242424;
         }
+
         .dashboard-card .icon-metric {
             font-size: 40px;
             color: #FBD814;
             margin-bottom: 15px;
         }
+
         .dashboard-card .metric-value {
             font-size: 36px;
             font-weight: 700;
@@ -85,6 +98,7 @@
             line-height: 1;
             margin-bottom: 5px;
         }
+
         .dashboard-card .metric-label {
             font-size: 13px;
             text-transform: uppercase;
@@ -92,6 +106,7 @@
             color: #ccc;
             font-weight: 600;
         }
+
         .chart-panel {
             background-color: #1f1f1f;
             border-radius: 12px;
@@ -100,12 +115,14 @@
             margin-top: 2rem;
             height: 100%;
         }
+
         .chart-panel h3 {
             color: #FBD814;
             font-size: 1.1rem;
             margin-bottom: 1rem;
             font-weight: 700;
         }
+
         .filtro-mes {
             background-color: #282828;
             padding: 15px;
@@ -117,17 +134,20 @@
             gap: 15px;
             flex-wrap: wrap;
         }
+
         .filtro-mes label {
             color: #FBD814;
             font-size: 12px;
             font-weight: bold;
         }
+
         .filtro-mes input,
         .filtro-mes button {
             height: 40px;
         }
     </style>
 </head>
+
 <body>
     <?php $this->load->view('components/Navbar', array('ativo' => 'menu')); ?>
 
@@ -221,14 +241,35 @@
             options: {
                 responsive: true,
                 plugins: {
-                    legend: { labels: { color: '#ffffff' } }
+                    legend: {
+                        labels: {
+                            color: '#ffffff'
+                        }
+                    }
                 },
                 scales: {
-                    x: { ticks: { color: '#ffffff' }, grid: { color: 'rgba(255,255,255,0.08)' } },
-                    y: { beginAtZero: true, ticks: { color: '#ffffff' }, grid: { color: 'rgba(255,255,255,0.08)' } }
+                    x: {
+                        ticks: {
+                            color: '#ffffff'
+                        },
+                        grid: {
+                            color: 'rgba(255,255,255,0.08)'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: '#ffffff'
+                        },
+                        grid: {
+                            color: 'rgba(255,255,255,0.08)'
+                        }
+                    }
                 }
             }
         });
     </script>
+    <?php $this->load->view('components/Chatbot'); ?>
 </body>
+
 </html>

@@ -302,6 +302,9 @@
             <button type="button" class="btn-filtro-os" data-filtro="aberta">
                 <i class="fa-solid fa-lock-open"></i> Abertas
             </button>
+            <button type="button" class="btn-filtro-os" data-filtro="bloqueada">
+                <i class="fa-solid fa-ban"></i> Bloqueadas
+            </button>
             <button type="button" class="btn-filtro-os" data-filtro="fechada">
                 <i class="fa-solid fa-lock"></i> Fechadas
             </button>
@@ -333,6 +336,10 @@
                                     <button class="btn btn-sm btn-outline-warning" type="button" onclick="abrirModalAbertura(<?= $os['id'] ?>)">
                                         <i class="fa-solid fa-lock-open"></i> Abrir OS
                                     </button>
+                                <?php elseif ($os['status'] === 'bloqueada'): ?>
+                                    <button class="btn btn-sm btn-outline-danger" type="button" disabled>
+                                        <i class="fa-solid fa-ban"></i> Bloqueada
+                                    </button>
                                 <?php elseif ($os['status'] === 'aberta'): ?>
                                     <button class="btn btn-sm btn-outline-success" type="button" onclick="abrirModalFechamento(<?= $os['id'] ?>)">
                                         <i class="fa-solid fa-check"></i> Fechar OS
@@ -349,6 +356,8 @@
                             <td>
                                 <?php if ($os['status'] === 'solicitada'): ?>
                                     <span class="badge bg-warning text-dark">Solicitada</span>
+                                <?php elseif ($os['status'] === 'bloqueada'): ?>
+                                    <span class="badge bg-danger">Bloqueada</span>
                                 <?php elseif ($os['status'] === 'aberta'): ?>
                                     <span class="badge bg-success">Aberta</span>
                                 <?php else: ?>
@@ -458,11 +467,15 @@
                             <h6 style="color: #FBD814; text-transform: uppercase; font-size: 14px; font-weight: bold; margin-bottom: 12px;">Checklist de Início</h6>
                             <?php foreach ($checklistInicio['perguntas'] as $pergunta): ?>
                                 <label><?= htmlspecialchars($pergunta['texto_pergunta']) ?></label>
-                                <select name="checklist_resposta[<?= $pergunta['id'] ?>]" required>
-                                    <option value="" disabled selected hidden>Selecione sim ou não</option>
-                                    <option value="sim">Sim</option>
-                                    <option value="nao">Não</option>
-                                </select>
+                                <?php if (($pergunta['tipo_resposta'] ?? '') === 'text'): ?>
+                                    <input type="text" name="checklist_resposta[<?= $pergunta['id'] ?>]" placeholder="Digite a resposta" required>
+                                <?php else: ?>
+                                    <select name="checklist_resposta[<?= $pergunta['id'] ?>]" required>
+                                        <option value="" disabled selected hidden>Selecione sim ou não</option>
+                                        <option value="sim">Sim</option>
+                                        <option value="nao">Não</option>
+                                    </select>
+                                <?php endif; ?>
                             <?php endforeach; ?>
                             <input type="hidden" name="checklist_inicio_id" value="<?= $checklistInicio['id'] ?>">
                         </div>
@@ -523,12 +536,20 @@
                         <p class="mb-3">Responda o checklist de fim para encerrar a OS.</p>
                         <?php foreach ($checklistFim['perguntas'] as $pergunta): ?>
                             <label><?= htmlspecialchars($pergunta['texto_pergunta']) ?></label>
-                            <select name="checklist_resposta[<?= $pergunta['id'] ?>]" required class="select-checklist-fim" data-pergunta="<?= $pergunta['id'] ?>">
-                                <option value="" disabled selected hidden>Selecione sim ou não</option>
-                                <option value="sim">Sim</option>
-                                <option value="nao">Não</option>
-                            </select>
-                            <textarea name="motivo_nao[<?= $pergunta['id'] ?>]" class="motivo-nao form-control" placeholder="Explique o motivo do não" style="display:none; margin-top:10px;"></textarea>
+                            <?php if (($pergunta['tipo_resposta'] ?? '') === 'text'): ?>
+                                <input type="text" name="checklist_resposta[<?= $pergunta['id'] ?>]" placeholder="Digite a resposta" required>
+                            <?php else: ?>
+                                <select name="checklist_resposta[<?= $pergunta['id'] ?>]" required class="select-checklist-fim" data-pergunta="<?= $pergunta['id'] ?>" data-bloqueio="<?= htmlspecialchars($pergunta['bloqueia_normalizado'] ?? '') ?>">
+                                    <option value="" disabled selected hidden>Selecione sim ou não</option>
+                                    <option value="sim">Sim</option>
+                                    <option value="nao">Não</option>
+                                </select>
+                                <?php if (!empty($pergunta['bloqueia_normalizado'])): ?>
+                                    <div class="aviso-bloqueio" data-pergunta="<?= $pergunta['id'] ?>" style="display:none; color:#ff6b6b; font-size:12px; margin-top:6px;">
+                                        <i class="fa-solid fa-triangle-exclamation"></i> Esta resposta impede o fechamento da OS.
+                                    </div>
+                                <?php endif; ?>
+                            <?php endif; ?>
                         <?php endforeach; ?>
 
                         <div class="foto-os-campo mt-4">
@@ -764,18 +785,14 @@
             }
             const select = event.target;
             const perguntaId = select.dataset.pergunta;
-            const textarea = document.querySelector('textarea[name="motivo_nao[' + perguntaId + ']"]');
-            if (!textarea) {
+            const bloqueio = select.dataset.bloqueio || '';
+            const aviso = document.querySelector('.aviso-bloqueio[data-pergunta="' + perguntaId + '"]');
+            if (!aviso) {
                 return;
             }
-            if (select.value === 'nao') {
-                textarea.style.display = 'block';
-                textarea.required = true;
-            } else {
-                textarea.style.display = 'none';
-                textarea.required = false;
-                textarea.value = '';
-            }
+            // Avisa na hora que a resposta configurada como bloqueio barra o fechamento,
+            // em vez de deixar o eletricista descobrir só depois de enviar o formulário.
+            aviso.style.display = (bloqueio !== '' && select.value === bloqueio) ? 'block' : 'none';
         });
 
         document.querySelectorAll('#filtro-status-os .btn-filtro-os').forEach(function(botao) {
@@ -817,7 +834,6 @@
             });
         });
     </script>
-    <?php $this->load->view('components/Chatbot'); ?>
 
 </body>
 
