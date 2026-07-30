@@ -8,37 +8,166 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <title><?= $titulo ?></title>
     <style>
-        body { background-color: #3c3b3b; color: white; }
+        body {
+            background-color: #3c3b3b;
+            color: white;
+        }
 
-        nav.navbar.navbar-custom { background-color: #282828; padding-top: 15px; padding-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        nav.navbar.navbar-custom .navbar-brand img { max-height: 80px; width: auto; object-fit: contain; }
-        nav.navbar.navbar-custom ul.navbar-nav .nav-link { color: #ffffff; font-weight: 500; font-size: 16px; padding: 8px 16px; transition: all 0.3s ease; }
+        nav.navbar.navbar-custom {
+            background-color: #282828;
+            padding-top: 15px;
+            padding-bottom: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        nav.navbar.navbar-custom .navbar-brand img {
+            max-height: 80px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        nav.navbar.navbar-custom ul.navbar-nav .nav-link {
+            color: #ffffff;
+            font-weight: 500;
+            font-size: 16px;
+            padding: 8px 16px;
+            transition: all 0.3s ease;
+        }
+
         nav.navbar.navbar-custom ul.navbar-nav .nav-link:hover,
-        nav.navbar.navbar-custom ul.navbar-nav .nav-link.active { color: #282828; background-color: #FBD814; border-radius: 6px; }
+        nav.navbar.navbar-custom ul.navbar-nav .nav-link.active {
+            color: #282828;
+            background-color: #FBD814;
+            border-radius: 6px;
+        }
 
-        .page-title { margin-top: 2.5rem; margin-bottom: 1rem; }
-        .page-title h1 { color: #FBD814; font-size: 1.75rem; font-weight: bold; margin: 0; }
+        .page-title {
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+        }
 
-        .filtro-container { background-color: #282828; padding: 15px; border-radius: 8px; border: 1px solid #FBD814; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end; }
-        .filtro-container select { background-color: #3c3b3b; color: white; border: 1px solid #777; border-radius: 5px; padding: 8px; }
+        .page-title h1 {
+            color: #FBD814;
+            font-size: 1.75rem;
+            font-weight: bold;
+            margin: 0;
+        }
 
-        table.table.custom-table, table.table.custom-table th, table.table.custom-table td { border-color: #FBD814; vertical-align: middle; }
-        table.table.custom-table thead th { color: #FBD814; font-size: 1.1rem; }
-        .table-empty { text-align: center; color: #a0a0a0; padding: 2rem; font-style: italic; }
+        .filtro-container {
+            background-color: #282828;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #FBD814;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: flex-end;
+        }
 
-        .alert-success, .alert-danger { background-color: transparent !important; border-radius: 8px; padding: 15px; margin-bottom: 20px; font-weight: 500; }
-        .alert-success { color: #198754 !important; border: 1px solid #198754 !important; }
-        .alert-danger { color: #dc3545 !important; border: 1px solid #dc3545 !important; }
+        .filtro-container select {
+            background-color: #3c3b3b;
+            color: white;
+            border: 1px solid #777;
+            border-radius: 5px;
+            padding: 8px;
+        }
 
-        .modal-content.eletrotech-modal { background-color: #282828; color: white; border: 1px solid #FBD814; border-radius: 12px; }
-        .modal-content.eletrotech-modal .modal-header { border-bottom: 1px solid rgba(251, 216, 20, 0.3); }
-        .modal-content.eletrotech-modal .modal-title { color: #FBD814; font-weight: bold; }
+        table.table.custom-table,
+        table.table.custom-table th,
+        table.table.custom-table td {
+            border-color: #FBD814;
+            vertical-align: middle;
+        }
 
-        .eletrotech-form label { color: #ccc; font-size: 12px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .eletrotech-form textarea { border: none; border-bottom: 1px solid #777; background: transparent; color: white; padding: 10px 0; width: 100%; outline: none; margin-bottom: 18px; font-size: 14px; min-height: 100px; resize: vertical; }
-        .eletrotech-form textarea:focus { border-bottom: 2px solid #FBD814; }
-        .eletrotech-form .btn-submit { background-color: #ebca1e; color: #282828; border: none; border-radius: 30px; padding: 12px 20px; font-weight: bold; text-transform: uppercase; transition: 0.3s; }
-        .eletrotech-form .btn-submit:hover { background-color: #ffffff; }
+        table.table.custom-table thead th {
+            color: #FBD814;
+            font-size: 1.1rem;
+        }
+
+        .table-empty {
+            text-align: center;
+            color: #a0a0a0;
+            padding: 2rem;
+            font-style: italic;
+        }
+
+        .alert-success,
+        .alert-danger {
+            background-color: transparent !important;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            color: #198754 !important;
+            border: 1px solid #198754 !important;
+        }
+
+        .alert-danger {
+            color: #dc3545 !important;
+            border: 1px solid #dc3545 !important;
+        }
+
+        .modal-content.eletrotech-modal {
+            background-color: #282828;
+            color: white;
+            border: 1px solid #FBD814;
+            border-radius: 12px;
+        }
+
+        .modal-content.eletrotech-modal .modal-header {
+            border-bottom: 1px solid rgba(251, 216, 20, 0.3);
+        }
+
+        .modal-content.eletrotech-modal .modal-title {
+            color: #FBD814;
+            font-weight: bold;
+        }
+
+        .eletrotech-form label {
+            color: #ccc;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .eletrotech-form textarea {
+            border: none;
+            border-bottom: 1px solid #777;
+            background: transparent;
+            color: white;
+            padding: 10px 0;
+            width: 100%;
+            outline: none;
+            margin-bottom: 18px;
+            font-size: 14px;
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .eletrotech-form textarea:focus {
+            border-bottom: 2px solid #FBD814;
+        }
+
+        .eletrotech-form .btn-submit {
+            background-color: #ebca1e;
+            color: #282828;
+            border: none;
+            border-radius: 30px;
+            padding: 12px 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+            transition: 0.3s;
+        }
+
+        .eletrotech-form .btn-submit:hover {
+            background-color: #ffffff;
+        }
     </style>
 </head>
 
@@ -117,7 +246,7 @@
                             <tr>
                                 <td>
                                     <a href="<?= site_url('consultachecklist/relatorio/' . $c['id_os'] . '/' . $c['tipo']) ?>" target="_blank" class="btn btn-sm btn-outline-info" title="Gerar relatório">
-                                        <i class="fa-solid fa-file-lines"></i> 
+                                        <i class="fa-solid fa-file-lines"></i>
                                     </a>
                                     <button type="button" class="btn btn-sm btn-outline-warning"
                                         onclick="abrirModalFinalizar(<?= $c['id_os'] ?>, '<?= $c['tipo'] ?>')"> Decidir
@@ -131,7 +260,9 @@
                             </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
-                        <tr><td colspan="6" class="table-empty">Nenhum checklist bloqueado no momento.</td></tr>
+                        <tr>
+                            <td colspan="6" class="table-empty">Nenhum checklist bloqueado no momento.</td>
+                        </tr>
                     <?php endif; ?>
                 </tbody>
             </table>
@@ -169,5 +300,7 @@
             new bootstrap.Modal(document.getElementById('modalFinalizar')).show();
         }
     </script>
+    <?php $this->load->view('components/Chatbot'); ?>
 </body>
+
 </html>
