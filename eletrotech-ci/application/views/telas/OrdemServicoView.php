@@ -302,6 +302,9 @@
             <button type="button" class="btn-filtro-os" data-filtro="aberta">
                 <i class="fa-solid fa-lock-open"></i> Abertas
             </button>
+            <button type="button" class="btn-filtro-os" data-filtro="bloqueada">
+                <i class="fa-solid fa-ban"></i> Bloqueadas
+            </button>
             <button type="button" class="btn-filtro-os" data-filtro="fechada">
                 <i class="fa-solid fa-lock"></i> Fechadas
             </button>
@@ -333,6 +336,10 @@
                                     <button class="btn btn-sm btn-outline-warning" type="button" onclick="abrirModalAbertura(<?= $os['id'] ?>)">
                                         <i class="fa-solid fa-lock-open"></i> Abrir OS
                                     </button>
+                                <?php elseif ($os['status'] === 'bloqueada'): ?>
+                                    <button class="btn btn-sm btn-outline-danger" type="button" disabled>
+                                        <i class="fa-solid fa-ban"></i> Bloqueada
+                                    </button>
                                 <?php elseif ($os['status'] === 'aberta'): ?>
                                     <button class="btn btn-sm btn-outline-success" type="button" onclick="abrirModalFechamento(<?= $os['id'] ?>)">
                                         <i class="fa-solid fa-check"></i> Fechar OS
@@ -349,6 +356,8 @@
                             <td>
                                 <?php if ($os['status'] === 'solicitada'): ?>
                                     <span class="badge bg-warning text-dark">Solicitada</span>
+                                <?php elseif ($os['status'] === 'bloqueada'): ?>
+                                    <span class="badge bg-danger">Bloqueada</span>
                                 <?php elseif ($os['status'] === 'aberta'): ?>
                                     <span class="badge bg-success">Aberta</span>
                                 <?php else: ?>

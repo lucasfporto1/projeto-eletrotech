@@ -28,6 +28,8 @@ $config['base_url'] = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 
 	. '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost')
 	. str_replace(basename($_SERVER['SCRIPT_NAME']), '', $_SERVER['SCRIPT_NAME']);
 
+date_default_timezone_set('America/Sao_Paulo');
+
 /*
 |--------------------------------------------------------------------------
 | Index File

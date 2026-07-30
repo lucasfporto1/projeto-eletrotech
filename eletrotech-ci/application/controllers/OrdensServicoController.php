@@ -134,6 +134,8 @@ class OrdensServicoController extends Auth_Controller
         }
 
         $checklistRespostas = [];
+        $checklistBloqueado = false;
+
         foreach ($checklistInicio['perguntas'] as $pergunta) {
             $valor = trim($respostas[$pergunta['id']] ?? '');
             if ($valor === '') {
@@ -141,7 +143,6 @@ class OrdensServicoController extends Auth_Controller
                 redirect('ordemServico');
                 return;
             }
-
 
             if (($pergunta['tipo_resposta'] ?? '') !== 'text') {
                 $valor = strtolower($valor);
@@ -152,17 +153,12 @@ class OrdensServicoController extends Auth_Controller
                 }
             }
 
-
+            // A resposta que "bloqueia" não impede mais a abertura da OS: ela
+            // apenas sinaliza que este checklist precisará de revisão em
+            // Consulta Checklist. A OS segue seu fluxo normal (ver abrir_os).
             $bloqueio = $pergunta['bloqueia_normalizado'] ?? '';
             if ($bloqueio !== '' && $this->ChecklistModel->normalizar_resposta($valor) === $bloqueio) {
-                // A flashdata é impressa sem escape na view (aceita HTML de
-                // validation_errors), então o texto da pergunta é escapado aqui.
-                $this->session->set_flashdata(
-                    'erro',
-                    'Não é possível abrir a OS: a resposta de "' . htmlspecialchars($pergunta['texto_pergunta']) . '" impede a abertura.'
-                );
-                redirect('ordemServico');
-                return;
+                $checklistBloqueado = true;
             }
 
             $checklistRespostas[$pergunta['id']] = $valor;
@@ -176,8 +172,13 @@ class OrdensServicoController extends Auth_Controller
             ];
         }
 
-        if ($this->OrdemservicoModel->abrir_os($idOs, $produtos, $checklistRespostas)) {
-            $mensagem = 'OS #' . str_pad($idOs, 5, '0', STR_PAD_LEFT) . ' aberta e estoque atualizado!';
+        if ($this->OrdemservicoModel->abrir_os($idOs, $produtos, $checklistRespostas, $checklistBloqueado)) {
+            if ($checklistBloqueado) {
+                $this->ChecklistModel->registrar_bloqueio($idOs, 'inicio');
+                $mensagem = 'OS #' . str_pad($idOs, 5, '0', STR_PAD_LEFT) . ' aberta, porém com pendência no checklist de início. Ela ficará aguardando revisão em Consulta Checklist.';
+            } else {
+                $mensagem = 'OS #' . str_pad($idOs, 5, '0', STR_PAD_LEFT) . ' aberta e estoque atualizado!';
+            }
 
             $foto = $this->uploadFoto('foto_abertura');
             if ($foto['status'] === 'ok') {
@@ -227,6 +228,8 @@ class OrdensServicoController extends Auth_Controller
         $respostas = $this->input->post('checklist_resposta', TRUE) ?: [];
 
         $fechamentoRespostas = [];
+        $checklistBloqueado = false;
+
         foreach ($checklistFim['perguntas'] as $pergunta) {
             $valor = trim($respostas[$pergunta['id']] ?? '');
             if ($valor === '') {
@@ -244,14 +247,12 @@ class OrdensServicoController extends Auth_Controller
                     return;
                 }
             }
+
+            // Mesma lógica da abertura: a resposta que bloqueia não impede mais
+            // o fechamento, apenas marca a OS como pendente de revisão.
             $bloqueio = $pergunta['bloqueia_normalizado'] ?? '';
             if ($bloqueio !== '' && $this->ChecklistModel->normalizar_resposta($valor) === $bloqueio) {
-                $this->session->set_flashdata(
-                    'erro',
-                    'Não é possível fechar a OS: a resposta de "' . htmlspecialchars($pergunta['texto_pergunta']) . '" impede o fechamento.'
-                );
-                redirect('ordemServico');
-                return;
+                $checklistBloqueado = true;
             }
 
             $fechamentoRespostas[$pergunta['id']] = [
@@ -260,8 +261,13 @@ class OrdensServicoController extends Auth_Controller
             ];
         }
 
-        if ($this->OrdemservicoModel->fechar_os($idOs, $fechamentoRespostas)) {
-            $mensagem = 'OS #' . str_pad($idOs, 5, '0', STR_PAD_LEFT) . ' fechada com sucesso.';
+        if ($this->OrdemservicoModel->fechar_os($idOs, $fechamentoRespostas, $checklistBloqueado)) {
+            if ($checklistBloqueado) {
+                $this->ChecklistModel->registrar_bloqueio($idOs, 'fim');
+                $mensagem = 'OS #' . str_pad($idOs, 5, '0', STR_PAD_LEFT) . ' fechada, porém com pendência no checklist de fim. Ela ficará aguardando revisão em Consulta Checklist.';
+            } else {
+                $mensagem = 'OS #' . str_pad($idOs, 5, '0', STR_PAD_LEFT) . ' fechada com sucesso.';
+            }
 
             $foto = $this->uploadFoto('foto_fechamento');
             if ($foto['status'] === 'ok') {

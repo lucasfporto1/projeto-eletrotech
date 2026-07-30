@@ -139,6 +139,29 @@ class OrdemServicoModel extends CI_Model
         return $query->result_array();
     }
 
+    /**
+     * Respostas do checklist de uma OS filtradas por tipo (inicio ou fim),
+     * usadas no relatório de Consulta Checklist.
+     */
+    public function get_checklist_respostas_by_os_tipo($idOs, $tipo)
+    {
+        $query = $this->db
+            ->select('r.id_pergunta, p.texto_pergunta, r.resposta, r.motivo_nao')
+            ->from($this->tableRespostas . ' r')
+            ->join('tabela_checklist_perguntas p', 'r.id_pergunta = p.id', 'inner')
+            ->join('tabela_checklist c', 'p.id_checklist = c.id', 'inner')
+            ->where('r.id_os', $idOs)
+            ->where('c.tipo', $tipo)
+            ->order_by('p.ordem', 'ASC')
+            ->get();
+
+        if ($query === false) {
+            return [];
+        }
+
+        return $query->result_array();
+    }
+
     public function get_comentarios_by_os($idOs)
     {
         $query = $this->db->select('id, comentario, foto, data_comentario')
@@ -196,9 +219,13 @@ class OrdemServicoModel extends CI_Model
      * que vai utilizar e respondendo o checklist de início. É aqui que o estoque
      * é baixado e as movimentações de saída são geradas.
      *
+     * @param bool $bloqueado Se true, a OS é marcada como 'aberta_pendente' em vez
+     *                        de 'aberta' — a resposta do checklist bloqueou a abertura
+     *                        normal e a OS aguarda revisão em Consulta Checklist.
+     *
      * @return bool
      */
-    public function abrir_os($idOs, array $produtos, array $respostas = [])
+    public function abrir_os($idOs, array $produtos, array $respostas = [], $bloqueado = false)
     {
         $ordem = $this->db->where('id', (int) $idOs)
             ->where('status', 'solicitada')
@@ -267,7 +294,7 @@ class OrdemServicoModel extends CI_Model
         }
 
         $this->db->where('id', $idOs)->update($this->table, [
-            'status' => 'aberta',
+            'status' => $bloqueado ? 'bloqueada' : 'aberta',
         ]);
 
         $this->db->trans_complete();
@@ -275,9 +302,19 @@ class OrdemServicoModel extends CI_Model
         return $this->db->trans_status() !== FALSE;
     }
 
-    public function fechar_os($idOs, array $respostas)
+    /**
+     * @param bool $bloqueado Se true, a OS é marcada como 'fechada_pendente' em vez
+     *                        de 'fechada' — o checklist de fim bloqueou o fechamento
+     *                        e a OS aguarda revisão em Consulta Checklist.
+     */
+    public function fechar_os($idOs, array $respostas, $bloqueado = false)
     {
-        $ordem = $this->db->where('id', $idOs)->where('status', 'aberta')->get($this->table)->row_array();
+        // Aceita tanto OS abertas normalmente quanto OS que ficaram pendentes
+        // na abertura (o checklist de início bloqueou, mas o trabalho seguiu).
+        $ordem = $this->db->where('id', $idOs)
+            ->where_in('status', ['aberta', 'bloqueada'])
+            ->get($this->table)
+            ->row_array();
 
         if (empty($ordem)) {
             return false;
@@ -286,8 +323,8 @@ class OrdemServicoModel extends CI_Model
         $this->db->trans_start();
 
         $this->db->where('id', $idOs)->update($this->table, [
-            'status' => 'fechada',
-            'data_fechamento' => date('Y-m-d'),
+            'status' => $bloqueado ? 'bloqueada' : 'fechada',
+            'data_fechamento' => $bloqueado ? null : date('Y-m-d'),
         ]);
 
         foreach ($respostas as $perguntaId => $respostaData) {
@@ -316,7 +353,7 @@ class OrdemServicoModel extends CI_Model
     public function totalAbertasPorEletricista($idEletricista)
     {
         return $this->db->from($this->table)
-            ->where('status', 'aberta')
+            ->where_in('status', ['aberta', 'aberta_pendente'])
             ->where('eletricista_os', (int) $idEletricista)
             ->count_all_results();
     }
@@ -324,7 +361,7 @@ class OrdemServicoModel extends CI_Model
     public function totalFechadasPorEletricista($idEletricista)
     {
         return $this->db->from($this->table)
-            ->where('status', 'fechada')
+            ->where_in('status', ['fechada', 'fechada_pendente'])
             ->where('eletricista_os', (int) $idEletricista)
             ->count_all_results();
     }
