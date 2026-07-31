@@ -16,6 +16,8 @@ class Testes_Eletricistas extends CI_Controller {
         $this->testar_buscas_e_vinculos();
         $this->testar_get_all_com_subqueries();
         $this->testar_os_por_eletricista();
+        $this->testar_contar();
+        $this->testar_get_all_com_paginacao();
 
         echo "<div style='font-family: Arial; padding: 20px;'>";
         echo "<h2>Relatório de Testes: EletricistasModel</h2>";
@@ -138,6 +140,47 @@ class Testes_Eletricistas extends CI_Controller {
         $ordens = $this->EletricistasModel->get_os_by_eletricista($id);
         
         $this->unit->run(count($ordens), 3, 'Relação: get_os_by_eletricista deve retornar exatamente 3 registros');
+
+        $this->db->trans_rollback();
+    }
+
+    private function testar_contar() {
+        $this->db->trans_start();
+
+        $antes = $this->EletricistasModel->contar();
+
+        $this->EletricistasModel->insert(['nome' => 'Eletricista Contar 1', 'cpf' => '000' . rand(100000000, 999999999)]);
+        $this->EletricistasModel->insert(['nome' => 'Eletricista Contar 2', 'cpf' => '000' . rand(100000000, 999999999)]);
+
+        $depois = $this->EletricistasModel->contar();
+
+        $this->unit->run($depois - $antes, 2, 'Contar: Deve refletir exatamente os 2 eletricistas inseridos');
+
+        $this->db->trans_rollback();
+    }
+
+    private function testar_get_all_com_paginacao() {
+        $this->db->trans_start();
+
+        // Cria 3 eletricistas extras para garantir que há o que paginar
+        for ($i = 0; $i < 3; $i++) {
+            $this->EletricistasModel->insert([
+                'nome' => 'Eletricista Paginado ' . $i,
+                'cpf'  => '000' . rand(100000000, 999999999),
+            ]);
+        }
+
+        $pagina = $this->EletricistasModel->get_all(2, 0);
+
+        $this->unit->run(count($pagina), 2, 'GetAll: Com limite=2 deve retornar exatamente 2 registros');
+
+        $paginaOffset = $this->EletricistasModel->get_all(2, 2);
+        $this->unit->run(count($paginaOffset) <= 2, TRUE, 'GetAll: Com offset deve continuar respeitando o limite');
+
+        // IDs da primeira página não devem se repetir na segunda (ordenação por e.id DESC)
+        $idsPagina1 = array_column($pagina, 'id');
+        $idsPagina2 = array_column($paginaOffset, 'id');
+        $this->unit->run(count(array_intersect($idsPagina1, $idsPagina2)), 0, 'GetAll: Paginação não deve repetir registros entre páginas');
 
         $this->db->trans_rollback();
     }

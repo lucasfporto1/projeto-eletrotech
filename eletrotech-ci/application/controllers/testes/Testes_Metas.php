@@ -15,6 +15,7 @@ class Testes_Metas extends CI_Controller {
         $this->testar_crud_metas();
         $this->testar_filtros_e_contagem();
         $this->testar_eletricistas_ativos();
+        $this->testar_get_all_com_paginacao();
 
         echo "<div style='font-family: Arial; padding: 20px;'>";
         echo "<h2>Relatório de Testes: MetasModel</h2>";
@@ -125,6 +126,31 @@ class Testes_Metas extends CI_Controller {
         // Verifica as lógicas
         $this->unit->run(in_array($id_ativo, $ids), TRUE, 'Ativos: Eletricista sem data_demissao DEVE constar na lista');
         $this->unit->run(in_array($id_demitido, $ids), FALSE, 'Ativos: Eletricista com data_demissao NÃO pode constar na lista');
+
+        $this->db->trans_rollback();
+    }
+    private function testar_get_all_com_paginacao() {
+        $this->db->trans_start();
+
+        $this->db->insert('tabela_eletricistas', ['nome' => 'Eletr Paginacao', 'cpf' => '005' . rand(100000000, 999999999)]);
+        $id = $this->db->insert_id();
+
+        $this->MetasModel->insert(['eletricista_meta' => $id, 'mes_meta' => '2026-03']);
+        $this->MetasModel->insert(['eletricista_meta' => $id, 'mes_meta' => '2026-04']);
+        $this->MetasModel->insert(['eletricista_meta' => $id, 'mes_meta' => '2026-05']);
+
+        // Com limite=2, deve trazer só 2 dos 3 registros
+        $pagina1 = $this->MetasModel->get_all($id, '', 2, 0);
+        $this->unit->run(count($pagina1), 2, 'Paginacao: Com limite=2 deve retornar exatamente 2 registros');
+
+        // Offset=2 deve trazer o restante (1 registro)
+        $pagina2 = $this->MetasModel->get_all($id, '', 2, 2);
+        $this->unit->run(count($pagina2), 1, 'Paginacao: Com offset=2 deve retornar o registro restante');
+
+        // Os registros não devem se repetir entre as páginas
+        $idsPagina1 = array_column($pagina1, 'id');
+        $idsPagina2 = array_column($pagina2, 'id');
+        $this->unit->run(count(array_intersect($idsPagina1, $idsPagina2)), 0, 'Paginacao: Não deve haver sobreposição de registros entre páginas');
 
         $this->db->trans_rollback();
     }

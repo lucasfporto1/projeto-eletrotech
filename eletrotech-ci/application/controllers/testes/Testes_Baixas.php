@@ -24,6 +24,9 @@ class Testes_Baixas extends CI_Controller {
         $this->testar_finalizar_sem_itens();
         $this->testar_cancelar_baixa();
         $this->testar_finalizar_e_tudo_ou_nada();
+        $this->testar_consultar_por_ids();
+        $this->testar_produtos_lista_e_lancamento();
+        $this->testar_produto_por_id();
 
         echo "<div style='font-family: Arial; padding: 20px;'>";
         echo "<h2>Relatório de Testes: BaixasModel</h2>";
@@ -364,5 +367,63 @@ class Testes_Baixas extends CI_Controller {
         $this->db->where_in('id', [$idProdOk, $idProdFalta])->delete('tabela_produtos');
         $this->db->where('id', $idUsuario)->delete('tabela_usuarios');
         $this->db->where('id', $idEletricista)->delete('tabela_eletricistas');
+    }
+
+        private function testar_consultar_por_ids() {
+        $this->db->trans_start();
+
+        $this->db->insert('tabela_produtos', ['nome_produto' => 'Prod IDs', 'vlr_unitario' => 10, 'qtd_estoque' => 20]);
+        $idProd = $this->db->insert_id();
+
+        $this->db->insert('tabela_movimentacoes', ['id_produto' => $idProd, 'tipo' => 'entrada', 'quantidade' => 3, 'valor_unitario' => 10, 'data_mov' => date('Y-m-d')]);
+        $idMov = $this->db->insert_id();
+
+        $resultado = $this->BaixasModel->consultar_por_ids([$idMov]);
+        $vazio     = $this->BaixasModel->consultar_por_ids([]);
+
+        $this->unit->run(count($resultado), 1, 'ConsultarPorIds: Deve trazer a movimentação pelo ID');
+        $this->unit->run((float)$resultado[0]['valor_entrada'], 30.0, 'ConsultarPorIds: valor_entrada deve refletir o total quando tipo é entrada');
+        $this->unit->run((float)$resultado[0]['valor_saida'], 0.0, 'ConsultarPorIds: valor_saida deve ser 0 quando tipo é entrada');
+        $this->unit->run($vazio, [], 'ConsultarPorIds: Array de IDs vazio deve retornar array vazio sem consultar o banco');
+
+        $this->db->trans_rollback();
+    }
+
+    private function testar_produtos_lista_e_lancamento() {
+        $this->db->trans_start();
+
+        $this->db->insert('tabela_produtos', ['nome_produto' => 'Prod Lista', 'vlr_unitario' => 15, 'qtd_estoque' => 8]);
+        $idProd = $this->db->insert_id();
+
+        $lista = $this->BaixasModel->produtos_lista();
+        $paraLancamento = $this->BaixasModel->produtos_para_lancamento();
+
+        $encontrado = array_filter($lista, fn($p) => (int)$p['id'] === (int)$idProd);
+        $encontradoLanc = array_filter($paraLancamento, fn($p) => (int)$p['id'] === (int)$idProd);
+
+        $this->unit->run(count($encontrado) > 0, TRUE, 'ProdutosLista: Deve incluir o produto criado');
+        $this->unit->run(count($encontradoLanc) > 0, TRUE, 'ProdutosParaLancamento: Deve incluir o produto criado');
+
+        $itemLanc = array_values($encontradoLanc)[0];
+        $this->unit->run((float)$itemLanc['vlr_unitario'], 15.0, 'ProdutosParaLancamento: Deve trazer o valor unitário do produto');
+        $this->unit->run((int)$itemLanc['qtd_estoque'], 8, 'ProdutosParaLancamento: Deve trazer o estoque atual do produto');
+
+        $this->db->trans_rollback();
+    }
+
+    private function testar_produto_por_id() {
+    $this->db->trans_start();
+
+    $this->db->insert('tabela_produtos', ['nome_produto' => 'Prod Unico', 'vlr_unitario' => 22, 'qtd_estoque' => 5]);
+    $idProd = $this->db->insert_id();
+
+    $produto = $this->BaixasModel->produto_por_id($idProd);
+    $inexistente = $this->BaixasModel->produto_por_id(999999999);
+
+    $this->unit->run($produto['nome_produto'], 'Prod Unico', 'ProdutoPorId: Deve encontrar o produto pelo ID');
+    $this->unit->run((float)$produto['vlr_unitario'], 22.0, 'ProdutoPorId: Deve trazer o valor unitário correto');
+    $this->unit->run(empty($inexistente), TRUE, 'ProdutoPorId: ID inexistente deve retornar vazio/null');
+
+    $this->db->trans_rollback();
     }
 }

@@ -16,6 +16,12 @@ class Testes_Dashboard extends CI_Controller {
         $this->testar_os_por_status();
         $this->testar_movimentacao_por_mes();
         $this->testar_os_por_eletricista();
+        $this->testar_contar_totais_por_eletricista();
+        $this->testar_contar_produtos_utilizados();
+        $this->testar_get_meta_atual();
+        $this->testar_get_os_por_mes();
+        $this->testar_os_por_eletricista_com_filtro();
+        $this->testar_movimentacao_por_mes_com_filtro();
 
         echo "<div style='font-family: Arial; padding: 20px;'>";
         echo "<h2>Relatório de Testes: DashboardModel</h2>";
@@ -175,6 +181,136 @@ class Testes_Dashboard extends CI_Controller {
             }
         }
         $this->unit->run($encontrado, TRUE, 'OS por Eletricista: Eletricista encontrado no agrupamento');
+
+        $this->db->trans_rollback();
+    }
+    private function testar_contar_totais_por_eletricista() {
+        $this->db->trans_start();
+
+        $idEletricista = $this->criarEletricistaTeste('Eletricista Totais Filtro');
+
+        $this->db->insert('tabela_ordens_servico', ['status' => 'aberta', 'eletricista_os' => $idEletricista]);
+        $this->db->insert('tabela_ordens_servico', ['status' => 'fechada', 'eletricista_os' => $idEletricista]);
+
+        $totais = $this->DashboardModel->contarTotais($idEletricista);
+
+        $this->unit->run($totais['os'], 2, 'ContarTotais: Com filtro de eletricista deve contar só as OS dele');
+        $this->unit->run($totais['eletricistas'], 0, 'ContarTotais: Com filtro de eletricista os demais totais devem ficar zerados');
+        $this->unit->run($totais['produtos'], 0, 'ContarTotais: Com filtro de eletricista produtos deve ficar zerado');
+
+        $this->db->trans_rollback();
+    }
+
+    private function testar_contar_produtos_utilizados() {
+        $this->db->trans_start();
+
+        $idEletricista = $this->criarEletricistaTeste('Eletricista Produtos Utilizados');
+        $this->db->insert('tabela_produtos', ['nome_produto' => 'Prod Utilizado']);
+        $idProduto = $this->db->insert_id();
+
+        $this->db->insert('tabela_ordens_servico', ['status' => 'aberta', 'eletricista_os' => $idEletricista]);
+        $idOs = $this->db->insert_id();
+
+        $this->db->insert('tabela_os_materiais', ['id_os' => $idOs, 'id_produto' => $idProduto, 'qtd_utilizada' => 7]);
+
+        $totalGeral = $this->DashboardModel->contarProdutosUtilizados();
+        $totalFiltrado = $this->DashboardModel->contarProdutosUtilizados($idEletricista);
+
+        $this->unit->run($totalGeral >= 7, TRUE, 'ProdutosUtilizados: Total geral deve incluir a quantidade inserida');
+        $this->unit->run($totalFiltrado, 7, 'ProdutosUtilizados: Filtrado por eletricista deve retornar exatamente 7');
+
+        $this->db->trans_rollback();
+    }
+
+    private function testar_get_meta_atual() {
+        $this->db->trans_start();
+
+        $idEletricista = $this->criarEletricistaTeste('Eletricista Meta Atual');
+
+        $this->db->insert('tabela_metas', [
+            'vlr_meta' => 250.75,
+            'eletricista_meta' => $idEletricista,
+            'mes_meta' => date('Y-m'),
+        ]);
+
+        $meta = $this->DashboardModel->getMetaAtual($idEletricista);
+        $semMeta = $this->DashboardModel->getMetaAtual($this->criarEletricistaTeste('Sem Meta'));
+
+        $this->unit->run($meta, 250.75, 'MetaAtual: Deve retornar o valor da meta do mês corrente');
+        $this->unit->run($semMeta, 0.0, 'MetaAtual: Eletricista sem meta cadastrada deve retornar 0');
+
+        $this->db->trans_rollback();
+    }
+
+    private function testar_get_os_por_mes() {
+        $this->db->trans_start();
+
+        $mes_atual = date('Y-m');
+        $idEletricista = $this->criarEletricistaTeste('Eletricista Os Por Mes');
+
+        $this->db->insert('tabela_ordens_servico', [
+            'status' => 'aberta',
+            'eletricista_os' => $idEletricista,
+            'data_os' => date('Y-m-d'),
+        ]);
+        $this->db->insert('tabela_ordens_servico', [
+            'status' => 'aberta',
+            'eletricista_os' => $idEletricista,
+            'data_os' => date('Y-m-d'),
+        ]);
+
+        $filtradoPorMes = $this->DashboardModel->getOsPorMes($mes_atual, $idEletricista);
+        $filtradoPorMesInexistente = $this->DashboardModel->getOsPorMes('2000-01', $idEletricista);
+
+        $encontrado = array_values(array_filter($filtradoPorMes, fn($r) => $r['mes'] === $mes_atual));
+
+        $this->unit->run(count($encontrado) === 1, TRUE, 'OsPorMes: Deve agrupar em uma única linha para o mês atual');
+        $this->unit->run((int)$encontrado[0]['total'], 2, 'OsPorMes: Deve contar as 2 OS criadas no mês/eletricista filtrados');
+        $this->unit->run($filtradoPorMesInexistente, [], 'OsPorMes: Mês sem OS deve retornar array vazio');
+
+        $this->db->trans_rollback();
+    }
+
+    private function testar_os_por_eletricista_com_filtro() {
+        $this->db->trans_start();
+
+        $nomeA = 'Eletricista Filtro A ' . uniqid();
+        $idA = $this->criarEletricistaTeste($nomeA);
+        $nomeB = 'Eletricista Filtro B ' . uniqid();
+        $idB = $this->criarEletricistaTeste($nomeB);
+
+        $this->db->insert('tabela_ordens_servico', ['eletricista_os' => $idA]);
+        $this->db->insert('tabela_ordens_servico', ['eletricista_os' => $idA]);
+        $this->db->insert('tabela_ordens_servico', ['eletricista_os' => $idB]);
+
+        $resultado = $this->DashboardModel->getOsPorEletricista($idA);
+
+        $this->unit->run(count($resultado), 1, 'OsPorEletricista: Filtro deve retornar só o eletricista pedido');
+        $this->unit->run((int)$resultado[0]['total'], 2, 'OsPorEletricista: Total do eletricista filtrado deve ser 2');
+
+        $this->db->trans_rollback();
+    }
+
+    private function testar_movimentacao_por_mes_com_filtro() {
+        $this->db->trans_start();
+
+        $idEletricista = $this->criarEletricistaTeste('Eletricista Mov Filtro');
+        $this->db->insert('tabela_ordens_servico', ['eletricista_os' => $idEletricista]);
+        $idOs = $this->db->insert_id();
+
+        $this->db->insert('tabela_produtos', ['nome_produto' => 'Prod Mov Filtro']);
+        $idProduto = $this->db->insert_id();
+
+        $this->db->insert('tabela_movimentacoes', [
+            'tipo' => 'saida', 'quantidade' => 2, 'valor_unitario' => 15,
+            'data_mov' => date('Y-m-d'), 'id_produto' => $idProduto, 'id_os' => $idOs
+        ]);
+
+        $mes_atual = date('Y-m');
+        $movs = $this->DashboardModel->getMovimentacaoPorMes($idEletricista);
+        $linha = $this->totaisDoMes($movs, $mes_atual);
+
+        $this->unit->run($linha['saida'], 30.0, 'Movimentação: Filtro por eletricista deve considerar só as movimentações da OS dele');
 
         $this->db->trans_rollback();
     }
