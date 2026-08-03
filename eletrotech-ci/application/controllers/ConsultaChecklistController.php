@@ -18,10 +18,19 @@ class ConsultaChecklistController extends Auth_Controller
         $data['filtroEletricista'] = $this->input->get('eletricista', TRUE) ?: '';
         $data['ordenar'] = $this->input->get('ordenar', TRUE) ?: 'data_desc';
 
+        $total = $this->ChecklistModel->contar_bloqueados(
+            $data['filtroTipo'] ?: null,
+            $data['filtroEletricista'] ?: null
+        );
+
+        $data = array_merge($data, $this->paginar($total, site_url('consultachecklist')));
+
         $data['checklists'] = $this->ChecklistModel->get_bloqueados(
             $data['filtroTipo'] ?: null,
             $data['filtroEletricista'] ?: null,
-            $data['ordenar']
+            $data['ordenar'],
+            $data['por_pagina'],
+            $data['offset']
         );
 
         $data['eletricistas'] = $this->ChecklistModel->listarEletricistas();

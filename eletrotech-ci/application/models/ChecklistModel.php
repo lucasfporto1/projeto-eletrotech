@@ -191,10 +191,9 @@ class ChecklistModel extends CI_Model
         ]);
     }
 
-    public function get_bloqueados($filtroTipo = null, $filtroEletricista = null, $ordenar = 'data_desc')
+    private function aplicar_filtros_bloqueados($filtroTipo = null, $filtroEletricista = null)
     {
-        $this->db->select('s.id AS id_status, s.id_os, s.tipo, s.data_bloqueio, os.data_os, os.status AS status_os, e.id AS id_eletricista, e.nome AS nome_eletricista')
-            ->from('tabela_os_checklist_status s')
+        $this->db->from('tabela_os_checklist_status s')
             ->join('tabela_ordens_servico os', 'os.id = s.id_os', 'inner')
             ->join('tabela_eletricistas e', 'e.id = os.eletricista_os', 'left')
             ->where('s.bloqueado', 1);
@@ -206,6 +205,20 @@ class ChecklistModel extends CI_Model
         if (!empty($filtroEletricista) && is_numeric($filtroEletricista)) {
             $this->db->where('e.id', (int) $filtroEletricista);
         }
+    }
+
+    public function contar_bloqueados($filtroTipo = null, $filtroEletricista = null)
+    {
+        $this->aplicar_filtros_bloqueados($filtroTipo, $filtroEletricista);
+
+        return $this->db->count_all_results();
+    }
+
+    public function get_bloqueados($filtroTipo = null, $filtroEletricista = null, $ordenar = 'data_desc', $limite = null, $offset = 0)
+    {
+        $this->db->select('s.id AS id_status, s.id_os, s.tipo, s.data_bloqueio, os.data_os, os.status AS status_os, e.id AS id_eletricista, e.nome AS nome_eletricista');
+
+        $this->aplicar_filtros_bloqueados($filtroTipo, $filtroEletricista);
 
         switch ($ordenar) {
             case 'data_asc':
@@ -227,6 +240,10 @@ class ChecklistModel extends CI_Model
             default:
                 $this->db->order_by('s.data_bloqueio', 'DESC');
                 break;
+        }
+
+        if ($limite !== null) {
+            $this->db->limit($limite, $offset);
         }
 
         $query = $this->db->get();

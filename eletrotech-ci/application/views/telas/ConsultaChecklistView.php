@@ -267,6 +267,8 @@
                 </tbody>
             </table>
         </div>
+
+        <?php $this->load->view('components/Pagination'); ?>
     </div>
 
     <div class="modal fade" id="modalFinalizar" tabindex="-1" aria-hidden="true">
